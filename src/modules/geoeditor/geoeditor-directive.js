@@ -80,6 +80,9 @@ angular.module('anol.geoeditor')
 
                     scope.activeLayer = undefined;
                     scope.modifyActive = false;
+                    scope.continueDrawingPoints = true;
+                    scope.continueDrawingLines = true;
+                    scope.continueDrawingPolygons = true;
                     var selectedFeature;
                     var controls = [];
                     var drawPointControl, drawLineControl, drawPolygonControl, modifyControl;
@@ -421,6 +424,15 @@ angular.module('anol.geoeditor')
                             .concat(modifyControl.interactions);
                     };
 
+                    var setContinueDrawing = function() {
+                        var pointCount = GeoeditorService.countFeaturesFor('Point');
+                        var lineCount = GeoeditorService.countFeaturesFor('LineString');
+                        var polygonCount = GeoeditorService.countFeaturesFor('Polygon');
+                        scope.continueDrawingPoints = pointCount <= scope.geometriesConfig.point.max;
+                        scope.continueDrawingLines = lineCount <= scope.geometriesConfig.line.max;
+                        scope.continueDrawingPolygons = polygonCount <= scope.geometriesConfig.polygon.max;
+                    };
+
                     var visibleDewatcher;
 
                     var bindActiveLayer = function(layer) {
@@ -441,6 +453,12 @@ angular.module('anol.geoeditor')
                         });
 
                         scope.activeLayer = layer;
+                        // inital setup in case the active layer already contains features
+                        setContinueDrawing();
+
+                        scope.activeLayer.olLayer.getSource().on('change', function() {
+                            setContinueDrawing();
+                        });
 
                         visibleDewatcher = scope.$watch(function() {
                             return scope.activeLayer.getVisible();
