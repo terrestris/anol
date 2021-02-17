@@ -456,9 +456,7 @@ angular.module('anol.geoeditor')
                         // inital setup in case the active layer already contains features
                         setContinueDrawing();
 
-                        scope.activeLayer.olLayer.getSource().on('change', function() {
-                            setContinueDrawing();
-                        });
+                        scope.activeLayer.olLayer.getSource().on('change', setContinueDrawing);
 
                         visibleDewatcher = scope.$watch(function() {
                             return scope.activeLayer.getVisible();
@@ -488,6 +486,7 @@ angular.module('anol.geoeditor')
                             visibleDewatcher();
                         }
 
+                        scope.activeLayer.olLayer.getSource().un('change', setContinueDrawing);
                         scope.activeLayer = undefined;
                     };
 
