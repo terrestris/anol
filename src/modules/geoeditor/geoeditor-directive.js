@@ -37,6 +37,7 @@ angular.module('anol.geoeditor')
                 restrict: 'A',
                 require: '?^anolMap',
                 scope: {
+                    geometries: '=',
                     continueDrawing: '@',
                     postDrawAction: '&',
                     freeDrawing: '@',
@@ -61,6 +62,7 @@ angular.module('anol.geoeditor')
                         });
                     } 
                     // attribute defaults
+                    scope.geometriesConfig = applyGeometriesConfig(scope.geometries);
                     scope.continueDrawing = angular.isDefined(scope.continueDrawing) ?
                         scope.continueDrawing : false;
                     scope.freeDrawing = angular.isDefined(scope.freeDrawing) ?
@@ -88,6 +90,22 @@ angular.module('anol.geoeditor')
 
                     var executePostDrawCallback = function(evt) {
                         scope.postDrawAction()(scope.activeLayer, evt.feature);
+                    };
+
+                    function applyGeometriesConfig(geometries = {}) {
+                        var defaultVals = {
+                            enabled: true,
+                            min: 0,
+                            max: Infinity
+                        };
+
+                        var defaultGeometries = {
+                            point: angular.copy(defaultVals),
+                            line: angular.copy(defaultVals),
+                            polygon: angular.copy(defaultVals)
+                        };
+
+                        return angular.merge(defaultGeometries, geometries);
                     };
 
                     var createDrawInteractions = function(drawType, source, control, layer, postDrawActions) {
