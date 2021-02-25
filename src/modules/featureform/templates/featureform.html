@@ -1,7 +1,7 @@
 <form class="container-fluid" style="padding-top: 2em">
     <div ng-repeat="field in formFields"
          class="form-group"
-         ng-class="{ 'has-error': highlightInvalid && !isValid(field) }"
+         ng-class="{ 'has-error': highlightInvalid && !validateFeatureFormField(field) }"
          ng-switch="field.type"
     >
         <label for="input-{{field.name}}">
@@ -43,7 +43,7 @@
         <div ng-switch-default>
             {{ 'anol.featureform.INPUT_NOT_SUPPORTED' | translate }}"{{ field.type }}"
         </div>
-        <small ng-if="highlightInvalid && !isValid(field)"
+        <small ng-if="highlightInvalid && !validateFeatureFormField(field)"
                class="help-block">
             {{ 'anol.featureform.IS_REQUIRED' | translate }}
         </small>
