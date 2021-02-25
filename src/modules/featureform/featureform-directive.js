@@ -28,7 +28,8 @@ angular.module('anol.featureform')
      * @param {FormField[]} pointFields The form fields for points
      * @param {FormField[]} lineFields The form fields for lines
      * @param {FormField[]} polygonFields The form fields for polygons
-     * @param {boolean} [highlightInvalid] show if fields are invalid
+     * @param {boolean} [highlightInvalid] show if fields are invalid. A `validate` function needs to be provided for this to work.
+     * @param {function(FormField, any): boolean} [validate] a validation function of a value for a specific field
      *
      * @description
      * Creates a form to edit defined feature properties.
@@ -38,14 +39,14 @@ angular.module('anol.featureform')
         function($templateRequest, $compile) {
             return {
                 restrict: 'A',
-                require: '?^anolFeaturePopup',
                 scope: {
                     'feature': '=',
                     'layer': '=', // TODO: is this needed?
                     'pointFields': '=?',
                     'lineFields': '=?',
                     'polygonFields': '=?',
-                    'highlightInvalid': '<?'
+                    'highlightInvalid': '<?',
+                    'validate': '&?'
                 },
                 template: function(tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -53,7 +54,7 @@ angular.module('anol.featureform')
                     }
                     return require('./templates/featureform.html');
                 },
-                link: function(scope, element, attrs, FeaturePopupController) {
+                link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
                             var template = angular.element(html);
@@ -123,19 +124,11 @@ angular.module('anol.featureform')
 
                     /**
                      * @param {FormField} field
-                     * @return {boolean}
+                     * @returns {boolean}
                      */
-                    scope.isValid = function (field) {
-                        if (field.required) {
-                            const value = scope.properties[field.name];
-                            switch (field.type) {
-                            case 'int':
-                            case 'float':
-                                return angular.isNumber(value);
-                            case 'text':
-                            case 'select':
-                                return angular.isString(value) && value !== '';
-                            }
+                    scope.validateFeatureFormField = function (field) {
+                        if (scope.validate) {
+                            return scope.validate({ field: field, value: scope.properties[field.name] });
                         }
                         return true;
                     };

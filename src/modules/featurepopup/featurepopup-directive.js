@@ -20,7 +20,7 @@ angular.module('anol.featurepopup')
  * @description
  * Shows a popup for selected feature
  */
-    .directive('anolFeaturePopup', ['$templateRequest', '$compile','$window', '$timeout', 'MapService', 'LayersService', 'ControlsService', 'PopupsService', 
+    .directive('anolFeaturePopup', ['$templateRequest', '$compile','$window', '$timeout', 'MapService', 'LayersService', 'ControlsService', 'PopupsService',
         function($templateRequest, $compile, $window, $timeout, MapService, LayersService, ControlsService, PopupsService) {
             // TODO use for all css values
             var cssToFloat = function(v) {
@@ -52,7 +52,7 @@ angular.module('anol.featurepopup')
                         return '<div></div>';
                     }
                     return require('./templates/popup.html');
-                },           
+                },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
@@ -60,7 +60,7 @@ angular.module('anol.featurepopup')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    }             
+                    }
                     var self = this;
                     PopupsService.register(scope);
                     var multiselect = angular.isDefined(attrs.multiselect);
@@ -185,7 +185,7 @@ angular.module('anol.featurepopup')
                                     return;
                                 }
                                 // don't show popup if layer has min and maxresolution
-                                if (layer.olLayer.getMinResolution() > mapResolution || 
+                                if (layer.olLayer.getMinResolution() > mapResolution ||
                             layer.olLayer.getMaxResolution() < mapResolution) {
                                     return;
                                 }
@@ -321,8 +321,8 @@ angular.module('anol.featurepopup')
                             scope.selects = {};
                             scope.layer = undefined;
                             scope.feature = undefined;
-                            if(angular.isFunction(scope.onClose) && angular.isFunction(scope.onClose())) {
-                                scope.onClose()();
+                            if(angular.isFunction(scope.onClose)) {
+                                scope.onClose();
                             }
                         }
                         else if (scope.mobileFullscreen === true && $window.innerWidth >= 480) {
