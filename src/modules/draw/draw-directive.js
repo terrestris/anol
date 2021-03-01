@@ -136,15 +136,24 @@ angular.module('anol.draw')
                             type: drawType,
                             style: !scope.liveMeasure ? undefined : function (feature) {
                                 const geometry = feature.getGeometry();
-                                if (geometry.getType() === 'Point' && draw.sketchFeature_) {
-                                    const sketchGeometry = draw.sketchFeature_.getGeometry();
+                                // TODO document behaviour of style function in OpenLayers
+                                // Point: 1 invocation
+                                //  - with point feature
+                                // LineString: 2 invocations
+                                //  - with point feature
+                                //  - with line feature
+                                // Polygon: 3 invocations
+                                //  - with point feature
+                                //  - with line feature
+                                //  - with polygon feature
+                                if (drawType !== 'Point' && geometry.getType() === drawType) {
                                     const projection = MapService.getMap().getView().getProjection();
                                     if (drawType === 'LineString') {
                                         scope.measureOverlay.getElement().innerHTML =
-                                            MeasureService.formatLineResult(sketchGeometry, projection, false);
+                                            MeasureService.formatLineResult(geometry, projection, false);
                                     } else if (drawType === 'Polygon') {
                                         scope.measureOverlay.getElement().innerHTML =
-                                            MeasureService.formatAreaResult(sketchGeometry, projection, false, true);
+                                            MeasureService.formatAreaResult(geometry, projection, false, true);
                                     }
                                     scope.measureOverlay.setPosition(geometry.getLastCoordinate());
                                     ensureMeasureOverlayAdded();
