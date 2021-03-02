@@ -1,6 +1,7 @@
 import './module.js';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
+import { fromExtent } from 'ol/geom/Polygon';
 
 angular.module('anol.urlmarkers')
 /**
@@ -120,12 +121,17 @@ angular.module('anol.urlmarkers')
 
                     var marker = {};
                     var style = {};
+                    var shouldFit = false;
+
                     angular.forEach(params, function(kv) {
                         kv = kv.split(self.keyValueDelimiter);
                         if(kv[0] === 'coord') {
                             var coord = kv[1].split(',');
                             coord = [parseFloat(coord[0]), parseFloat(coord[1])];
                             marker.geometry = new Point(coord);
+                        } else if (kv[0] === 'bbox') {
+                            var extent = kv[1].split(',').map(parseFloat);
+                            marker.geometry = fromExtent(extent);
                         } else if (kv[0] === 'srs') {
                             marker.srs = 'EPSG:' + kv[1];
                         } else if (kv[0] === 'color') {
@@ -134,6 +140,8 @@ angular.module('anol.urlmarkers')
                                 strokeColor: '#' + kv[1],
                                 graphicColor: '#' + kv[1]
                             };
+                        } else if (kv[0] === 'fit') {
+                            shouldFit = JSON.parse(kv[1]);
                         } else {
                             marker[kv[0]] = kv[1];
                         }
@@ -150,7 +158,15 @@ angular.module('anol.urlmarkers')
                         marker.style.text = marker.label;
                     }
                     self.features.push(new Feature(marker));
-
+                    if (shouldFit) {
+                        var map = MapService.getMap();
+                        map.once('postrender', function () {
+                            map.getView().fit(marker.geometry);
+                            const newParams = params.filter(kv => !kv.startsWith('fit'));
+                            $location.search('marker', newParams.join(self.propertiesDelimiter));
+                            $location.replace();
+                        });
+                    }
                 });
             };
 
