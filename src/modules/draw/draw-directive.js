@@ -1,10 +1,11 @@
 import './module.js';
+import '../util.js';
+
 import { TOUCH as hasTouch } from 'ol/has';
 import Draw from 'ol/interaction/Draw';
 import Select from 'ol/interaction/Select';
 import Modify from 'ol/interaction/Modify';
 import Snap from 'ol/interaction/Snap';
-import DoubleClickZoom from 'ol/interaction/DoubleClickZoom';
 import {never as neverCondition, singleClick} from 'ol/events/condition';
 
 angular.module('anol.draw')
@@ -35,8 +36,8 @@ angular.module('anol.draw')
  * @description
  * Provides controls to draw points, lines and polygons, modify and remove them
  */
-    .directive('anolDraw', ['$templateRequest', '$compile', '$rootScope', '$translate', '$timeout', 'ControlsService', 'MapService', 'DrawService', 'MeasureService',
-        function($templateRequest, $compile, $rootScope, $translate, $timeout, ControlsService, MapService, DrawService, MeasureService) {
+    .directive('anolDraw', ['$templateRequest', '$compile', '$rootScope', '$translate', '$timeout', '$olOn', 'ControlsService', 'MapService', 'DrawService', 'MeasureService',
+        function($templateRequest, $compile, $rootScope, $translate, $timeout, $olOn, ControlsService, MapService, DrawService, MeasureService) {
             return {
                 restrict: 'A',
                 require: '?^anolMap',
@@ -44,7 +45,7 @@ angular.module('anol.draw')
                     geometries: '=',
                     style: '=geometriesStyle',
                     continueDrawing: '@',
-                    postDrawAction: '&',
+                    postDrawAction: '&?',
                     freeDrawing: '@',
                     tooltipDelay: '@',
                     tooltipEnable: '@',
@@ -111,22 +112,26 @@ angular.module('anol.draw')
                     }
 
                     var executePostDrawCallback = function(evt) {
-                        scope.postDrawAction()(scope.activeLayer, evt.feature);
+                        if (angular.isFunction(scope.postDrawAction)) {
+                            scope.postDrawAction({ layer: scope.activeLayer, feature: evt.feature });
+                        }
                     };
 
                     let overlayAdded = false;
+
                     function ensureMeasureOverlayAdded () {
                         if (!overlayAdded) {
                             scope.map.addOverlay(scope.measureOverlay);
                         }
                         overlayAdded = true;
-                    };
+                    }
+
                     function ensureMeasureOverlayRemoved () {
                         if (overlayAdded) {
                             scope.map.removeOverlay(scope.measureOverlay);
                             overlayAdded = false;
                         }
-                    };
+                    }
 
                     var createDrawInteractions = function(drawType, source, control, layer, postDrawActions) {
                         postDrawActions = postDrawActions || [];
@@ -134,6 +139,7 @@ angular.module('anol.draw')
                         var draw = new Draw({
                             source: source,
                             type: drawType,
+                            stopClick: true,
                             style: !scope.liveMeasure ? undefined : function (feature) {
                                 const geometry = feature.getGeometry();
                                 // TODO document behaviour of style function in OpenLayers
@@ -161,25 +167,10 @@ angular.module('anol.draw')
                                 return MeasureService.measureStyle(feature, true);
                             }
                         });
-                        draw.on('drawend', function () {
-                            ensureMeasureOverlayRemoved();
-                        });
 
-                        if(angular.isFunction(scope.postDrawAction) && angular.isFunction(scope.postDrawAction())) {
-                            postDrawActions.push(executePostDrawCallback);
-                        }
+                        postDrawActions.push(ensureMeasureOverlayRemoved);
+                        postDrawActions.push(executePostDrawCallback);
 
-                        // TODO remove when https://github.com/openlayers/ol3/issues/3610/ resolved
-                        postDrawActions.push(function() {
-                            MapService.getMap().getInteractions().forEach(function(interaction) {
-                                if(interaction instanceof DoubleClickZoom) {
-                                    interaction.setActive(false);
-                                    $timeout(function() {
-                                        interaction.setActive(true);
-                                    }, 275);
-                                }
-                            });
-                        });
                         if(scope.continueDrawing === false && angular.isDefined(control)) {
                             postDrawActions.push(function() {
                                 control.deactivate();
@@ -188,7 +179,7 @@ angular.module('anol.draw')
 
                         // bind post draw actions
                         angular.forEach(postDrawActions, function(postDrawAction) {
-                            draw.on('drawend', postDrawAction);
+                            $olOn(draw, 'drawend', postDrawAction);
                         });
 
                         var interactions = [draw];
@@ -368,7 +359,7 @@ angular.module('anol.draw')
                         }
                     };
 
-                    // extra action for a realy custumised draw experience
+                    // extra action for a really customised draw experience
                     scope.drawCustom = function(drawType, postDrawCallback) {
                         // skip when no active layer present
                         if(angular.isUndefined(scope.activeLayer)) {
@@ -536,7 +527,7 @@ angular.module('anol.draw')
                         // inital setup in case the active layer already contains features
                         setContinueDrawing();
 
-                        scope.activeLayer.olLayer.getSource().on('change', setContinueDrawing);
+                        $olOn(scope.activeLayer.olLayer.getSource(), 'change', setContinueDrawing);
 
                         visibleDewatcher = scope.$watch(function() {
                             return scope.activeLayer.getVisible();

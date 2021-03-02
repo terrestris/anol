@@ -1,6 +1,8 @@
 import './module.js';
+import '../util';
 import Overlay from 'ol/Overlay';
 import Cluster from 'ol/source/Cluster';
+import { unByKey } from 'ol/Observable';
 
 // TODO rename to popup
 angular.module('anol.featurepopup')
@@ -20,8 +22,8 @@ angular.module('anol.featurepopup')
  * @description
  * Shows a popup for selected feature
  */
-    .directive('anolFeaturePopup', ['$templateRequest', '$compile','$window', '$timeout', 'MapService', 'LayersService', 'ControlsService', 'PopupsService',
-        function($templateRequest, $compile, $window, $timeout, MapService, LayersService, ControlsService, PopupsService) {
+    .directive('anolFeaturePopup', ['$templateRequest', '$compile','$window', '$timeout', '$olOn', 'MapService', 'LayersService', 'ControlsService', 'PopupsService',
+        function($templateRequest, $compile, $window, $timeout, $olOn, MapService, LayersService, ControlsService, PopupsService) {
             // TODO use for all css values
             var cssToFloat = function(v) {
                 return parseFloat(v.replace(/[^-\d\.]/g, ''));
@@ -62,9 +64,11 @@ angular.module('anol.featurepopup')
                         });
                     }
                     var self = this;
+                    var singleClickListenerKey = undefined;
                     PopupsService.register(scope);
                     var multiselect = angular.isDefined(attrs.multiselect);
                     var clickPointSelect = angular.isDefined(attrs.clickPointSelect);
+
                     scope.sticky = angular.isDefined(attrs.sticky);
                     scope.openingDirection = scope.openingDirection || 'top';
                     scope.map = MapService.getMap();
@@ -266,7 +270,6 @@ angular.module('anol.featurepopup')
                             }
                             updateOffset(featureLayerList);
                         }
-                        scope.$digest();
                     };
 
                     var changeCursorCondition = function(pixel) {
@@ -291,17 +294,23 @@ angular.module('anol.featurepopup')
                         }
                     };
 
+                    var callCloseCallbackOnReopen = function () {
+                        if (angular.isDefined(scope.coordinate) && angular.isDefined(scope.onClose)) {
+                            scope.onClose({ layer: scope.layer, feature: scope.feature });
+                        }
+                    }
+
                     var control = new anol.control.Control({
                         subordinate: true,
                         olControl: null
                     });
-                    control.onDeactivate(function() {
-                        scope.map.un('singleclick', handleClick, self);
-                        MapService.removeCursorPointerCondition(changeCursorCondition);
-                    });
                     control.onActivate(function() {
-                        scope.map.on('singleclick', handleClick, self);
+                        singleClickListenerKey = $olOn(scope.map, 'singleclick', handleClick.bind(self));
                         MapService.addCursorPointerCondition(changeCursorCondition);
+                    });
+                    control.onDeactivate(function() {
+                        unByKey(singleClickListenerKey);
+                        MapService.removeCursorPointerCondition(changeCursorCondition);
                     });
 
                     scope.$watch('layers', function(n, o) {
@@ -319,11 +328,11 @@ angular.module('anol.featurepopup')
                     scope.$watch('coordinate', function(coordinate) {
                         if(angular.isUndefined(coordinate)) {
                             scope.selects = {};
+                            if(angular.isFunction(scope.onClose)) {
+                                scope.onClose({ layer: scope.layer, feature: scope.feature })
+                            }
                             scope.layer = undefined;
                             scope.feature = undefined;
-                            if(angular.isFunction(scope.onClose)) {
-                                scope.onClose();
-                            }
                         }
                         else if (scope.mobileFullscreen === true && $window.innerWidth >= 480) {
                             var xPadding = parseInt(element.css('padding-left').replace(/[^-\d\.]/g, ''));
@@ -352,15 +361,20 @@ angular.module('anol.featurepopup')
                         });
                     });
                     scope.$watch('openFor', function(openFor) {
+
                         if(angular.isDefined(openFor)) {
+                            if('coordinate' in openFor) {
+                                if (angular.isDefined(openFor.coordinate)) {
+                                    callCloseCallbackOnReopen();
+                                }
+                                scope.coordinate = openFor.coordinate;
+                            } else if (angular.isDefined(openFor.feature)) {
+                                callCloseCallbackOnReopen();
+                                scope.coordinate = openFor.feature.getGeometry().getLastCoordinate();
+                            }
+
                             scope.layer = openFor.layer;
                             scope.feature = openFor.feature;
-
-                            if('coordinate' in openFor) {
-                                scope.coordinate = openFor.coordinate;
-                            } else if(angular.isDefined(scope.feature)) {
-                                scope.coordinate = scope.feature.getGeometry().getLastCoordinate();
-                            }
 
                             if(angular.isDefined(openFor.content)) {
                                 element.find('.anol-popup-content').empty().append(openFor.content);
