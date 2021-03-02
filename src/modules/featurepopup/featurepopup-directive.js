@@ -1,4 +1,5 @@
 import './module.js';
+import '../util';
 import Overlay from 'ol/Overlay';
 import Cluster from 'ol/source/Cluster';
 import { unByKey } from 'ol/Observable';
@@ -293,6 +294,12 @@ angular.module('anol.featurepopup')
                         }
                     };
 
+                    var callCloseCallbackOnReopen = function () {
+                        if (angular.isDefined(scope.coordinate) && angular.isDefined(scope.onClose)) {
+                            scope.onClose({ layer: scope.layer, feature: scope.feature });
+                        }
+                    }
+
                     var control = new anol.control.Control({
                         subordinate: true,
                         olControl: null
@@ -354,12 +361,16 @@ angular.module('anol.featurepopup')
                         });
                     });
                     scope.$watch('openFor', function(openFor) {
+
                         if(angular.isDefined(openFor)) {
-                            if('coordinate' in openFor || angular.isDefined(openFor.feature)) {
-                                if(angular.isDefined(scope.coordinate) && angular.isFunction(scope.onClose)) {
-                                    scope.onClose({ layer: scope.layer, feature: scope.feature });
+                            if('coordinate' in openFor) {
+                                if (angular.isDefined(openFor.coordinate)) {
+                                    callCloseCallbackOnReopen();
                                 }
-                                scope.coordinate = openFor.coordinate || openFor.feature.getGeometry().getLastCoordinate();
+                                scope.coordinate = openFor.coordinate;
+                            } else if (angular.isDefined(openFor.feature)) {
+                                callCloseCallbackOnReopen();
+                                scope.coordinate = openFor.feature.getGeometry().getLastCoordinate();
                             }
 
                             scope.layer = openFor.layer;

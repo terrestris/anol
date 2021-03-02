@@ -1,6 +1,6 @@
-require('../util');
-
 import './module.js';
+import '../util.js';
+
 import { TOUCH as hasTouch } from 'ol/has';
 import Draw from 'ol/interaction/Draw';
 import Select from 'ol/interaction/Select';
