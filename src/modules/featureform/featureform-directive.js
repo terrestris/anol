@@ -64,17 +64,19 @@ angular.module('anol.featureform')
                     }
 
                     scope.formFields = [];
-                    scope.properties = {};
-
-                    var propertyWatchers = [];
+                    scope.formValues = {};
 
                     /**
                      * @param {ol.Feature} feature
                      */
                     var featureChangeHandler = function (feature) {
-                        clearPropertiesWatchers();
                         if (feature) {
-                            scope.properties = feature.getProperties();
+                            scope.formValues = feature.get('formValues');
+                            if (angular.isUndefined(scope.formValues)) {
+                                scope.formValues = {};
+                                feature.set('formValues', scope.formValues);
+                            }
+
                             const geomType = feature.getGeometry().getType();
                             if (geomType === 'Point') {
                                 scope.formFields = scope.pointFields;
@@ -83,27 +85,7 @@ angular.module('anol.featureform')
                             } else if (geomType === 'Polygon') {
                                 scope.formFields = scope.polygonFields;
                             }
-                            setupPropertiesWatchers(scope.formFields);
                         }
-                    };
-
-                    /**
-                     * @param {FormField[]} formFields
-                     */
-                    var setupPropertiesWatchers = function (formFields) {
-                        formFields.forEach(function (field) {
-                            var watcher = scope.$watch('properties["' + field.name + '"]', function (value) {
-                                scope.feature.set(field.name, value);
-                            });
-                            propertyWatchers.push(watcher);
-                        });
-                    };
-
-                    var clearPropertiesWatchers = function () {
-                        propertyWatchers.forEach(function (dewatch) {
-                            dewatch();
-                        });
-                        propertyWatchers = [];
                     };
 
                     /**
@@ -128,7 +110,7 @@ angular.module('anol.featureform')
                      */
                     scope.validateFeatureFormField = function (field) {
                         if (scope.validate) {
-                            return scope.validate({ field: field, value: scope.properties[field.name] });
+                            return scope.validate({ field: field, value: scope.formValues[field.name] });
                         }
                         return true;
                     };
