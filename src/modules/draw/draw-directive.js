@@ -46,6 +46,8 @@ angular.module('anol.draw')
                     style: '=geometriesStyle',
                     continueDrawing: '@',
                     postDrawAction: '&?',
+                    onModifySelect: '&?',
+                    postDeleteAction: '&?',
                     freeDrawing: '@',
                     tooltipDelay: '@',
                     tooltipEnable: '@',
@@ -213,7 +215,7 @@ angular.module('anol.draw')
                                 return MeasureService.measureStyle(feature, true);
                             }
                         });
-                        selectInteraction.on('select', function(evt) {
+                        $olOn(selectInteraction, 'select', function(evt) {
                             if(evt.selected.length === 0) {
                                 selectedFeature = undefined;
                                 removeButtonElement.addClass('disabled');
@@ -221,6 +223,9 @@ angular.module('anol.draw')
                             } else {
                                 selectedFeature = evt.selected[0];
                                 removeButtonElement.removeClass('disabled');
+                                if (angular.isFunction(scope.onModifySelect)) {
+                                    scope.onModifySelect({ layer: scope.activeLayer, feature: selectedFeature });
+                                }
                             }
                         });
                         var modifyInteraction = new Modify({
@@ -345,6 +350,7 @@ angular.module('anol.draw')
                         }
                         if(modifyControl.active) {
                             modifyControl.deactivate();
+                            ensureMeasureOverlayRemoved();
                         } else {
                             modifyControl.activate();
                         }
@@ -354,6 +360,9 @@ angular.module('anol.draw')
                         if(angular.isDefined(selectedFeature)) {
                             scope.activeLayer.olLayer.getSource().removeFeature(selectedFeature);
                             modifyControl.interactions[0].getFeatures().clear();
+                            if (angular.isFunction(scope.postDeleteAction)) {
+                                scope.postDeleteAction({ feature: selectedFeature, layer: scope.activeLayer });
+                            }
                             selectedFeature = undefined;
                             ensureMeasureOverlayRemoved();
                         }
