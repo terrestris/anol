@@ -72,10 +72,6 @@ angular.module('anol.featureform')
                     var featureChangeHandler = function (feature) {
                         if (feature) {
                             scope.formValues = feature.get('formValues');
-                            if (angular.isUndefined(scope.formValues)) {
-                                scope.formValues = {};
-                                feature.set('formValues', scope.formValues);
-                            }
 
                             const geomType = feature.getGeometry().getType();
                             if (geomType === 'Point') {

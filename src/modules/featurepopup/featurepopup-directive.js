@@ -41,6 +41,7 @@ angular.module('anol.featurepopup')
                     'coordinate': '=?',
                     'offset': '=?',
                     'closeOnZoom': '=?',
+                    'altMobileFullscreen': '<?',
                     '_autoPanMargin': '=autoPanMargin',
                     '_popupFlagSize': '=popupFlagSize',
                     '_mobileFullscreen': '=mobileFullscreen',
@@ -72,6 +73,7 @@ angular.module('anol.featurepopup')
                     scope.sticky = angular.isDefined(attrs.sticky);
                     scope.openingDirection = scope.openingDirection || 'top';
                     scope.map = MapService.getMap();
+                    scope.isVisible = false;
 
                     scope.feature = undefined;
                     scope.layer = undefined;
@@ -100,8 +102,13 @@ angular.module('anol.featurepopup')
                         });
                     }
 
+                    const overlayElement = element.find('.anol-popup:first')
+                    if (angular.isDefined(attrs.class)) {
+                        scope.class = attrs.class;
+                    }
+
                     scope.overlayOptions = {
-                        element: element[0],
+                        element: overlayElement[0],
                         autoPan: true,
                         autoPanAnimation: {
                             duration: 250
@@ -124,7 +131,8 @@ angular.module('anol.featurepopup')
 
                     scope.popup = new Overlay(scope.overlayOptions);
                     scope.map.addOverlay(scope.popup);
-                    element.parent().addClass('anol-popup-container');
+
+                    overlayElement.parent().addClass('anol-popup-container');
                     if(scope.mobileFullscreen === true) {
                         element.parent().addClass('mobile-fullscreen');
                     }
@@ -326,6 +334,7 @@ angular.module('anol.featurepopup')
 
                     scope.$watch('layers', bindCursorChange);
                     scope.$watch('coordinate', function(coordinate) {
+                        scope.isVisible = angular.isDefined(coordinate);
                         if(angular.isUndefined(coordinate)) {
                             scope.selects = {};
                             if(angular.isFunction(scope.onClose)) {
@@ -355,8 +364,8 @@ angular.module('anol.featurepopup')
                             }
                         }
                         $timeout(function() {
-                            element.css('height', 'auto')
-                            element.css('width', 'auto')
+                            overlayElement.css('height', 'auto')
+                            overlayElement.css('width', 'auto')
                             scope.popup.setPosition(coordinate);
                         });
                     });
@@ -386,8 +395,8 @@ angular.module('anol.featurepopup')
                     if(scope.autoPanOnSizeChange === true) {
                         scope.$watchCollection(function() {
                             return {
-                                w: element.width(),
-                                h: element.height()
+                                w: overlayElement.width(),
+                                h: overlayElement.height()
                             };
                         }, function() {
                             scope.popup.setPosition(undefined);
@@ -398,8 +407,8 @@ angular.module('anol.featurepopup')
                         if(scope.allowDrag === false) {
                             return;
                         }
-                        var y = cssToFloat(element.parent().css('top')) + cssToFloat(element.css('top'));
-                        var x = cssToFloat(element.parent().css('left')) + cssToFloat(element.css('left'));
+                        var y = cssToFloat(overlayElement.parent().css('top')) + cssToFloat(overlayElement.css('top'));
+                        var x = cssToFloat(overlayElement.parent().css('left')) + cssToFloat(overlayElement.css('left'));
 
                         PopupsService.makeDraggable(scope, [x, y], scope.feature, scope.layer, scope.selects, event);
                     };
