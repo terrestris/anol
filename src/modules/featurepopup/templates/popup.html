@@ -1,14 +1,14 @@
 <div ng-show="isVisible">
-    <div class="anol-popup {{ openingDirection }} {{ class }}"
+    <div class="anol-popup"
          ng-mousedown="makeDraggable($event)"
-         ng-class="{ 'hide-for-mobile': altMobileFullscreen }">
+         ng-class="[{ 'hide-for-mobile': altMobileFullscreen }, openingDirection, class]">
         <span class="anol-popup-closer glyphicon glyphicon-remove" ng-click="close()" ng-if="!sticky" ng-mousedown="$event.stopPropagation();"></span>
         <div class="anol-popup-content">
             <ng-transclude></ng-transclude>
         </div>
     </div>
     <div ng-if="altMobileFullscreen">
-        <div class="anol-popup anol-popup-mobile {{ class }}">
+        <div class="anol-popup anol-popup-mobile" ng-class="class">
             <span class="anol-popup-closer glyphicon glyphicon-remove" ng-click="close()" ng-mousedown="$event.stopPropagation();"></span>
             <div class="anol-popup-content">
                 <ng-transclude></ng-transclude>
