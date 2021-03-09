@@ -21,7 +21,6 @@ angular.module('anol.draw')
  * @requires anol.map.DrawService
  *
  * @param {object} geometries The configuration of the geometries (e.g. min/max values).
- * @param {object} style The style for the geometries.
  * @param {boolean} continueDrawing Don't deactivate drawing after feature is added
  * @param {function} postDrawAction Action to call after feature is drawn. Draw control will be deactivated when postDrawAction defined.
  * @param {boolean} freeDrawing Deactivate snapped drawing
@@ -43,7 +42,6 @@ angular.module('anol.draw')
                 require: '?^anolMap',
                 scope: {
                     geometries: '=',
-                    style: '=geometriesStyle',
                     continueDrawing: '@',
                     postDrawAction: '&?',
                     onModifySelect: '&?',
@@ -511,11 +509,6 @@ angular.module('anol.draw')
                     var visibleDewatcher;
 
                     var bindActiveLayer = function(layer) {
-                        if (angular.isDefined(scope.style)) {
-                            layer.style = scope.style;
-                            layer.setStyle();
-                        }
-
                         drawPointControl.interactions = createDrawInteractions(
                             'Point', layer.olLayer.getSource(), drawPointControl, layer.olLayer);
                         drawPointControl.enable();
