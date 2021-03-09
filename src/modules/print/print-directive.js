@@ -83,7 +83,9 @@ angular.module('anol.print')
                             scope.prepareDownload = true;
 
                             var layers = [LayersService.activeBackgroundLayer()];
-                            layers = layers.concat(prepareOverlays(LayersService.overlayLayers));
+                            layers = layers.concat(prepareOverlays(LayersService.overlayLayers)).filter(function(l) {
+                                return l.name !== undefined;
+                            });
 
                             // TODO load from PrintPageService
                             scope.measureLayers = ['lineMeasureLayer', 'areaMeasureLayer'];

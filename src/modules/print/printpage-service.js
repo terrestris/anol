@@ -11,6 +11,7 @@ import { inherits } from 'ol';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
+import { getSize } from 'ol/extent';
 
 angular.module('anol.print')
 
@@ -806,7 +807,32 @@ angular.module('anol.print')
 
             PrintPage.prototype.getSettings = function(attr) {
                 return this.settings;
-            };        
+            };
+
+            PrintPage.prototype.getScaleFromExtent = function(extent, mapSize, margin) {
+                if (angular.isUndefined(margin)) {
+                    margin = 20;
+                }
+
+                var extendSize = getSize(extent);
+
+                // substract margin to avoid having geometries directly at the edges of the page
+                var widthScale = (extendSize[0] * 1000) / (mapSize[0] - margin);
+                var heightScale = (extendSize[1] * 1000) / (mapSize[1] - margin);
+                return Math.max(widthScale, heightScale);
+            };
+
+            PrintPage.prototype.getBoundsForCenterMapSizeScale = function(center, mapSize, scale) {
+                var mapWidth = mapSize[0] / 1000 * scale;
+                var mapHeight = mapSize[1] / 1000 * scale;
+
+                var top = center[1] + (mapHeight / 2);
+                var bottom = center[1] - (mapHeight / 2);
+                var left = center[0] - (mapWidth / 2);
+                var right = center[0] + (mapWidth / 2);
+                return [left, bottom, right, top];
+            };
+
             return new PrintPage(_pageLayouts, _outputFormats, _defaultScale, _availableScales, _allowPageResize, _pageMargins, _minPageSize, _maxPageSize);
         }];
     }]);
