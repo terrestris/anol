@@ -198,7 +198,7 @@ angular.module('anol.featurepopup')
                                 }
                                 // don't show popup if layer has min and maxresolution
                                 if (layer.olLayer.getMinResolution() > mapResolution ||
-                            layer.olLayer.getMaxResolution() < mapResolution) {
+                                        layer.olLayer.getMaxResolution() < mapResolution) {
                                     return;
                                 }
 
@@ -386,7 +386,10 @@ angular.module('anol.featurepopup')
                             scope.feature = openFor.feature;
 
                             if(angular.isDefined(openFor.content)) {
-                                element.find('.anol-popup-content').empty().append(openFor.content);
+                                overlayElement.find('.anol-popup-content').empty().append(openFor.content);
+                                if (scope.altMobileFullscreen) {
+                                    element.find('.anol-popup-content').empty().append(openFor.content.clone());
+                                }
                             }
                             scope.openFor = undefined;
                         }
