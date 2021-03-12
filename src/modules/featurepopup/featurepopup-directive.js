@@ -41,6 +41,7 @@ angular.module('anol.featurepopup')
                     'coordinate': '=?',
                     'offset': '=?',
                     'closeOnZoom': '=?',
+                    'containerId': '@?',
                     'altMobileFullscreen': '<?',
                     '_autoPanMargin': '=autoPanMargin',
                     '_popupFlagSize': '=popupFlagSize',

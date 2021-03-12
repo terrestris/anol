@@ -1,5 +1,6 @@
 <div ng-show="isVisible">
     <div class="anol-popup"
+         ng-attr-id="{{ containerId }}"
          ng-mousedown="makeDraggable($event)"
          ng-class="[{ 'hide-for-mobile': altMobileFullscreen }, openingDirection, class]">
         <span class="anol-popup-closer glyphicon glyphicon-remove" ng-click="close()" ng-if="!sticky" ng-mousedown="$event.stopPropagation();"></span>
