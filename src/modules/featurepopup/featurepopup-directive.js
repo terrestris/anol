@@ -69,7 +69,6 @@ angular.module('anol.featurepopup')
                     var singleClickListenerKey = undefined;
                     PopupsService.register(scope);
                     var multiselect = angular.isDefined(attrs.multiselect);
-                    var clickPointSelect = angular.isDefined(attrs.clickPointSelect);
 
                     scope.sticky = angular.isDefined(attrs.sticky);
                     scope.openingDirection = scope.openingDirection || 'top';
@@ -204,7 +203,7 @@ angular.module('anol.featurepopup')
                         });
 
                         if(featureLayerList.length > 0) {
-                            if (multiselect || clickPointSelect) {
+                            if (multiselect) {
                                 scope.selects = {};
                                 featureLayerList.forEach(function (featureAndLayer) {
                                     var anolLayer = featureAndLayer[1].get('anolLayer');
