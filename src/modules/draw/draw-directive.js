@@ -211,7 +211,8 @@ angular.module('anol.draw')
                                     scope.measureOverlay.setPosition(geometry.getLastCoordinate());
                                 }
                                 return MeasureService.measureStyle(feature, true);
-                            }
+                            },
+                            hitTolerance: 10
                         });
                         $olOn(selectInteraction, 'select', function(evt) {
                             if(evt.selected.length === 0) {
@@ -235,7 +236,7 @@ angular.module('anol.draw')
                         var snapInteraction = new Snap({
                             source: layer.getSource()
                         });
-                        return [selectInteraction, modifyInteraction, snapInteraction];
+                        return [snapInteraction, selectInteraction, modifyInteraction];
                     };
 
                     var createDrawControl = function(controlElement, controlTarget) {
@@ -303,8 +304,11 @@ angular.module('anol.draw')
                     };
 
                     var changeCursorCondition = function(pixel) {
-                        return scope.map.hasFeatureAtPixel(pixel, function(layer) {
-                            return layer === scope.activeLayer.olLayer;
+                        return scope.map.hasFeatureAtPixel(pixel, {
+                            layerFunction: function(layer) {
+                                return layer === scope.activeLayer.olLayer;
+                            },
+                            hitTolerance: 10
                         });
                     };
 
