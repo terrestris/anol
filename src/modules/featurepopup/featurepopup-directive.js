@@ -80,6 +80,7 @@ angular.module('anol.featurepopup')
                     scope.layer = undefined;
                     scope.selects = {};
 
+                    scope.tolerance = angular.isDefined(scope.tolerance) ? scope.tolerance : 10
                     scope.autoPanMargin = angular.isDefined(scope._autoPanMargin) ? scope._autoPanMargin : 20;
                     scope.popupFlagSize = angular.isDefined(scope._popupFlagSize) ? scope._popupFlagSize : 15;
                     scope.mobileFullscreen = angular.isDefined(scope._mobileFullscreen) ? scope._mobileFullscreen : false;
@@ -181,102 +182,50 @@ angular.module('anol.featurepopup')
                     };
 
                     var handleClick = function(evt) {
-                        var extent = [
-                            evt.coordinate[0] - (scope.tolerance || 0),
-                            evt.coordinate[1] - (scope.tolerance || 0),
-                            evt.coordinate[0] + (scope.tolerance || 0),
-                            evt.coordinate[1] + (scope.tolerance || 0)
-                        ];
-                        var found = false;
-                        var features = [];
-                        var singleFeature, singleLayer;
+                        var featureLayerList = [];
+                        var olLayers = scope.layers.map(function (l) { return l.olLayer; });
 
-                        if(clickPointSelect) {
-                            var mapResolution = scope.map.getView().getResolution();
-                            angular.forEach(scope.layers, function(layer) {
-                                if(!layer.getVisible()) {
+                        scope.map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+                            if(layer.getSource() instanceof Cluster) {
+                                // set to original feature when clicked on clustered feature containing one feature
+                                if(feature.get('features').length === 1) {
+                                    feature = feature.get('features')[0];
+                                } else {
                                     return;
                                 }
-                                // don't show popup if layer has min and maxresolution
-                                if (layer.olLayer.getMinResolution() > mapResolution ||
-                                        layer.olLayer.getMaxResolution() < mapResolution) {
-                                    return;
-                                }
-
-                                var _features = layer.olLayer.getSource().getFeaturesInExtent(extent);
-
-                                if(_features.length > 0) {
-                                    features = features.concat(_features);
-                                    found = true;
-                                    if(singleFeature === undefined) {
-                                        singleFeature = _features[0];
-                                        singleLayer = layer;
-                                    }
-                                    scope.selects[layer.name] = {
-                                        layer: layer,
-                                        features: _features
-                                    };
-                                }
-                            });
-                            if(found === true) {
-                                scope.coordinate = evt.coordinate;
-                            } else {
-                                scope.coordinate = undefined;
                             }
-                        } else {
-                            if(multiselect === true) {
+
+                            featureLayerList.push([feature, layer]);
+                        }, {
+                            layerFilter: function (layer) {
+                                return layer.getVisible() && olLayers.indexOf(layer) > -1;
+                            },
+                            hitTolerance: scope.tolerance
+                        });
+
+                        if(featureLayerList.length > 0) {
+                            if (multiselect || clickPointSelect) {
                                 scope.selects = {};
-                            } else {
-                                scope.feature = undefined;
-                                scope.layer = undefined;
-                            }
-
-                            var featureLayerList = [];
-                            var olLayers = scope.layers.map(function (l) { return l.olLayer; });
-
-                            scope.map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
-
-                                if(layer.getSource() instanceof Cluster) {
-                                    // set to original feature when clicked on clustered feature containing one feature
-                                    if(feature.get('features').length === 1) {
-                                        feature = feature.get('features')[0];
-                                    } else {
-                                        return;
+                                featureLayerList.forEach(function (featureAndLayer) {
+                                    var anolLayer = featureAndLayer[1].get('anolLayer');
+                                    if(angular.isUndefined(scope.selects[anolLayer.name])) {
+                                        scope.selects[anolLayer.name] = {
+                                            layer: anolLayer,
+                                            features: []
+                                        };
                                     }
-                                }
-
-                                var anolLayer = layer.get('anolLayer');
-
-                                if(multiselect !== true) {
-                                    if(angular.isUndefined(scope.layer) && angular.isUndefined(scope.feature)) {
-                                        scope.layer = anolLayer;
-                                        scope.feature = feature;
-                                        featureLayerList.push([feature, layer]);
-                                        found = true;
-                                    }
-                                    return;
-                                }
-                                if(angular.isUndefined(scope.selects[anolLayer.name])) {
-                                    scope.selects[anolLayer.name] = {
-                                        layer: anolLayer,
-                                        features: []
-                                    };
-                                }
-                                scope.selects[anolLayer.name].features.push(feature);
-                                featureLayerList.push([feature, layer]);
-                            }, {
-                                layerFilter: function (layer) {
-                                    return layer.getVisible() && olLayers.indexOf(layer) > -1;
-                                },
-                                hitTolerance: 10
-                            });
-                            if(featureLayerList.length > 0) {
-                                scope.coordinate = evt.coordinate;
+                                    scope.selects[anolLayer.name].features.push(featureAndLayer[0]);
+                                });
                             } else {
-                                scope.coordinate = undefined;
+                                scope.layer = featureLayerList[0][1].get('anolLayer');
+                                scope.feature = featureLayerList[0][0];
                             }
-                            updateOffset(featureLayerList);
+                            scope.coordinate = evt.coordinate;
+                        } else {
+                            // the watcher for scope.coordinate will reset scope.selects, scope.layer and scope.feature
+                            scope.coordinate = undefined;
                         }
+                        updateOffset(featureLayerList);
                     };
 
                     var changeCursorCondition = function(pixel) {
@@ -285,7 +234,7 @@ angular.module('anol.featurepopup')
                             layerFilter: function (layer) {
                                 return layer.getVisible() && olLayers.indexOf(layer) > -1;
                             },
-                            hitTolerance: 10
+                            hitTolerance: scope.tolerance
                         });
                     };
 

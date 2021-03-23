@@ -50,7 +50,7 @@ angular.module('anol.getfeatureinfo')
                         return '<div></div>';
                     }
                     return require('./templates/getfeatureinfo.html');
-                },           
+                },
                 link: {
                     pre: function(scope, element, attrs) {
                         if (attrs.templateUrl && attrs.templateUrl !== '') {
@@ -59,7 +59,7 @@ angular.module('anol.getfeatureinfo')
                                 element.html(template);
                                 $compile(template)(scope);
                             });
-                        }                     
+                        }
                         scope.popupOpeningDirection = scope.popupOpeningDirection || 'top';
 
                         scope.map = MapService.getMap();
@@ -205,7 +205,7 @@ angular.module('anol.getfeatureinfo')
                                         if (rLayer.layers === undefined || rLayer.layers.length === 0) {
                                             return;
                                         }
-                                        
+
                                         var names = [];
                                         angular.forEach(rLayer.layers, function(lname) {
                                             names.push(lname)
@@ -220,7 +220,7 @@ angular.module('anol.getfeatureinfo')
                                                 var element = $('<a ng-click="addGroupToMap(\''+name +'\')">'+ title +'</a><br>');
                                                 scope.popupContentTemp.append(element)
                                             });
-                                    
+
                                             angular.forEach(data.layers, function(layer) {
                                                 var name = layer.name
                                                 var title = layer.title;
@@ -229,12 +229,12 @@ angular.module('anol.getfeatureinfo')
                                             });
                                             count++;
                                             if (responseLayers.length == count) {
-                                                defer.resolve(scope.popupContentTemp); 
+                                                defer.resolve(scope.popupContentTemp);
                                             }
                                         });
                                     });
                                     return defer.promise;
-                                } 
+                                }
                                 var data = createPopUpContent(responseLayers).then(function() {
                                     scope.hideWaitingOverlay();
                                     scope.coordinate = scope.clickedCoordiante;
@@ -288,7 +288,7 @@ angular.module('anol.getfeatureinfo')
                                     'coordinate': scope.coordinate,
                                     'content': scope.popupContentTemp.children()
                                 }
-                            };
+                            }
 
                             angular.forEach(LayersService.flattedLayers(), function(layer) {
                                 if(!layer.getVisible()) {
@@ -363,9 +363,9 @@ angular.module('anol.getfeatureinfo')
                                     $http.get(gmlUrl).then(
                                         function(response) {
                                             gmlRequestDeferred.resolve({
-                                                style: layer.featureinfo.gmlStyle, 
-                                                gmlData: response.data, 
-                                                title: layer.title, 
+                                                style: layer.featureinfo.gmlStyle,
+                                                gmlData: response.data,
+                                                title: layer.title,
                                                 catalog: layer.featureinfo.catalog,
                                                 group: layer.featureinfo.gmlGroup
                                             });

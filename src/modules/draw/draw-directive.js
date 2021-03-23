@@ -52,7 +52,8 @@ angular.module('anol.draw')
                     pointTooltipPlacement: '@',
                     lineTooltipPlacement: '@',
                     polygonTooltipPlacement: '@',
-                    liveMeasure: '<'
+                    liveMeasure: '<',
+                    tolerance: '<?'
                 },
                 template: function(tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -84,6 +85,7 @@ angular.module('anol.draw')
                         scope.lineTooltipPlacement : 'right';
                     scope.polygonTooltipPlacement = angular.isDefined(scope.polygonTooltipPlacement) ?
                         scope.polygonTooltipPlacement : 'right';
+                    scope.tolerance = angular.isDefined(scope.tolerance) ? scope.tolerance : 10
 
                     scope.activeLayer = undefined;
                     scope.modifyActive = false;
@@ -212,7 +214,7 @@ angular.module('anol.draw')
                                 }
                                 return MeasureService.measureStyle(feature, true);
                             },
-                            hitTolerance: 10
+                            hitTolerance: scope.tolerance
                         });
                         $olOn(selectInteraction, 'select', function(evt) {
                             if(evt.selected.length === 0) {
@@ -234,7 +236,8 @@ angular.module('anol.draw')
                             }
                         });
                         var snapInteraction = new Snap({
-                            source: layer.getSource()
+                            source: layer.getSource(),
+                            pixelTolerance: scope.tolerance
                         });
                         return [snapInteraction, selectInteraction, modifyInteraction];
                     };
@@ -308,7 +311,7 @@ angular.module('anol.draw')
                             layerFunction: function(layer) {
                                 return layer === scope.activeLayer.olLayer;
                             },
-                            hitTolerance: 10
+                            hitTolerance: scope.tolerance
                         });
                     };
 
