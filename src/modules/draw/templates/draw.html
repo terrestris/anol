@@ -1,5 +1,5 @@
 <button ng-click="drawPoint()"
-        ng-disabled="!geometriesConfig.point.enabled || !continueDrawingPoints"
+        ng-disabled="!geometriesConfig.point.enabled"
         class="draw-button draw-point"
         uib-tooltip="{{ 'anol.draw.TOOLTIP_POINT' | translate }}"
         tooltip-placement="{{ pointTooltipPlacement }}"
@@ -9,7 +9,7 @@
         tooltip-trigger="mouseenter">
 </button>
 <button ng-click="drawLine()"
-        ng-disabled="!geometriesConfig.line.enabled || !continueDrawingLines"
+        ng-disabled="!geometriesConfig.line.enabled"
         class="draw-button draw-line"
         uib-tooltip="{{ 'anol.draw.TOOLTIP_LINE' | translate }}"
         tooltip-placement="{{ lineTooltipPlacement }}"
@@ -19,7 +19,7 @@
         tooltip-trigger="mouseenter">
 </button>
 <button ng-click="drawPolygon()"
-        ng-disabled="!geometriesConfig.polygon.enabled || !continueDrawingPolygons"
+        ng-disabled="!geometriesConfig.polygon.enabled"
         class="draw-button draw-polygon"
         uib-tooltip="{{ 'anol.draw.TOOLTIP_POLYGON' | translate }}"
         tooltip-placement="{{ polygonTooltipPlacement }}"
