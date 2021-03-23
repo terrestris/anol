@@ -28,12 +28,12 @@ import {isEmpty} from 'ol/extent.js';
 
 
 class FeatureLayer extends AnolBaseLayer {
-    
+
     constructor(_options) {
         if(_options === false) {
             super();
             return;
-        }        
+        }
 
         var defaults = {};
         var options = $.extend({}, defaults, _options );
@@ -124,7 +124,7 @@ class FeatureLayer extends AnolBaseLayer {
                 color: 'rgba(255,255,0,0.3)'
             })
         });
-    }   
+    }
 
     setOlLayer(olLayer) {
         var self = this;
@@ -158,7 +158,7 @@ class FeatureLayer extends AnolBaseLayer {
         } else {
             this.defaultStyle = defaultStyle;
         }
-        
+
         olLayer.setStyle(function(feature, resolution) {
             var style = self.createStyle(feature, resolution);
             if(angular.isArray(style)) {
@@ -484,7 +484,7 @@ class FeatureLayer extends AnolBaseLayer {
         }
         if (angular.isDefined(label)) {
             styleOptions.text = label;
-        } 
+        }
         if(angular.isUndefined(styleOptions.text) && angular.isDefined(feature)) {
             return;
         }
@@ -591,3 +591,4 @@ class FeatureLayer extends AnolBaseLayer {
 }
 
 export default FeatureLayer;
+

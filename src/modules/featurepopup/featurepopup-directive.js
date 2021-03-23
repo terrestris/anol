@@ -231,12 +231,10 @@ angular.module('anol.featurepopup')
                                 scope.layer = undefined;
                             }
 
-                            found = false;
                             var featureLayerList = [];
+                            var olLayers = scope.layers.map(function (l) { return l.olLayer; });
+
                             scope.map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
-                                if(angular.isUndefined(layer) || layer === null) {
-                                    return;
-                                }
 
                                 if(layer.getSource() instanceof Cluster) {
                                     // set to original feature when clicked on clustered feature containing one feature
@@ -248,10 +246,6 @@ angular.module('anol.featurepopup')
                                 }
 
                                 var anolLayer = layer.get('anolLayer');
-
-                                if(scope.layers.indexOf(anolLayer) === -1) {
-                                    return;
-                                }
 
                                 if(multiselect !== true) {
                                     if(angular.isUndefined(scope.layer) && angular.isUndefined(scope.feature)) {
@@ -270,9 +264,13 @@ angular.module('anol.featurepopup')
                                 }
                                 scope.selects[anolLayer.name].features.push(feature);
                                 featureLayerList.push([feature, layer]);
-                                found = true;
+                            }, {
+                                layerFilter: function (layer) {
+                                    return layer.getVisible() && olLayers.indexOf(layer) > -1;
+                                },
+                                hitTolerance: 10
                             });
-                            if(found) {
+                            if(featureLayerList.length > 0) {
                                 scope.coordinate = evt.coordinate;
                             } else {
                                 scope.coordinate = undefined;
@@ -282,17 +280,13 @@ angular.module('anol.featurepopup')
                     };
 
                     var changeCursorCondition = function(pixel) {
-                        var coordinate = scope.map.getCoordinateFromPixel(pixel);
-                        var hasFeatureAtPixel = false;
-                        angular.forEach(scope.layers, function(layer) {
-                            if(!layer.getVisible()) {
-                                return;
-                            }
-                            if (layer.olLayer.getSource() && layer.olLayer.getSource().getFeaturesAtCoordinate(coordinate).length > 0) {
-                                hasFeatureAtPixel = true;
-                            }
+                        const olLayers = scope.layers.map(function (l) { return l.olLayer; });
+                        return scope.map.hasFeatureAtPixel(pixel, {
+                            layerFilter: function (layer) {
+                                return layer.getVisible() && olLayers.indexOf(layer) > -1;
+                            },
+                            hitTolerance: 10
                         });
-                        return hasFeatureAtPixel;
                     };
 
                     var bindCursorChange = function() {

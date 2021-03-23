@@ -32,7 +32,7 @@ angular.module('anol.print')
                         return '<div></div>';
                     }
                     return require('./templates/print.html');
-                },                 
+                },
                 scope: {
                     showPrintArea: '='
                 },
@@ -45,7 +45,7 @@ angular.module('anol.print')
                                 element.html(template);
                                 $compile(template)(scope);
                             });
-                        }           
+                        }
                         scope.printAttributes = {
                             pageSize: [],
                             layout: undefined,
@@ -94,7 +94,7 @@ angular.module('anol.print')
                             angular.forEach(scope.measureLayers, function(layername) {
                                 var featureLayer = LayersService.getSystemLayerByName(layername);
                                 var geojsonFormat = new GeoJSON();
-                                if (featureLayer && featureLayer.olLayer.getSource().getFeatures().length !== 0) {                                
+                                if (featureLayer && featureLayer.olLayer.getSource().getFeatures().length !== 0) {
                                     measure_feature_collection = geojsonFormat.writeFeaturesObject(
                                         featureLayer.olLayer.getSource().getFeatures()
                                     );
@@ -210,7 +210,7 @@ angular.module('anol.print')
                             if (angular.isDefined(printData.outputFormat)) {
                                 if(angular.isArray(scope.outputFormats) && scope.outputFormats.length > 0) {
                                     angular.forEach(scope.outputFormats, function(format, idx) {
-                                        if (format.value == printData.outputFormat.value) { 
+                                        if (format.value == printData.outputFormat.value) {
                                             scope.printAttributes.outputFormat = scope.outputFormats[idx];
                                         }
                                     });
@@ -227,7 +227,7 @@ angular.module('anol.print')
                             function(n) {
                                 if(angular.isDefined(n)) {
                                     PrintPageService.saveSettings(scope.printAttributes);
-                                } 
+                                }
                             }
                         );
                         scope.$watchCollection('printAttributes.pageSize',
