@@ -102,7 +102,7 @@ angular.module('anol.permalink')
             if (angular.isDefined(fitParams)) {
                 if (fitParams.length === 5) {
                     result.fit = {
-                        extent: [fitParams[0], fitParams[1], fitParams[2], fitParams[3]],
+                        extent: [fitParams[0], fitParams[1], fitParams[2], fitParams[3]].map(parseFloat),
                         crs: fitParams[4]
                     };
 
