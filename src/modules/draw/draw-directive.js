@@ -35,8 +35,8 @@ angular.module('anol.draw')
  * @description
  * Provides controls to draw points, lines and polygons, modify and remove them
  */
-    .directive('anolDraw', ['$templateRequest', '$compile', '$rootScope', '$translate', '$timeout', '$olOn', 'ControlsService', 'MapService', 'DrawService', 'MeasureService',
-        function($templateRequest, $compile, $rootScope, $translate, $timeout, $olOn, ControlsService, MapService, DrawService, MeasureService) {
+    .directive('anolDraw', ['$templateRequest', '$compile', '$rootScope', '$translate', '$timeout', '$olOn', '$document', 'ControlsService', 'MapService', 'DrawService', 'MeasureService',
+        function($templateRequest, $compile, $rootScope, $translate, $timeout, $olOn, $document, ControlsService, MapService, DrawService, MeasureService) {
             return {
                 restrict: 'A',
                 require: '?^anolMap',
@@ -609,6 +609,12 @@ angular.module('anol.draw')
                         return modifyControl.active;
                     }, function() {
                         scope.modifyActive = modifyControl.active;
+                    });
+
+                    $document.on('keypress', function(e) {
+                       if (e.code === 'Delete') {
+                           scope.remove();
+                       }
                     });
 
                     scope.getBadgeText = function (count, config) {
