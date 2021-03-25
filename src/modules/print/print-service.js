@@ -166,7 +166,7 @@ angular.module('anol.print')
                         var statusURL = response.data[self.checkUrlAttribute];
 
                         deferred.resolve({
-                            'mode': 'trigger',
+                            mode: 'trigger',
                             downloadURL: downloadURL,
                             statusURL: statusURL
                         });
