@@ -87,6 +87,9 @@ angular.module('anol.draw')
 
                     scope.activeLayer = undefined;
                     scope.modifyActive = false;
+                    scope.badgeTexts = {};
+                    translateBadgeTexts();
+
                     var selectedFeature;
                     var controls = [];
                     var drawPointControl, drawLineControl, drawPolygonControl, modifyControl;
@@ -94,6 +97,20 @@ angular.module('anol.draw')
                     // disabled by default. Will be enabled, when feature selected
                     var removeButtonElement = element.find('.draw-remove');
                     removeButtonElement.addClass('disabled');
+
+                    function translateBadgeTexts() {
+                        $translate([
+                            'anol.draw.BADGE_CURRENT',
+                            'anol.draw.BADGE_MIN',
+                            'anol.draw.BADGE_MAX'
+                        ]).then(function(translations) {
+                            scope.badgeTexts = {
+                                current: translations['anol.draw.BADGE_CURRENT'],
+                                min: translations['anol.draw.BADGE_MIN'],
+                                max: translations['anol.draw.BADGE_MAX']
+                            };
+                        });
+                    }
 
                     function applyGeometriesConfig(geometries = {}) {
                         var defaultVals = {
@@ -591,12 +608,12 @@ angular.module('anol.draw')
                     });
 
                     scope.getBadgeText = function (count, config) {
-                        var text = 'aktuell: ' + count;
+                        var text = scope.badgeTexts.current + ': ' + count;
                         if (config.min !== 0) {
-                            text += ' min: ' + config.min;
+                            text += ' ' + scope.badgeTexts.min + ': ' + config.min;
                         }
                         if (config.max !== Infinity) {
-                            text += ' max: ' + config.max;
+                            text += ' ' + scope.badgeTexts.max + ': ' + config.max;
                         }
                         return text;
                     }
