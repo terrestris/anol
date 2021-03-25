@@ -6,7 +6,7 @@ angular.module('anol.print')
  * @name anol.print.PrintServiceProvider
  */
     .provider('PrintService', [function() {
-        var _downloadReady, _printUrl, _checkUrlAttribute;
+        var _downloadReady, _printUrl, _checkUrlAttribute, _downloadUrlAttribute;
         var _downloadPrefix = '';
         var _preparePrintArgs = function(rawPrintArgs) {
             return rawPrintArgs;
@@ -62,6 +62,17 @@ angular.module('anol.print')
         this.setDownloadReady = function(downloadReady) {
             _downloadReady = downloadReady;
         };
+
+        /**
+         * @ngdoc method
+         * @name setDownloadUrlAttribute
+         * @methodOf anol.print.PrintServiceProvider
+
+         * @param {string} downloadUrlAttribute Attribute of print endpoint response containing the url for the download
+         */
+        this.setDownloadUrlAttribute = function (downloadUrlAttribute) {
+            _downloadUrlAttribute = downloadUrlAttribute;
+        };
         /**
      * @ngdoc method
      * @name downloadPrefix
@@ -94,10 +105,11 @@ angular.module('anol.print')
          * @description
          * Service for comunication with print backend
          */
-            var Print = function(printUrl, mode, checkUrlAttribute, preparePrintArgs, downloadReady, downloadPrefix) {
+            var Print = function(printUrl, mode, checkUrlAttribute, downloadUrlAttribute, preparePrintArgs, downloadReady, downloadPrefix) {
                 this.printUrl = printUrl;
                 this.mode = mode;
                 this.checkUrlAttribute = checkUrlAttribute;
+                this.downloadUrlAttribute = downloadUrlAttribute;
                 this.preparePrintArgs = preparePrintArgs;
                 this.downloadReady = downloadReady;
                 this.downloadPrefix = downloadPrefix;
@@ -133,11 +145,37 @@ angular.module('anol.print')
                 case 'queue':
                     this.stopDownloadChecker = false;
                     return this.printQueue(printArgs);
+                case 'trigger':
+                    this.stopDownloadChecker = true;
+                    return this.triggerPrint(printArgs);
                 // includes case 'direct'
                 default:
                     this.stopDownloadChecker = true;
                     return this.printDirect(printArgs);
                 }
+            };
+
+            Print.prototype.triggerPrint = function (printArgs) {
+                var self = this;
+                var deferred = $q.defer();
+                $http.post(this.printUrl, printArgs, {
+                    responseType: 'json'
+                }).then(
+                    function(response) {
+                        var downloadURL = response.data[self.downloadUrlAttribute];
+                        var statusURL = response.data[self.checkUrlAttribute];
+
+                        deferred.resolve({
+                            'mode': 'trigger',
+                            downloadURL: downloadURL,
+                            statusURL: statusURL
+                        });
+                    },
+                    function() {
+                        deferred.reject();
+                    }
+                );
+                return deferred.promise;
             };
 
             Print.prototype.printQueue = function(printArgs) {
@@ -220,6 +258,6 @@ angular.module('anol.print')
                 return deferred.promise;
             };
 
-            return new Print(_printUrl, _mode, _checkUrlAttribute, _preparePrintArgs, _downloadReady, _downloadPrefix);
+            return new Print(_printUrl, _mode, _checkUrlAttribute, _downloadUrlAttribute, _preparePrintArgs, _downloadReady, _downloadPrefix);
         }];
     }]);
