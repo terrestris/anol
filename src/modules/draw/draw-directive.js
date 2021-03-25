@@ -86,11 +86,11 @@ angular.module('anol.draw')
                         scope.polygonTooltipPlacement : 'right';
 
                     scope.activeLayer = undefined;
+                    scope.selectedFeature = undefined;
                     scope.modifyActive = false;
                     scope.badgeTexts = {};
                     translateBadgeTexts();
 
-                    var selectedFeature;
                     var controls = [];
                     var drawPointControl, drawLineControl, drawPolygonControl, modifyControl;
 
@@ -233,14 +233,14 @@ angular.module('anol.draw')
                         });
                         $olOn(selectInteraction, 'select', function(evt) {
                             if(evt.selected.length === 0) {
-                                selectedFeature = undefined;
+                                scope.selectedFeature = undefined;
                                 removeButtonElement.addClass('disabled');
                                 ensureMeasureOverlayRemoved();
                             } else {
-                                selectedFeature = evt.selected[0];
+                                scope.selectedFeature = evt.selected[0];
                                 removeButtonElement.removeClass('disabled');
                                 if (angular.isFunction(scope.onModifySelect)) {
-                                    scope.onModifySelect({ layer: scope.activeLayer, feature: selectedFeature });
+                                    scope.onModifySelect({ layer: scope.activeLayer, feature: scope.selectedFeature });
                                 }
                             }
                         });
@@ -303,7 +303,7 @@ angular.module('anol.draw')
                             });
                         });
                         _modifyControl.onDeactivate(function() {
-                            selectedFeature = undefined;
+                            unselectFeature();
                         });
                         return _modifyControl;
                     };
@@ -327,6 +327,12 @@ angular.module('anol.draw')
                             },
                             hitTolerance: 10
                         });
+                    };
+
+                    var unselectFeature = function () {
+                        var select = modifyControl.interactions.find(function (i) { return i instanceof Select; });
+                        select.getFeatures().clear();
+                        scope.selectedFeature = undefined;
                     };
 
                     // Button binds
@@ -376,13 +382,12 @@ angular.module('anol.draw')
                     };
 
                     scope.remove = function() {
-                        if(angular.isDefined(selectedFeature)) {
-                            scope.activeLayer.olLayer.getSource().removeFeature(selectedFeature);
-                            modifyControl.interactions[0].getFeatures().clear();
+                        if(angular.isDefined(scope.selectedFeature)) {
+                            scope.activeLayer.olLayer.getSource().removeFeature(scope.selectedFeature);
                             if (angular.isFunction(scope.postDeleteAction)) {
-                                scope.postDeleteAction({ feature: selectedFeature, layer: scope.activeLayer });
+                                scope.postDeleteAction({ feature: scope.selectedFeature, layer: scope.activeLayer });
                             }
-                            selectedFeature = undefined;
+                            unselectFeature();
                             ensureMeasureOverlayRemoved();
                         }
                     };
@@ -503,7 +508,6 @@ angular.module('anol.draw')
                         MapService.addCursorPointerCondition(changeCursorCondition);
                     });
                     modifyControl.onDeactivate(function(control) {
-                        control.interactions[0].getFeatures().clear();
                         removeButtonElement.addClass('disabled');
                         MapService.removeCursorPointerCondition(changeCursorCondition);
                     });
