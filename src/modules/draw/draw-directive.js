@@ -87,6 +87,9 @@ angular.module('anol.draw')
 
                     scope.activeLayer = undefined;
                     scope.modifyActive = false;
+                    scope.badgeTexts = {};
+                    translateBadgeTexts();
+
                     var selectedFeature;
                     var controls = [];
                     var drawPointControl, drawLineControl, drawPolygonControl, modifyControl;
@@ -94,6 +97,20 @@ angular.module('anol.draw')
                     // disabled by default. Will be enabled, when feature selected
                     var removeButtonElement = element.find('.draw-remove');
                     removeButtonElement.addClass('disabled');
+
+                    function translateBadgeTexts() {
+                        $translate([
+                            'anol.draw.BADGE_CURRENT',
+                            'anol.draw.BADGE_MIN',
+                            'anol.draw.BADGE_MAX'
+                        ]).then(function(translations) {
+                            scope.badgeTexts = {
+                                current: translations['anol.draw.BADGE_CURRENT'],
+                                min: translations['anol.draw.BADGE_MIN'],
+                                max: translations['anol.draw.BADGE_MAX']
+                            };
+                        });
+                    }
 
                     function applyGeometriesConfig(geometries = {}) {
                         var defaultVals = {
@@ -501,13 +518,12 @@ angular.module('anol.draw')
                             .concat(modifyControl.interactions);
                     };
 
-                    var setContinueDrawing = function() {
-                        var pointCount = DrawService.countFeaturesFor('Point');
-                        var lineCount = DrawService.countFeaturesFor('LineString');
-                        var polygonCount = DrawService.countFeaturesFor('Polygon');
-                        scope.continueDrawingPoints = pointCount < scope.geometriesConfig.point.max;
-                        scope.continueDrawingLines = lineCount < scope.geometriesConfig.line.max;
-                        scope.continueDrawingPolygons = polygonCount < scope.geometriesConfig.polygon.max;
+                    var updateGeometryCount = function() {
+                        scope.geometryCount = {
+                            point: DrawService.countFeaturesFor('Point'),
+                            line: DrawService.countFeaturesFor('LineString'),
+                            polygon: DrawService.countFeaturesFor('Polygon')
+                        }
                     };
 
                     var visibleDewatcher;
@@ -531,9 +547,9 @@ angular.module('anol.draw')
 
                         scope.activeLayer = layer;
                         // inital setup in case the active layer already contains features
-                        setContinueDrawing();
+                        updateGeometryCount();
 
-                        $olOn(scope.activeLayer.olLayer.getSource(), 'change', setContinueDrawing);
+                        $olOn(scope.activeLayer.olLayer.getSource(), 'change', updateGeometryCount);
 
                         visibleDewatcher = scope.$watch(function() {
                             return scope.activeLayer.getVisible();
@@ -565,7 +581,7 @@ angular.module('anol.draw')
                         }
 
                         if (scope.activeLayer && scope.activeLayer.olLayer) {
-                            scope.activeLayer.olLayer.getSource().un('change', setContinueDrawing);
+                            scope.activeLayer.olLayer.getSource().un('change', updateGeometryCount);
                         }
 
                         scope.activeLayer = undefined;
@@ -590,6 +606,17 @@ angular.module('anol.draw')
                     }, function() {
                         scope.modifyActive = modifyControl.active;
                     });
+
+                    scope.getBadgeText = function (count, config) {
+                        var text = scope.badgeTexts.current + ': ' + count;
+                        if (config.min !== 0) {
+                            text += ' ' + scope.badgeTexts.min + ': ' + config.min;
+                        }
+                        if (config.max !== Infinity) {
+                            text += ' ' + scope.badgeTexts.max + ': ' + config.max;
+                        }
+                        return text;
+                    }
                 }
             };
         }]);

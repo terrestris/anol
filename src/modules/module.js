@@ -37,7 +37,10 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'TOOLTIP_LINE': 'Draw line',
                     'TOOLTIP_POLYGON': 'Draw polygon',
                     'TOOLTIP_REMOVE': 'Remove selected geometry',
-                    'LAYER_TITLE': 'Draw layer'
+                    'LAYER_TITLE': 'Draw layer',
+                    'BADGE_CURRENT': 'current',
+                    'BADGE_MIN': 'min',
+                    'BADGE_MAX': 'max'
                 },
                 'featureexchange': {
                     'NO_JSON_FORMAT': 'No json format',
@@ -137,7 +140,10 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'TOOLTIP_DRAW_LINE': 'Linie zeichnen',
                     'TOOLTIP_DRAW_POLYGON': 'Polygon zeichnen',
                     'TOOLTIP_REMOVE': 'Ausgewählte Geometrie entfernen',
-                    'DRAW_LAYER_TITLE': 'Zeichenlayer'
+                    'DRAW_LAYER_TITLE': 'Zeichenlayer',
+                    'BADGE_CURRENT': 'aktuell',
+                    'BADGE_MIN': 'min',
+                    'BADGE_MAX': 'max'
                 },
                 'featureform': {
                     'PLEASE_CHOOSE': 'Bitte auswählen ...',
