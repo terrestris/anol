@@ -1,9 +1,8 @@
 <button ng-click="drawPoint()"
         ng-disabled="!geometriesConfig.point.enabled"
         class="draw-button draw-point"
-        uib-tooltip="{{ 'anol.draw.TOOLTIP_POINT' | translate }}"
+        uib-tooltip="{{ 'anol.draw.TOOLTIP_DRAW_POINT' | translate }}"
         tooltip-placement="{{ pointTooltipPlacement }}"
-        tooltip-append-to-body="true"
         tooltip-popup-delay="{{ tooltipDelay }}"
         tooltip-enable="{{ tooltipEnable }}"
         tooltip-trigger="mouseenter">
@@ -11,9 +10,8 @@
 <button ng-click="drawLine()"
         ng-disabled="!geometriesConfig.line.enabled"
         class="draw-button draw-line"
-        uib-tooltip="{{ 'anol.draw.TOOLTIP_LINE' | translate }}"
+        uib-tooltip="{{ 'anol.draw.TOOLTIP_DRAW_LINE' | translate }}"
         tooltip-placement="{{ lineTooltipPlacement }}"
-        tooltip-append-to-body="true"
         tooltip-popup-delay="{{ tooltipDelay }}"
         tooltip-enable="{{ tooltipEnable }}"
         tooltip-trigger="mouseenter">
@@ -21,9 +19,8 @@
 <button ng-click="drawPolygon()"
         ng-disabled="!geometriesConfig.polygon.enabled"
         class="draw-button draw-polygon"
-        uib-tooltip="{{ 'anol.draw.TOOLTIP_POLYGON' | translate }}"
+        uib-tooltip="{{ 'anol.draw.TOOLTIP_DRAW_POLYGON' | translate }}"
         tooltip-placement="{{ polygonTooltipPlacement }}"
-        tooltip-append-to-body="true"
         tooltip-popup-delay="{{ tooltipDelay }}"
         tooltip-enable="{{ tooltipEnable }}"
         tooltip-trigger="mouseenter">
@@ -32,16 +29,15 @@
         class="draw-button draw-modify"
         uib-tooltip="{{ 'anol.draw.TOOLTIP_MODIFY' | translate }}"
         tooltip-placement="{{ polygonTooltipPlacement }}"
-        tooltip-append-to-body="true"
         tooltip-popup-delay="{{ tooltipDelay }}"
         tooltip-enable="{{ tooltipEnable }}"
         tooltip-trigger="mouseenter">
 </button>
 <button ng-click="remove()"
         class="draw-button draw-remove"
+        ng-disable="selectedFeature === undefined"
         uib-tooltip="{{ 'anol.draw.TOOLTIP_REMOVE' | translate }}"
         tooltip-placement="{{ polygonTooltipPlacement }}"
-        tooltip-append-to-body="true"
         tooltip-popup-delay="{{ tooltipDelay }}"
         tooltip-enable="{{ tooltipEnable }}"
         tooltip-trigger="mouseenter">
