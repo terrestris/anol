@@ -231,7 +231,7 @@ export function createElement(node, html) {
 }
 
 function classRegex(classname) {
-  return new RegExp(`(^|\\s+) ${classname} (\\s+|$)`);
+  return new RegExp('(^|\\s+) ' + classname + ' (\\s+|$)');
 }
 
 function _addClass(el, klass, timeout) {

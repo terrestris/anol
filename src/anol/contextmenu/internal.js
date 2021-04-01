@@ -103,7 +103,7 @@ export class Internal {
     };
     if (space_left_w >= menuSize.w) {
       container.style.right = 'auto';
-      container.style.left = `${pixel[0] + 5}px`;
+      container.style.left = (pixel[0] + 5) + 'px';
     } else {
       container.style.left = 'auto';
       container.style.right = '15px';
@@ -112,7 +112,7 @@ export class Internal {
     // set top or bottom
     if (space_left_h >= menuSize.h) {
       container.style.bottom = 'auto';
-      container.style.top = `${pixel[1] - 10}px`;
+      container.style.top = (pixel[1] - 10) + 'px';
     } else {
       container.style.top = 'auto';
       container.style.bottom = 0;
