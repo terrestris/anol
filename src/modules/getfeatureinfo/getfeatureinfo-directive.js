@@ -114,7 +114,7 @@ angular.module('anol.getfeatureinfo')
                                 }
                                 var iframe;
                                 if(featureInfoObject.target === '_popup') {
-                                    iframe = $('<iframe seamless src="' + featureInfoObject.url + '"></iframe>');
+                                    iframe = $('<iframe seamless id="feature_info_iframe" src="' + featureInfoObject.url + '"></iframe>');
                                 }
                                 switch(featureInfoObject.target) {
                                     case '_blank':
