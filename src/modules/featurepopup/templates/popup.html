@@ -4,6 +4,7 @@
          ng-mousedown="makeDraggable($event)"
          ng-class="[{ 'hide-for-mobile': altMobileFullscreen }, openingDirection, class]">
         <span class="anol-popup-closer glyphicon glyphicon-remove" ng-click="close()" ng-if="!sticky" ng-mousedown="$event.stopPropagation();"></span>
+        <span class="anol-popup-closer glyphicon glyphicon-print ng-scope" style="bottom: 5px;top: auto;" onclick="document.getElementById(\'feature_info_iframe\').contentWindow.print();"></span>
         <div class="anol-popup-content">
             <ng-transclude></ng-transclude>
         </div>
@@ -11,6 +12,7 @@
     <div ng-if="altMobileFullscreen">
         <div class="anol-popup anol-popup-mobile" ng-class="class">
             <span class="anol-popup-closer glyphicon glyphicon-remove" ng-click="close()" ng-mousedown="$event.stopPropagation();"></span>
+            <span class="anol-popup-closer glyphicon glyphicon-print ng-scope" style="bottom: 5px;top: auto;" onclick="document.getElementById(\'feature_info_iframe\').contentWindow.print();"></span>
             <div class="anol-popup-content">
                 <ng-transclude></ng-transclude>
             </div>
