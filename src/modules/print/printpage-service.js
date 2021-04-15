@@ -160,7 +160,22 @@ angular.module('anol.print')
                 style: defaultStyle,
                 zIndex: 2001
             });
-          
+
+            /**
+             * This method rounds up to certain precision.
+             * _ceilToPrecision(123213, 2) -> 130000
+             * _ceilToPrecision(12.3213, 4) -> 12.33
+             * Similar to Number.toPrecision but always rounding up.
+             * @param {number} numb
+             * @param {number} precision
+             * @returns {number}
+             * @private
+             */
+            const _ceilToPrecision = (numb, precision) => {
+                const unsignificant = Math.pow(10, Math.ceil(Math.log10(numb)) - precision);
+                return Math.ceil(numb / unsignificant) * unsignificant;
+            }
+
             // TODO replace ol3 styling by anol.layerFeature styling
             // if(_style) {
             //     _printLayer.setStyle(_style);
@@ -814,12 +829,13 @@ angular.module('anol.print')
                     margin = 20;
                 }
 
-                var extendSize = getSize(extent);
+                const extendSize = getSize(extent);
 
                 // substract margin to avoid having geometries directly at the edges of the page
-                var widthScale = (extendSize[0] * 1000) / (mapSize[0] - margin);
-                var heightScale = (extendSize[1] * 1000) / (mapSize[1] - margin);
-                return Math.max(widthScale, heightScale);
+                const widthScale = (extendSize[0] * 1000) / (mapSize[0] - margin);
+                const heightScale = (extendSize[1] * 1000) / (mapSize[1] - margin);
+                const preciseScale = Math.max(widthScale, heightScale);
+                return _ceilToPrecision(preciseScale, 3)
             };
 
             PrintPage.prototype.getBoundsForCenterMapSizeScale = function(center, mapSize, scale) {
