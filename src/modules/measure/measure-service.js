@@ -116,16 +116,30 @@ angular.module('anol.measure')
                         color: 'rgba(255, 255, 255, 0.2)'
                     }),
                     stroke: new Stroke({
-                        color: 'rgba(0, 0, 0, 0.5)',
+                        color: 'rgba(255, 255, 255, 0.75)',
                         lineDash: [10, 10],
-                        width: 2,
-                        opacity: 0.5
+                        width: 5,
+                        opacity: 0.75
                     }),
                     image: new CircleStyle({
                         radius: 5,
                         stroke: new Stroke({
-                            color: 'rgba(0, 0, 0, 0.7)'
+                            color: 'rgba(255, 255, 255, 0.75)',
+                            width: 2,
+                            opacity: 0.75
+                        }),
+                        fill: new _style.Fill({
+                            color: 'rgba(227, 0, 20, 0.75)'
                         })
+                    })
+                }),
+                
+                new Style({
+                    stroke: new Stroke({
+                        color: 'rgba(227, 0, 20, 0.75)',
+                        lineDash: [10, 10],
+                        width: 2,
+                        opacity: 0.75
                     })
                 })
             ];
@@ -182,8 +196,13 @@ angular.module('anol.measure')
                     geometry: new MultiPoint([start, end]),
                     image: new CircleStyle({
                         radius: 5,
+                        stroke: new Stroke({
+                            color: 'rgba(255, 255, 255, 0.75)',
+                            width: 2,
+                            opacity: 0.75
+                        }),
                         fill: new Fill({
-                            color: 'grey'
+                            color: 'rgba(227, 0, 20, 0.75)'
                         })
                     })
                 }));
