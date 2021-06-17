@@ -77,7 +77,7 @@ class AnolBaseLayer {
         this.clusterOptions = options.cluster || false;
         this.unclusteredSource = undefined;
         this.selectClusterControl = undefined;
-        
+
         this.catalog = options.catalog || false;
         this.catalogLayer = options.catalogLayer || false;
         this.groupLayer = false;
@@ -94,7 +94,7 @@ class AnolBaseLayer {
         // this is needed for system layers in measure/print/etc.
         if(options.olLayer instanceof BaseLayer) {
             this.olLayer = options.olLayer;
-        } 
+        }
         else {
             this.olSourceOptions = this._createSourceOptions(options.olLayer.source);
             delete options.olLayer.source;
@@ -134,7 +134,7 @@ class AnolBaseLayer {
             return true;
         }
         return false;
-    }    
+    }
     getVisible() {
         if(angular.isUndefined(this.olLayer)) {
             return false;
@@ -146,8 +146,7 @@ class AnolBaseLayer {
             if (this.anolGroup.singleSelect) {
                 $.each(this.anolGroup.layers, function(idx, layer) {
                     if (layer.getVisible()) {
-                        this.olLayer.setVisible(false);
-                        angular.element(this).triggerHandler('anol.layer.visible:change', [layer]);
+                        layer.setVisible(false); // layer.setVisible will update WMS params
                     }
                 });
             }
