@@ -101,7 +101,7 @@ angular.module('anol.catalog')
             };
         })
         // filter directive needed when we want to be able to sort the objects on the catalog.
-        // It's not possible to siort on an object
+        // It's not possible to sort on an object
         .filter("catalogToArray", function(){
           return function(obj) {
               return Object
