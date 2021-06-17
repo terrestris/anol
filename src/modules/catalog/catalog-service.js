@@ -1,4 +1,5 @@
 import './module.js';
+import voca from 'voca';
 
 angular.module('anol.catalog')
 
@@ -82,7 +83,8 @@ angular.module('anol.catalog')
                         self.firstLetters.push(firstLetter);
                         sortedLayers[firstLetter] = {
                             'layers':  [_layer],
-                            'title': firstLetter
+                            'title': firstLetter,
+                            'localeTitle': voca.latinise(firstLetter)
                         };
                     } 
                     else {
@@ -130,7 +132,8 @@ angular.module('anol.catalog')
                         self.firstLettersGroups.push(firstLetter);
                         sortedGroups[firstLetter] = {
                             'layers':  [_group],
-                            'title': firstLetter
+                            'title': firstLetter,
+                            'localeTitle': voca.latinise(firstLetter)
                         };
                     } 
                     else {
