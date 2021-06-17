@@ -84,7 +84,7 @@ angular.module('anol.catalog')
                         sortedLayers[firstLetter] = {
                             'layers':  [_layer],
                             'title': firstLetter,
-                            'localeTitle': voca.latinise(firstLetter)
+                            'latinisedTitle': voca.latinise(firstLetter)
                         };
                     } 
                     else {
@@ -133,7 +133,7 @@ angular.module('anol.catalog')
                         sortedGroups[firstLetter] = {
                             'layers':  [_group],
                             'title': firstLetter,
-                            'localeTitle': voca.latinise(firstLetter)
+                            'latinisedTitle': voca.latinise(firstLetter)
                         };
                     } 
                     else {
