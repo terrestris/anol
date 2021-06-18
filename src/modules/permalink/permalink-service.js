@@ -219,75 +219,110 @@ angular.module('anol.permalink')
                         self.moveendHandler();
                     }.bind(self));
 
+                    function arrayChanges(newArray, oldArray) {
+                        newArray = angular.isDefined(newArray) ? newArray : [];
+                        oldArray = angular.isDefined(oldArray) ? oldArray : [];
+                        return {
+                            added: newArray.filter(item => oldArray.indexOf(item) < 0),
+                            removed: oldArray.filter(item => newArray.indexOf(item) < 0)
+                        };
+                    }
+
+                    function permalinkLayers(layers) {
+                        return layers
+                            .filter(l => angular.isDefined(l) && angular.isDefined(l.name))
+                            .flatMap(l => l instanceof anol.layer.Group ? l.layers : [l])
+                            .filter(l => l.permalink === true);
+                    }
+
                     $rootScope.$watchCollection(function() {
                         return LayersService.layers();
-                    }, function(newVal) {
-                        if(angular.isDefined(newVal)) {
-                            angular.forEach(newVal, function(layer) {
-                                if (angular.isUndefined(layer)) {
-                                    return true;
-                                }
+                    }, function(newVal, oldVal) {
+                        const { added, removed } = arrayChanges(newVal, oldVal);
 
-                                if(layer instanceof anol.layer.Group) {
-                                    angular.forEach(layer.layers, function(groupLayer) {
-                                        if(groupLayer.permalink === true) {
-                                            groupLayer.offVisibleChange(self.handleVisibleChange);
-                                            groupLayer.onVisibleChange(self.handleVisibleChange, self);
-                                        }
-                                    });
-                                } else {
-                                    if(layer.permalink === true) {
-                                        layer.offVisibleChange(self.handleVisibleChange);
-                                        layer.onVisibleChange(self.handleVisibleChange, self);
-                                    }
-                                }
-                            });
+                        if (added.length + removed.length === 0) {
+                            return;
                         }
+
+                        self.visibleLayerNames = [];
+
+                        for (const layer of permalinkLayers(added)) {
+                            layer.onVisibleChange(self.handleVisibleChange, self);
+                            if (layer.getVisible()) {
+                                self.visibleLayerNames.push(layer.name);
+                            }
+                        }
+
+                        for (const layer of permalinkLayers(removed)) {
+                            layer.offVisibleChange(self.handleVisibleChange);
+                        }
+
+                        self.generatePermalink();
                     });
 
                     $rootScope.$watchCollection(function() {
                         return CatalogService.addedCatalogGroups();
-                    }, function(newVal) {
-                        if(angular.isDefined(newVal)) {
-                            self.catalogGroupNames = [];
-                            self.visibleCatalogGroupNames = [];
-                            self.visibleCatalogLayerNames = [];
-                            angular.forEach(newVal, function(group) {
-                                group.offVisibleChange(self.handleVisibleChange);
-                                group.onVisibleChange(self.handleVisibleChange, self);
-                                    angular.forEach(group.layers, function(layer) {
-                                        layer.offVisibleChange(self.handleVisibleChange);
-                                        layer.onVisibleChange(self.handleVisibleChange, self);
-                                        if (layer.getVisible() ) {
-                                            self.visibleCatalogLayerNames.push(layer.name);
-                                        }
-                                    });
+                    }, function(newVal, oldVal) {
+                        const { added, removed } = arrayChanges(newVal, oldVal);
 
-                                self.catalogGroupNames.push(group.name);
-                                if (group.getVisible()) {
-                                    self.visibleCatalogGroupNames.push(group.name);
-                                }
-                            });
-                            self.generatePermalink();
+                        if (added.length + removed.length === 0) {
+                            return;
                         }
+
+                        self.catalogGroupNames = [];
+                        self.visibleCatalogGroupNames = [];
+                        self.visibleCatalogLayerNames = [];
+
+                        for (const group of added) {
+                            group.onVisibleChange(self.handleVisibleChange, self);
+                            for (const layer of group.layers) {
+                                layer.onVisibleChange(self.handleVisibleChange, self);
+                                if (layer.getVisible()) {
+                                    self.visibleCatalogLayerNames.push(layer.name);
+                                }
+                            }
+
+                            self.catalogGroupNames.push(group.name);
+                            if (group.getVisible()) {
+                                self.visibleCatalogGroupNames.push(group.name);
+                            }
+                        }
+
+                        for (const group of removed) {
+                            group.offVisibleChange(self.handleVisibleChange);
+                            for (const layer of group.layers) {
+                                layer.offVisibleChange(self.handleVisibleChange);
+                            }
+                        }
+
+                        self.generatePermalink();
                     });
 
                     $rootScope.$watchCollection(function() {
                         return CatalogService.addedCatalogLayers();
-                    }, function(newVal) {
-                        if(angular.isDefined(newVal)) {
-                            self.catalogLayerNames = [];
-                            self.visibleCatalogLayerNames = [];
-                            angular.forEach(newVal, function(layer) {
-                                layer.offVisibleChange(self.handleVisibleChange);
-                                layer.onVisibleChange(self.handleVisibleChange, self);
-                                self.catalogLayerNames.push(layer.name);
-                                if (layer.getVisible()) {
-                                    self.visibleCatalogLayerNames.push(layer.name);
-                                }
-                            });
-                            self.generatePermalink();
+                    }, function(newVal, oldVal) {
+                        const { added, removed } = arrayChanges(newVal, oldVal);
+
+                        if (added.length + removed.length === 0) {
+                            return;
                         }
+
+                        self.catalogLayerNames = [];
+                        self.visibleCatalogLayerNames = [];
+
+                        for (const layer of added) {
+                            layer.onVisibleChange(self.handleVisibleChange);
+                            self.catalogLayerNames.push(layer.name);
+                            if (layer.getVisible()) {
+                                self.visibleCatalogLayerNames.push(layer.name);
+                            }
+                        }
+
+                        for (const layer of removed) {
+                            layer.offVisibleChange(self.handleVisibleChange);
+                        }
+
+                        self.generatePermalink();
                     });
                 };
 
