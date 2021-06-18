@@ -20,7 +20,7 @@
 import AnolBaseLayer from '../layer.js';
 
 import TileLayer from 'ol/layer/Tile';
-import { default as WMTSSource} from 'ol/source/WMTS';
+import WMTSSource from 'ol/source/WMTS';
 import WMTSTileGrid from 'ol/tilegrid/WMTS';
 import { getWidth, getHeight, getTopLeft} from 'ol/extent';
 import { DEVICE_PIXEL_RATIO } from 'ol/has';
