@@ -117,10 +117,10 @@ class AnolBaseLayer {
         delete this.olLayer;
     }
     isCombinable(other) {
-        if(other.CLASS_NAME !== this.CLASS_NAME) {
-            return false;
-        }
-        return true;
+        return other.CLASS_NAME === this.CLASS_NAME;
+    }
+    isCombinableInGroup(other) {
+        return false;
     }
     isClustered() {
         return false;

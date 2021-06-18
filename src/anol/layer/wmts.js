@@ -26,7 +26,7 @@ import { getWidth, getHeight, getTopLeft} from 'ol/extent';
 import { DEVICE_PIXEL_RATIO } from 'ol/has';
 
 class WMTS extends AnolBaseLayer {
-    
+
     constructor(_options) {
         var defaults = {
             olLayer: {
@@ -110,9 +110,8 @@ class WMTS extends AnolBaseLayer {
         return srcOptions;
     }
     isCombinable() {
-        this.combinable = false;
         return false;
     }
 }
 
-export default WMTS; 
+export default WMTS;

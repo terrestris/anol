@@ -16,7 +16,7 @@ class Group {
 
     constructor(options) {
         var self = this;
-        this.CLASS_NAME = 'anol.layer.Group';    
+        this.CLASS_NAME = 'anol.layer.Group';
         this.name = options.name;
         this.title = options.title;
         this.layers = options.layers;
@@ -76,30 +76,21 @@ class Group {
     }
     offVisibleChange(func) {
         angular.element(this).off('anol.group.visible:change', func);
-    }    
-    isCombinable() {
-        // check if check was alredy done for group
-        if (angular.isDefined(combinable)) {
-            return combinable;
+    }
+
+    childrenAreCombinable() {
+        if (angular.isDefined(this.childrenCombinable)) {
+            return this.childrenCombinable;
         }
-        var lastClass = undefined;
-        var lastUrl = undefined;
-        var combinable = true;
-        var self = this;
-        $.each(self.layers, function(idx, layer) {
-            if(angular.isDefined(lastClass) && layer.CLASS_NAME !== lastClass) {
-                combinable = false;
-                return;
-            }
-            lastClass = layer.CLASS_NAME;
-            if(angular.isDefined(lastUrl)  && layer.olSourceOptions.url !== lastUrl) {
-                combinable = false;
-                return;
-            }
-            lastUrl = layer.olSourceOptions.url;
-        });
-        this.combinable = combinable;
-        return combinable;
+
+        this.childrenCombinable = this.layers
+            .slice(1)
+            .every((layer, i) => {
+                const last = this.layers[i];
+                return last.isCombinableInGroup(layer);
+            });
+
+        return this.childrenCombinable;
     }
 }
 

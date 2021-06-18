@@ -34,37 +34,24 @@ class BaseWMS extends AnolBaseLayer {
     }
 
     isCombinable(other) {
-        var combinable = super.isCombinable(other);
-        if(!combinable) {
-            return false;
-        }
-        if (angular.isDefined(other.anolGroup)) {
-            combinable = other.anolGroup.isCombinable();
-            if(!combinable) {
-                return false;
-            }
-        }
-        if(this.olSourceOptions.url !== other.olSourceOptions.url) {
-            return false;
-        }
-        if (this.isBackground) {
-            return false;
-        }
-        var thisParams = $.extend(true, {}, this.olSourceOptions.params);
-        delete thisParams.LAYERS;
-        var otherParams = $.extend(true, {}, other.olSourceOptions.params);
-        delete otherParams.LAYERS;
-        if(!angular.equals(thisParams, otherParams)) {
-            return false;
-        }
-        if(!angular.equals(this.anolGroup, other.anolGroup)) {
-            return false;
-        }
+        return angular.isDefined(other.anolGroup) ?
+            other.anolGroup.childrenAreCombinable() :
+            this.isCombinableInGroup(other);
+    }
 
-        if (this.catalog) {
-            return false;
-        }
-        return true;
+    isCombinableInGroup(other) {
+        var ownParams = angular.merge({}, this.olSourceOptions.params);
+        delete ownParams.LAYERS;
+        var otherParams = angular.merge({}, other.olSourceOptions.params);
+        delete otherParams.LAYERS;
+
+        return super.isCombinable(other) &&
+            this.olSourceOptions.url === other.olSourceOptions.url &&
+            !this.isBackground &&
+            angular.equals(ownParams, otherParams) &&
+            angular.equals(this.anolGroup, other.anolGroup) &&
+            !this.catalog &&
+            angular.isUndefined(this.options.opacity) && angular.isUndefined(other.options.opacity);
     }
 
     getCombinedSource(other) {
@@ -92,7 +79,7 @@ class BaseWMS extends AnolBaseLayer {
             }
             olSource.set('anolLayers', anolLayers);
 
-            // update layer params 
+            // update layer params
             var layerParams = [];
             angular.forEach(anolLayers, function(layer) {
                 if (layer.getVisible()) {
@@ -102,7 +89,7 @@ class BaseWMS extends AnolBaseLayer {
             var params = olSource.getParams();
             params.LAYERS = layerParams.reverse().join(',');
             olSource.updateParams(params);
-        } 
+        }
     }
     getVisible() {
         if(angular.isUndefined(this.olLayer)) {
@@ -121,11 +108,11 @@ class BaseWMS extends AnolBaseLayer {
         var params = olSource.getParams();
         params.LAYERS = layerParams.reverse().join(',');
         olSource.updateParams(params);
-    }    
+    }
     setVisible(visible) {
         if (visible == this.getVisible()) {
             return;
-        }     
+        }
         var insertLayerIdx = 0;
         var source = this.olLayer.getSource();
         var self = this;

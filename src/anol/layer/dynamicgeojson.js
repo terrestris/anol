@@ -28,6 +28,7 @@ import Stroke from 'ol/style/Stroke';
 import {containsCoordinate} from 'ol/extent';
 
 import GeoJSON from 'ol/format/GeoJSON';
+import AnolBaseLayer from "../layer";
 
 class DynamicGeoJSON extends StaticGeoJSON {
 
@@ -41,7 +42,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
             this.additionalRequestParameters = _options.olLayer.source.additionalParameters;
         }
         this.CLASS_NAME = 'anol.layer.DynamicGeoJSON';
-    
+
         this.olSourceOptions = this._createSourceOptions(_options.olLayer.source);
         delete _options.olLayer.source;
         this.olLayerOptions = _options.olLayer;
@@ -54,19 +55,10 @@ class DynamicGeoJSON extends StaticGeoJSON {
     }
 
     isCombinable(other) {
-        if(other.CLASS_NAME !== this.CLASS_NAME) {
-            return false;
-        }
-        if(this.olSourceOptions.url !== other.olSourceOptions.url) {
-            return false;
-        }
-        if(this.olSourceOptions.featureProjection !== other.olSourceOptions.featureProjection) {
-            return false;
-        }
-        if(this.clusterOptions !== false && this.anolGroup !== other.anolGroup) {
-            return false;
-        }
-        return true;
+        return AnolBaseLayer.prototype.isCombinable.call(this, other) &&
+            this.olSourceOptions.url === other.olSourceOptions.url &&
+            this.olSourceOptions.featureProjection === other.olSourceOptions.featureProjection &&
+            (this.clusterOptions === false || this.anolGroup === other.anolGroup);
     }
 
     getCombinedSource(other) {
@@ -281,7 +273,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
                 styles.push(defaultStyle);
                 if (angular.isUndefined(styleDefinition.fontOffsetY)) {
                     styleDefinition.fontOffsetY = value.layer.style.graphicHeight;
-                } 
+                }
                 styles.push(new Style({
                     text: self.createTextStyle(
                         styleDefinition,
