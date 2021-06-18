@@ -15,7 +15,7 @@
  */
 
 import AnolBaseLayer from '../layer.js';
-   
+
 import {getWidth, getHeight, getBottomLeft} from 'ol/extent';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
@@ -97,7 +97,6 @@ class TMS extends AnolBaseLayer {
         return url;
     }
     isCombinable() {
-        this.combinable = false;
         return false;
     }
 }
