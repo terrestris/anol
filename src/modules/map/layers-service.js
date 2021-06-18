@@ -186,7 +186,7 @@ angular.module('anol.map')
             };
             Layers.prototype.removeOverlayLayer = function(layer) {
                 var self = this;
-               
+
                 if(layer instanceof anol.layer.Group) {
                     var group = layer;
                     if(self.overlayLayers.indexOf(group) === -1) {
@@ -202,7 +202,7 @@ angular.module('anol.map')
                         if (!layer.catalogLayer) {
                             self.deletedOverlayLayers.push(group.name)
                         }
-                    }   
+                    }
                     angular.forEach(group.layers, function(_layer) {
                         // _layer.setVisible(false);
                         if(angular.isDefined(self.map)) {
@@ -225,7 +225,7 @@ angular.module('anol.map')
                     var addedLayersIdx = self.addedLayers.indexOf(layer);
                     if(addedLayersIdx > -1) {
                         self.addedLayers.splice(addedLayersIdx, 1);
-                    }                    
+                    }
 
                     // remove single layer
                     var overlayLayerIdx = self.overlayLayers.indexOf(layer);
@@ -237,54 +237,54 @@ angular.module('anol.map')
                                 self.map.removeLayer(layer.olLayer);
                                 self.olLayers.splice(olLayerIdx, 1);
                             }
-                        }                        
-                    }  
+                        }
+                    }
 
                     // remove layer in group
-                    angular.forEach(self.overlayLayers, function(_layer) {
-                        if(_layer instanceof anol.layer.Group) {
-                            angular.forEach(_layer.layers, function(__layer) {
-                                if (angular.equals(__layer, layer)) {
-                                    var overlayLayerIdx = _layer.layers.indexOf(layer);
-                                    if(overlayLayerIdx > -1) {
-                                        if (!layer.combined) {
-                                            // remove not combined layer directly
-                                            var olLayerIdx = self.olLayers.indexOf(layer.olLayer);
-                                            if(olLayerIdx > -1) {
-                                                self.map.removeLayer(layer.olLayer);
-                                                self.olLayers.splice(olLayerIdx, 1);
-                                            }
-                                        }
-                                        _layer.layers.splice(overlayLayerIdx, 1);
-                                    }
-                                    layer.removeOlLayer();
-                                    if (!layer.catalogLayer) {
-                                        self.deletedOverlayLayers.push(layer.name);
-                                    }
-                                }
-                            });
+                    const groups = self.overlayLayers
+                        .filter(l => l instanceof anol.layer.Group);
+
+                    for (const group of groups) {
+                        const groupIndex = group.layers.indexOf(layer);
+                        if (groupIndex < 0) {
+                            continue;
                         }
-                    });
+
+                        if (!layer.combined) {
+                            // remove not combined layer directly
+                            const olIndex = self.olLayers.indexOf(layer.olLayer);
+                            if(olIndex > -1) {
+                                self.map.removeLayer(layer.olLayer);
+                                self.olLayers.splice(olIndex, 1);
+                            }
+                        }
+                        group.layers.splice(groupIndex, 1);
+                        layer.removeOlLayer();
+                        if (!layer.catalogLayer) {
+                            self.deletedOverlayLayers.push(layer.name);
+                        }
+
+                        if (group.layers.length === 0) {
+                            self.removeOverlayLayer(group);
+                        }
+                    }
+
                     // remove empty combined openlayers layer
                     if (layer.olLayer) {
                         var olSource = layer.olLayer.getSource();
                         var anolLayers = olSource.get('anolLayers');
-                        if (anolLayers.length === 0) {
-                            if(angular.isDefined(self.map)) {
-                                var olLayerIdx = self.olLayers.indexOf(layer.olLayer);
-                                if(olLayerIdx > -1) {
-                                    self.map.removeLayer(layer.olLayer);
-                                    self.olLayers.splice(olLayerIdx, 1);
-                                }
+                        if (anolLayers.length === 0 && angular.isDefined(self.map)) {
+                            var olLayerIdx = self.olLayers.indexOf(layer.olLayer);
+                            if(olLayerIdx > -1) {
+                                self.map.removeLayer(layer.olLayer);
+                                self.olLayers.splice(olLayerIdx, 1);
                             }
                         }
                     }
                     angular.forEach(self.overlayLayers, function(layer, idx) {
-                        if(layer instanceof anol.layer.Group) {
-                            if (layer.layers.length === 0) {
-                                self.overlayLayers.splice(idx, 1);
-                            }
-                        };
+                        if(layer instanceof anol.layer.Group && layer.layers.length === 0) {
+                            self.overlayLayers.splice(idx, 1);
+                        }
                     });
 
                     angular.forEach(self.removeLayerHandlers, function(handler) {
@@ -317,7 +317,7 @@ angular.module('anol.map')
                     }
                 });
                 return systemlayer
-            };            
+            };
             /**
          * private function
          * Creates olLayer
@@ -478,7 +478,7 @@ angular.module('anol.map')
          * @ngdoc method
          * @name activeLayers
          * @methodOf anol.map.LayersService
-         * @returns {anol.layer.Layer} 
+         * @returns {anol.layer.Layer}
          * @description
          * Returns the visible layers
          */
@@ -515,7 +515,7 @@ angular.module('anol.map')
             Layers.prototype.groupByName = function(name) {
                 return this.nameGroupsMap[name];
             };
-            
+
             Layers.prototype.deleteLayers = function(deletedLayers) {
                 var self = this;
                 if (angular.isUndefined(deletedLayers)) {
@@ -550,7 +550,7 @@ angular.module('anol.map')
                                                 anol.helper.array_move(overlayLayer.layers, goldIdx, gNewIdx);
                                             }
                                         }
-                                    });        
+                                    });
                                 });
                             }
                             return;
@@ -558,7 +558,7 @@ angular.module('anol.map')
                     });
                 });
                 this.reorderOverlayLayers();
-            };  
+            };
 
             Layers.prototype.setCollapsedGroups = function(groupLayers) {
                 this.overlayLayers.forEach(function(layer) {
@@ -567,8 +567,8 @@ angular.module('anol.map')
                             layer.options.collapsed = false;
                         }
                     }
-                });  
-            };  
+                });
+            };
 
             Layers.prototype.getCollapsedGroups = function() {
                 var groups = [];
@@ -578,9 +578,9 @@ angular.module('anol.map')
                             groups.push(layer.name);
                         }
                     }
-                });  
+                });
                 return groups;
-            };      
+            };
 
             Layers.prototype.overLayersAsArray = function() {
                 var sortedLayers = [];
@@ -592,14 +592,14 @@ angular.module('anol.map')
                             sortedGroupLayers.push(grouppedLayer.name);
                         });
                     }
-                    sortedLayers.push({ 
+                    sortedLayers.push({
                         'name': layer.name,
                         'layers': sortedGroupLayers
                     });
 
-                });  
+                });
                 return sortedLayers;
-            };        
+            };
             Layers.prototype.reorderGroupLayers = function() {
                 var lastOlLayerUid = undefined;
                 var self = this;
@@ -617,9 +617,9 @@ angular.module('anol.map')
                         layer.olLayer.setZIndex(self.zIndex);
                         self.zIndex = self.zIndex + 1;
                     }
-                });   
-  
-            };        
+                });
+
+            };
             Layers.prototype.reorderOverlayLayers = function() {
                 var lastOlLayerUid = undefined;
                 var self = this;
@@ -644,8 +644,8 @@ angular.module('anol.map')
                         layer.olLayer.setZIndex(self.zIndex);
                         self.zIndex = self.zIndex + 1;
                     }
-                });                        
-            };        
+                });
+            };
             Layers.prototype.lastAddedLayer = function() {
                 var idx = this.addedLayers.length - 1;
                 if(idx > -1) {
