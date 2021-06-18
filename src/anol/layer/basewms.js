@@ -34,8 +34,9 @@ class BaseWMS extends AnolBaseLayer {
     }
 
     isCombinable(other) {
-        return this.isCombinableInGroup(other) &&
-            (angular.isUndefined(other.anolGroup) || other.anolGroup.isCombinable());
+        return angular.isDefined(other.anolGroup) ?
+            other.anolGroup.childrenAreCombinable() :
+            this.isCombinableInGroup(other);
     }
 
     isCombinableInGroup(other) {

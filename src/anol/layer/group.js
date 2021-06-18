@@ -78,20 +78,19 @@ class Group {
         angular.element(this).off('anol.group.visible:change', func);
     }
 
-    isCombinable() {
-        // check if check was alredy done for group
-        if (angular.isDefined(this.combinable)) {
-            return this.combinable;
+    childrenAreCombinable() {
+        if (angular.isDefined(this.childrenCombinable)) {
+            return this.childrenCombinable;
         }
 
-        this.combinable = this.layers
+        this.childrenCombinable = this.layers
             .slice(1)
             .every((layer, i) => {
                 const last = this.layers[i];
                 return last.isCombinableInGroup(layer);
             });
 
-        return this.combinable;
+        return this.childrenCombinable;
     }
 }
 
