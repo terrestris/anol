@@ -35,18 +35,6 @@ angular.module('anol.permalink')
                 layers = layersParam.split(',');
             }
 
-            var defaultOverlaysParam = getParamString('defaultOverlays', params);
-            var defaultOverlays;
-            if (defaultOverlaysParam !== false) {
-                defaultOverlays = defaultOverlaysParam.split(',');
-            }
-
-            var backgroundLayerParam = getParamString('backgroundLayer', params);
-            var backgroundLayer;
-            if (backgroundLayerParam !== false) {
-                backgroundLayer = backgroundLayerParam;
-            }
-
             var visibleCatalogLayersParam = getParamString('visibleCatalogLayers', params);
             var visibleCatalogLayers;
             if (visibleCatalogLayersParam !== false) {
@@ -93,14 +81,6 @@ angular.module('anol.permalink')
 
             if (angular.isDefined(layers)) {
                 result.layers = layers;
-            }
-
-            if (angular.isDefined(defaultOverlays)) {
-                result.defaultOverlays = defaultOverlays;
-            }
-
-            if (angular.isDefined(backgroundLayer)) {
-                result.backgroundLayer = backgroundLayer;
             }
 
             if (angular.isDefined(catalogLayers)) {
@@ -175,12 +155,7 @@ angular.module('anol.permalink')
                     return layers
                         .filter(l => angular.isDefined(l) && angular.isDefined(l.name))
                         .flatMap(l => l instanceof anol.layer.Group ? l.layers : [l])
-                        .filter(l => l.permalink === true);
-                }
-
-                function backgroundLayers(layers) {
-                    return layers
-                        .filter(l => angular.isDefined(l) && l.isBackground);
+                        .filter(l => l.permalink !== false);
                 }
 
                 /**
@@ -207,9 +182,6 @@ angular.module('anol.permalink')
                     self.map = MapService.getMap();
                     self.view = self.map.getView();
                     self.visibleLayers = [];
-                    self.visibleGroups = [];
-                    self.visibleDefaultOverlays = [];
-                    self.backgroundLayer = [];
                     self.visibleCatalogLayers = [];
                     self.catalogLayers = [];
                     self.visibleCatalogGroups = [];
@@ -228,16 +200,10 @@ angular.module('anol.permalink')
                         self.updateMapFromParameters(mapParams);
                     } else {
                         angular.forEach(LayersService.flattedLayers(), function (layer) {
-                            if (layer.permalink === true) {
+                            if (layer.permalink !== false) {
                                 if (layer.getVisible()) {
                                     self.visibleLayers.push(layer);
-                                    if (layer.anolGroup) {
-                                        self.visibleGroups.push(layer.anolGroup)
-                                    }
                                 }
-                            }
-                            if (layer.isBackground && layer.getVisible()) {
-                                self.backgroundLayer = layer;
                             }
                         });
                     }
@@ -245,11 +211,11 @@ angular.module('anol.permalink')
                         self.moveendHandler();
                     }.bind(self));
 
-                    for (const layer of LayersService.flattedLayers()) {
-                        if (layer.isBackground || layer.permalink) {
+                    setTimeout(() => {
+                        for (const layer of permalinkLayers(LayersService.layers())) {
                             layer.onVisibleChange(self.handleVisibleChange, self);
                         }
-                    }
+                    }, 0);
 
                     $rootScope.$watchCollection(function () {
                         return LayersService.layers();
@@ -270,14 +236,6 @@ angular.module('anol.permalink')
                         }
 
                         for (const layer of permalinkLayers(removed)) {
-                            layer.offVisibleChange(self.handleVisibleChange);
-                        }
-
-                        for (const bgLayer of backgroundLayers(added)) {
-                            layer.onVisibleChange(self.handleVisibleChange, self);
-                        }
-
-                        for (const bgLayer of backgroundLayers(removed)) {
                             layer.offVisibleChange(self.handleVisibleChange);
                         }
 
@@ -354,34 +312,24 @@ angular.module('anol.permalink')
                  * @private
                  */
                 Permalink.prototype.handleVisibleChange = function (evt) {
-                    var self = evt.data.context;
+                    const self = evt.data.context;
                     // this in this context is the layer, visible changed for
-                    var layer = this;
-                    var layerName = layer.name;
-                    var layerGroup = layer.anolGroup;
+                    const layer = this;
+                    let layerName = layer.name;
+                    const layerGroup = layer.anolGroup;
 
-                    if (!layer.isBackground && layer.permalink === true) {
+                    if (layer.permalink !== false) {
                         if (angular.isDefined(layerName) && layer.getVisible()) {
                             if (self.visibleLayers.length === 1 && self.visibleLayers[0].name === '') {
-                                console.warn('why?') // TODO: remove
                                 self.visibleLayers.splice(0, 1);
                             }
-                            if (layerGroup) {
-                                self.visibleGroups.push(layerGroup);
-                            }
-                            self.visibleLayers.push(layerName);
+                            self.visibleLayers.push(layer);
                         } else {
-                            var layerIdx = self.visibleLayers.indexOf(layer);
+                            const layerIdx = self.visibleLayers.indexOf(layer);
                             // remove the layer from the sortedByGroup array
                             if (layerIdx > -1) {
                                 self.visibleLayers.splice(layerIdx, 1);
                             }
-                        }
-                    }
-
-                    if (layer.isBackground) {
-                        if (angular.isDefined(layer.name) && layer.getVisible()) {
-                            self.backgroundLayer = layer
                         }
                     }
 
@@ -394,7 +342,7 @@ angular.module('anol.permalink')
                             if (angular.isDefined(layerName) && layer.getVisible()) {
                                 self.visibleCatalogGroups.push(layer);
                             } else {
-                                var layerIdx = self.visibleCatalogGroups.indexOf(layer);
+                                const layerIdx = self.visibleCatalogGroups.indexOf(layer);
                                 if (layerIdx > -1) {
                                     self.visibleCatalogGroups.splice(layerIdx, 1);
                                 }
@@ -403,7 +351,7 @@ angular.module('anol.permalink')
                             if (angular.isDefined(layerName) && layer.getVisible()) {
                                 self.visibleCatalogLayers.push(layer);
                             } else {
-                                var layerIdx = self.visibleCatalogLayers.indexOf(layer);
+                                const layerIdx = self.visibleCatalogLayers.indexOf(layer);
                                 if (layerIdx > -1) {
                                     self.visibleCatalogLayers.splice(layerIdx, 1);
                                 }
@@ -434,13 +382,19 @@ angular.module('anol.permalink')
 
                 Permalink.prototype.sortedLayerNames = function () {
                     return this.visibleLayers.sort(function (a, b) {
-                        if (a.anolGroup.name < b.anolGroup.name) {
-                            return -1
+                        if (angular.isDefined(a.anolGroup)) {
+                            if (angular.isDefined(b.anolGroup)) {
+                                return a.anolGroup.name.localeCompare(b.anolGroup.name, 'de');
+                            } else {
+                                return 1;
+                            }
+                        } else {
+                            if (angular.isDefined(b.anolGroup)) {
+                                return -1;
+                            } else {
+                                return a.name.localeCompare(b.group, 'de');
+                            }
                         }
-                        if (a.anolGroup.name > b.anolGroup.name) {
-                            return 1
-                        }
-                        return 0;
                     }).map(layer => layer.name);
                 };
 
@@ -461,21 +415,6 @@ angular.module('anol.permalink')
                     $location.search('map', [self.zoom, self.lon, self.lat, self.urlCrs].join(','));
 
                     $location.search('layers', this.sortedLayerNames().join(','));
-
-                    if (self.backgroundLayer.length !== 0) {
-                        $location.search('backgroundLayer', self.backgroundLayer.name);
-
-                    } else {
-                        $location.search('backgroundLayer', '');
-                    }
-
-                    if (self.visibleDefaultOverlays.length !== 0) {
-                        $location.search('defaultOverlays', self.visibleDefaultOverlays
-                            .map(layer => layer.name)
-                            .join(','));
-                    } else {
-                        $location.search('defaultOverlays', null);
-                    }
 
                     if (self.visibleCatalogLayers.length !== 0) {
                         $location.search('visibleCatalogLayers', self.visibleCatalogLayers
@@ -522,39 +461,16 @@ angular.module('anol.permalink')
                         self.view.setZoom(mapParams.zoom);
                     }
 
-                    if (mapParams.defaultOverlays !== undefined) {
-                        self.visibleDefaultOverlays = [];
-                        for (const layer of LayersService.overlayLayers) {
-                            // find in the layers the overlay layers that are defined
-                            var visible = mapParams.defaultOverlays.indexOf(layer.name) !== -1;
-                            // if found then set its visibility to true
-                            layer.setVisible(visible);
-                            if (visible) {
-                                self.visibleDefaultOverlays.push(layer);
-                            }
-                        }
-                    }
-
-                    if (angular.isDefined(mapParams.backgroundLayer)) {
-                        self.backgroundLayer = LayersService.backgroundLayers
-                            .find(l => l.getVisible());
-
-                        setTimeout(() => {
-                            for (const layer of LayersService.backgroundLayers) {
-                                layer.setVisible(layer.name === mapParams.backgroundLayer)
-                            }
-                        }, 0)
-                    } else {
-                        self.backgroundLayer = LayersService.backgroundLayers
-                            .find(l => l.getVisible());
-                    }
-
-                    if (mapParams.layers !== undefined) {
+                    if (angular.isDefined(mapParams.layers)) {
                         for (const layer of permalinkLayers(LayersService.layers())) {
                             const visible = mapParams.layers.indexOf(layer.name) !== -1;
                             layer.setVisible(visible);
                         }
                     }
+
+                    self.visibleLayers = permalinkLayers(LayersService.layers())
+                        .filter(l => l.getVisible());
+
 
                     if (mapParams.catalogLayers !== undefined) {
                         for (const layerName of mapParams.catalogLayers) {
@@ -613,8 +529,6 @@ angular.module('anol.permalink')
                         center: [this.lon, this.lat],
                         crs: this.urlCrs,
                         layers: this.sortedLayerNames(),
-                        defaultOverlays: this.visibleDefaultOverlays.map(l => l.name),
-                        backgroundLayer: this.backgroundLayer.name,
                         catalogLayers: this.catalogLayers.map(l => l.name),
                         visibleCatalogLayers: this.visibleCatalogLayers.map(l => l.name),
                         catalogGroups: this.catalogGroups.map(l => l.name),
@@ -629,9 +543,7 @@ angular.module('anol.permalink')
                         zoom: this.zoom,
                         center: [this.lon, this.lat],
                         crs: this.urlCrs,
-                        layers: this.sortedLayerNames(),
-                        defaultOverlays: this.defaultOverlays.map(l => l.name),
-                        backgroundLayer: this.backgroundLayer.name
+                        layers: this.sortedLayerNames()
                     };
                 };
 
