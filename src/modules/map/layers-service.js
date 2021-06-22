@@ -134,7 +134,7 @@ angular.module('anol.map')
          * @name addBackgroundLayer
          * @methodOf anol.map.LayersService
          * @param {anol.layer} layer Background layer to add
-         * @param {number} idx Position to add backgorund layer at
+         * @param {number} idx Position to add background layer at
          * @description
          * Adds a background layer
          */
