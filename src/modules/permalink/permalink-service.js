@@ -212,6 +212,7 @@ angular.module('anol.permalink')
                     }.bind(self));
 
                     setTimeout(() => {
+                        // bind listeners after initialization
                         for (const layer of permalinkLayers(LayersService.layers())) {
                             layer.onVisibleChange(self.handleVisibleChange, self);
                         }
