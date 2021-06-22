@@ -27,10 +27,10 @@ angular.module('anol.savesettings')
         };
         this.setDeleteUrl = function(deleteUrl) {
             _deleteUrl = deleteUrl;
-        };    
+        };
         this.setProjectName = function(projectName) {
             _projectName = projectName;
-        };    
+        };
         this.$get = ['$rootScope', '$window', '$q', '$http', '$timeout', '$translate', 'PermalinkService', 'PrintPageService', 'ProjectSettings', 'LayersService', 'CatalogService',
             function($rootScope, $window, $q, $http, $timeout, $translate, PermalinkService, PrintPageService, ProjectSettings, LayersService, CatalogService) {
                 /**
@@ -72,7 +72,7 @@ angular.module('anol.savesettings')
                     angular.forEach(ProjectSettings, function(value, idx) {
                         if (value.id == data.settings.id) {
                             index = idx;
-                        }   
+                        }
                     });
 
                     if (index > -1) {
@@ -86,10 +86,10 @@ angular.module('anol.savesettings')
                         LayersService.setLayerOrder(settings.layerswitcher.order);
                         LayersService.setCollapsedGroups(settings.layerswitcher.open);
                     })
-            
+
                     // save print settings and check if print tab is open
                     PrintPageService.loadSettings(settings);
-        
+
                     $rootScope.$broadcast('updateSidebar', settings);
                     // load control settings
                     $rootScope.pointMeasureResultSrs = settings.controls.measureSrs;
@@ -113,7 +113,7 @@ angular.module('anol.savesettings')
                     promise.then(function(response) {
                         if (ajax) {
                             self.applyLoadSettings(response.data.settings);
-                        } else {  
+                        } else {
                             $window.location.href = response.data.redirect;
                         }
                         deferred.resolve(response.data);
@@ -124,7 +124,7 @@ angular.module('anol.savesettings')
                             deferred.reject(response.data);
                         }
                     });
-            
+
                     return deferred.promise;
                 };
 
@@ -133,18 +133,18 @@ angular.module('anol.savesettings')
                     var deferred = $q.defer();
 
                     // save all map settings from permalink
-                    var permalinkData = PermalinkService.getSettings();
-                    // save all layer settings 
-                    var layers = LayersService.overLayersAsArray(); 
+                    var permalinkData = PermalinkService.getParameters();
+                    // save all layer settings
+                    var layers = LayersService.overLayersAsArray();
                     var deletedLayers = LayersService.deletedOverlayLayers;
 
-                    var groups = LayersService.getCollapsedGroups(); 
+                    var groups = LayersService.getCollapsedGroups();
                     // save print settings
                     var printData = PrintPageService.getSettings();
                     // save control settings
                     var controls = {
                         'measureSrs': $rootScope.pointMeasureResultSrs,
-                        'catalogVariant': CatalogService.getVariant(), 
+                        'catalogVariant': CatalogService.getVariant(),
                     };
                     var data = {
                         'projectName': self.projectName,
@@ -170,7 +170,7 @@ angular.module('anol.savesettings')
                             deferred.reject(response.data);
                         }
                     });
-            
+
                     return deferred.promise;
                 };
 
@@ -191,9 +191,9 @@ angular.module('anol.savesettings')
                             deferred.reject(response.data);
                         }
                     });
-            
+
                     return deferred.promise;
-                }; 
+                };
 
                 _saveManagerInstance = new SaveSettings(_saveUrl, _loadUrl, _deleteUrl, _projectName);
                 return _saveManagerInstance;
