@@ -49,7 +49,7 @@ angular.module('anol.layerswitcher')
                                 element.html(template);
                                 $compile(template)(scope);
                             });
-                        } 
+                        }
                         scope.collapsed = false;
                         scope.showToggle = false;
                         if (angular.isDefined(scope.$parent.hideMetadata)) {
@@ -141,7 +141,7 @@ angular.module('anol.layerswitcher')
                         }
                         return false;
                     };
-   
+
                     $scope.toggleLayerVisibleByName = function(name) {
                         var layer = LayersService.layerByName(name);
                         if(angular.isDefined(layer)) {
@@ -156,7 +156,7 @@ angular.module('anol.layerswitcher')
                             layer.setVisible(!layer.getVisible());
                         }
                     };
-                    
+
                     $scope.toggleGroupVisibleByName = function(name) {
                         var group = LayersService.groupByName(name);
                         if(angular.isDefined(group)) {
@@ -179,12 +179,12 @@ angular.module('anol.layerswitcher')
                         return false;
                     };
                     $scope.removeLayer = function(layer) {
-                        if (layer.catalogLayer) {
+                        if (layer.catalogLayer || layer.catalog) {
                             CatalogService.removeFromMap(layer);
                         } else {
                             LayersService.removeOverlayLayer(layer);
                         }
-                    };                    
+                    };
                 }
             };
         }]);

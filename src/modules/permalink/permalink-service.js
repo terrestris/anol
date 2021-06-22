@@ -156,11 +156,18 @@ angular.module('anol.permalink')
                     };
                 }
 
+                function isCatalogLayer(layer) {
+                    return layer.catalog || layer.catalogLayer;
+                }
+
                 function permalinkLayers(layers) {
                     return layers
-                        .filter(l => angular.isDefined(l) && angular.isDefined(l.name))
-                        .flatMap(l => l instanceof anol.layer.Group ? l.layers : [l])
-                        .filter(l => (angular.isUndefined(l.catalog) || l.catalog === false) && l.permalink !== false);
+                        .filter(l => angular.isDefined(l.name) && !isCatalogLayer(l) && l.permalink !== false);
+                }
+
+                function catalogLayers(layers) {
+                    return layers
+                        .filter(l => isCatalogLayer(l));
                 }
 
                 function remove(array, elem) {
@@ -209,11 +216,25 @@ angular.module('anol.permalink')
                         self.moveendHandler();
                     }.bind(self));
 
+                    // This will be called on layers from LayersService.flattedLayers().
+                    // This contains all background and overlay layers including
+                    // catalog layers but no groups.
                     function addLayers(layers) {
                         for (const layer of permalinkLayers(layers)) {
                             layer.onVisibleChange(self.handleVisibleChange, self);
                             if (layer.getVisible()) {
                                 self.visibleLayers.push(layer);
+                            }
+                        }
+
+                        for (const layer of catalogLayers(layers)) {
+                            layer.onVisibleChange(self.handleVisibleChange);
+                            if (angular.isUndefined(layer.anolGroup)) {
+                                // if the layer has a group it as included via the group
+                                self.catalogLayers.push(layer);
+                            }
+                            if (layer.getVisible()) {
+                                self.visibleCatalogLayers.push(layer);
                             }
                         }
                     }
@@ -223,18 +244,19 @@ angular.module('anol.permalink')
                             layer.offVisibleChange(self.handleVisibleChange);
                             remove(self.visibleLayers, layer);
                         }
+
+                        for (const layer of catalogLayers(layers)) {
+                            layer.offVisibleChange(self.handleVisibleChange);
+                            remove(self.catalogLayers, layer);
+                            remove(self.visibleCatalogLayers, layer);
+                        }
                     }
 
+                    // This will be called on layers from CatalogService.addedCatalogGroups().
+                    // This contains all catalog layer groups.
                     function addCatalogGroups(groups) {
                         for (const group of groups) {
                             group.onVisibleChange(self.handleVisibleChange, self);
-                            for (const layer of group.layers) {
-                                layer.onVisibleChange(self.handleVisibleChange, self);
-                                if (layer.getVisible()) {
-                                    self.visibleCatalogLayers.push(layer);
-                                }
-                            }
-
                             self.catalogGroups.push(group);
                             if (group.getVisible()) {
                                 self.visibleCatalogGroups.push(group);
@@ -247,28 +269,6 @@ angular.module('anol.permalink')
                             group.offVisibleChange(self.handleVisibleChange);
                             remove(self.catalogGroups, group);
                             remove(self.visibleCatalogGroups, group);
-                            for (const layer of group.layers) {
-                                layer.offVisibleChange(self.handleVisibleChange);
-                                remove(self.visibleCatalogLayers, layer);
-                            }
-                        }
-                    }
-
-                    function addCatalogLayers(layers) {
-                        for (const layer of layers) {
-                            layer.onVisibleChange(self.handleVisibleChange);
-                            self.catalogLayers.push(layer);
-                            if (layer.getVisible()) {
-                                self.visibleCatalogLayers.push(layer);
-                            }
-                        }
-                    }
-
-                    function removeCatalogLayers(layers) {
-                        for (const layer of layers) {
-                            layer.offVisibleChange(self.handleVisibleChange);
-                            remove(self.catalogLayers, layer);
-                            remove(self.visibleCatalogLayers, layer);
                         }
                     }
 
@@ -277,15 +277,14 @@ angular.module('anol.permalink')
                     self.updateMapFromParameters(extractMapParams(params) || {})
                         .then(() => {
                             setTimeout(() => {
-                                addLayers(LayersService.layers());
+                                addLayers(LayersService.flattedLayers());
                                 addCatalogGroups(CatalogService.addedCatalogGroups());
-                                addCatalogLayers(CatalogService.addedCatalogLayers());
                                 self.generatePermalink();
                             }, 0);
 
 
                             $rootScope.$watchCollection(function () {
-                                return LayersService.layers();
+                                return LayersService.flattedLayers();
                             }, function (newVal, oldVal) {
                                 const {added, removed} = arrayChanges(newVal, oldVal);
 
@@ -309,20 +308,6 @@ angular.module('anol.permalink')
 
                                 addCatalogGroups(added);
                                 removeCatalogGroups(removed);
-                                self.generatePermalink();
-                            });
-
-                            $rootScope.$watchCollection(function () {
-                                return CatalogService.addedCatalogLayers();
-                            }, function (newVal, oldVal) {
-                                const {added, removed} = arrayChanges(newVal, oldVal);
-
-                                if (added.length + removed.length === 0) {
-                                    return;
-                                }
-
-                                addCatalogLayers(added);
-                                removeCatalogLayers(removed);
                                 self.generatePermalink();
                             });
                         });
