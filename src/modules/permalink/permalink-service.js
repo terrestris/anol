@@ -52,12 +52,6 @@ angular.module('anol.permalink')
                 catalogLayers = catalogLayersParam.split(',');
             }
 
-            var visibleCatalogGroupsParam = getParamString('visibleCatalogGroups', params);
-            var visibleCatalogGroups;
-            if (visibleCatalogGroupsParam !== false && visibleCatalogGroupsParam !== '') {
-                visibleCatalogGroups = visibleCatalogGroupsParam.split(',');
-            }
-
             var catalogGroupsParam = getParamString('catalogGroups', params);
             var catalogGroups;
             if (catalogGroupsParam !== false && catalogGroupsParam !== '') {
@@ -100,10 +94,6 @@ angular.module('anol.permalink')
                 result.catalogGroups = catalogGroups;
             }
 
-            if (angular.isDefined(visibleCatalogGroups)) {
-                result.visibleCatalogGroups = visibleCatalogGroups;
-            }
-
             if (angular.isDefined(fitParams)) {
                 if (fitParams.length === 5) {
                     result.fit = {
@@ -144,8 +134,8 @@ angular.module('anol.permalink')
             _precision = precision;
         };
 
-        this.$get = ['$rootScope', '$q', '$location', 'MapService', 'LayersService', 'CatalogService',
-            function ($rootScope, $q, $location, MapService, LayersService, CatalogService) {
+        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService',
+            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService) {
 
                 function arrayChanges(newArray, oldArray) {
                     newArray = angular.isDefined(newArray) ? newArray : [];
@@ -156,11 +146,18 @@ angular.module('anol.permalink')
                     };
                 }
 
+                function isCatalogLayer(layer) {
+                    return layer.catalog || layer.catalogLayer;
+                }
+
                 function permalinkLayers(layers) {
                     return layers
-                        .filter(l => angular.isDefined(l) && angular.isDefined(l.name))
-                        .flatMap(l => l instanceof anol.layer.Group ? l.layers : [l])
-                        .filter(l => (angular.isUndefined(l.catalog) || l.catalog === false) && l.permalink !== false);
+                        .filter(l => angular.isDefined(l.name) && !isCatalogLayer(l) && l.permalink !== false);
+                }
+
+                function catalogLayers(layers) {
+                    return layers
+                        .filter(l => isCatalogLayer(l));
                 }
 
                 function remove(array, elem) {
@@ -196,7 +193,6 @@ angular.module('anol.permalink')
                     self.visibleLayers = [];
                     self.visibleCatalogLayers = [];
                     self.catalogLayers = [];
-                    self.visibleCatalogGroups = [];
                     self.catalogGroups = [];
 
                     self.urlCrs = urlCrs;
@@ -209,11 +205,22 @@ angular.module('anol.permalink')
                         self.moveendHandler();
                     }.bind(self));
 
+                    // This will be called on layers from LayersService.flattedLayers().
+                    // This contains all background and overlay layers including
+                    // catalog layers but no groups.
                     function addLayers(layers) {
                         for (const layer of permalinkLayers(layers)) {
                             layer.onVisibleChange(self.handleVisibleChange, self);
                             if (layer.getVisible()) {
                                 self.visibleLayers.push(layer);
+                            }
+                        }
+
+                        for (const layer of catalogLayers(layers)) {
+                            layer.onVisibleChange(self.handleVisibleChange, self);
+                            self.catalogLayers.push(layer);
+                            if (layer.getVisible()) {
+                                self.visibleCatalogLayers.push(layer);
                             }
                         }
                     }
@@ -223,22 +230,20 @@ angular.module('anol.permalink')
                             layer.offVisibleChange(self.handleVisibleChange);
                             remove(self.visibleLayers, layer);
                         }
+
+                        for (const layer of catalogLayers(layers)) {
+                            layer.offVisibleChange(self.handleVisibleChange);
+                            remove(self.catalogLayers, layer);
+                            remove(self.visibleCatalogLayers, layer);
+                        }
                     }
 
+                    // This will be called on layers from CatalogService.addedCatalogGroups().
+                    // This contains all catalog layer groups.
                     function addCatalogGroups(groups) {
                         for (const group of groups) {
                             group.onVisibleChange(self.handleVisibleChange, self);
-                            for (const layer of group.layers) {
-                                layer.onVisibleChange(self.handleVisibleChange, self);
-                                if (layer.getVisible()) {
-                                    self.visibleCatalogLayers.push(layer);
-                                }
-                            }
-
                             self.catalogGroups.push(group);
-                            if (group.getVisible()) {
-                                self.visibleCatalogGroups.push(group);
-                            }
                         }
                     }
 
@@ -246,29 +251,6 @@ angular.module('anol.permalink')
                         for (const group of groups) {
                             group.offVisibleChange(self.handleVisibleChange);
                             remove(self.catalogGroups, group);
-                            remove(self.visibleCatalogGroups, group);
-                            for (const layer of group.layers) {
-                                layer.offVisibleChange(self.handleVisibleChange);
-                                remove(self.visibleCatalogLayers, layer);
-                            }
-                        }
-                    }
-
-                    function addCatalogLayers(layers) {
-                        for (const layer of layers) {
-                            layer.onVisibleChange(self.handleVisibleChange);
-                            self.catalogLayers.push(layer);
-                            if (layer.getVisible()) {
-                                self.visibleCatalogLayers.push(layer);
-                            }
-                        }
-                    }
-
-                    function removeCatalogLayers(layers) {
-                        for (const layer of layers) {
-                            layer.offVisibleChange(self.handleVisibleChange);
-                            remove(self.catalogLayers, layer);
-                            remove(self.visibleCatalogLayers, layer);
                         }
                     }
 
@@ -276,16 +258,15 @@ angular.module('anol.permalink')
 
                     self.updateMapFromParameters(extractMapParams(params) || {})
                         .then(() => {
-                            setTimeout(() => {
-                                addLayers(LayersService.layers());
-                                addCatalogGroups(CatalogService.addedCatalogGroups());
-                                addCatalogLayers(CatalogService.addedCatalogLayers());
-                                self.generatePermalink();
-                            }, 0);
-
+                            return $timeout(() => {}, 0);
+                        })
+                        .then(() => {
+                            addLayers(LayersService.flattedLayers());
+                            addCatalogGroups(CatalogService.addedCatalogGroups());
+                            self.generatePermalink();
 
                             $rootScope.$watchCollection(function () {
-                                return LayersService.layers();
+                                return LayersService.flattedLayers();
                             }, function (newVal, oldVal) {
                                 const {added, removed} = arrayChanges(newVal, oldVal);
 
@@ -311,20 +292,6 @@ angular.module('anol.permalink')
                                 removeCatalogGroups(removed);
                                 self.generatePermalink();
                             });
-
-                            $rootScope.$watchCollection(function () {
-                                return CatalogService.addedCatalogLayers();
-                            }, function (newVal, oldVal) {
-                                const {added, removed} = arrayChanges(newVal, oldVal);
-
-                                if (added.length + removed.length === 0) {
-                                    return;
-                                }
-
-                                addCatalogLayers(added);
-                                removeCatalogLayers(removed);
-                                self.generatePermalink();
-                            });
                         });
                 };
 
@@ -344,37 +311,17 @@ angular.module('anol.permalink')
                             }
                             self.visibleLayers.push(layer);
                         } else {
-                            const layerIdx = self.visibleLayers.indexOf(layer);
-                            // remove the layer from the sortedByGroup array
-                            if (layerIdx > -1) {
-                                self.visibleLayers.splice(layerIdx, 1);
-                            }
+                            remove(self.visibleLayers, layer);
                         }
                     }
 
-                    if (layer.catalogLayer === true) {
-                        if (layer instanceof anol.layer.Group || (layer.hasGroup() && layer.anolGroup.layers.length == 1)) {
-                            if (typeof layer.hasGroup == 'function' && layer.hasGroup()) {
-                                layerName = layer.anolGroup.name;
-                            }
+                    const isLayerGroup = layer instanceof anol.layer.Group || (layer.hasGroup() && layer.anolGroup.layers.length == 1);
 
-                            if (angular.isDefined(layerName) && layer.getVisible()) {
-                                self.visibleCatalogGroups.push(layer);
-                            } else {
-                                const layerIdx = self.visibleCatalogGroups.indexOf(layer);
-                                if (layerIdx > -1) {
-                                    self.visibleCatalogGroups.splice(layerIdx, 1);
-                                }
-                            }
+                    if (layer.catalogLayer === true && !isLayerGroup) {
+                        if (angular.isDefined(layerName) && layer.getVisible()) {
+                            self.visibleCatalogLayers.push(layer);
                         } else {
-                            if (angular.isDefined(layerName) && layer.getVisible()) {
-                                self.visibleCatalogLayers.push(layer);
-                            } else {
-                                const layerIdx = self.visibleCatalogLayers.indexOf(layer);
-                                if (layerIdx > -1) {
-                                    self.visibleCatalogLayers.splice(layerIdx, 1);
-                                }
-                            }
+                            remove(self.visibleCatalogLayers, layer);
                         }
                     }
                     self.generatePermalink();
@@ -455,14 +402,6 @@ angular.module('anol.permalink')
                         $location.search('catalogLayers', null);
                     }
 
-                    if (self.visibleCatalogGroups.length !== 0) {
-                        $location.search('visibleCatalogGroups', self.visibleCatalogGroups
-                            .map(layer => layer.name)
-                            .join(','));
-                    } else {
-                        $location.search('visibleCatalogGroups', null);
-                    }
-
                     if (self.catalogGroups.length !== 0) {
                         $location.search('catalogGroups', self.catalogGroups
                             .map(layer => layer.name)
@@ -491,32 +430,12 @@ angular.module('anol.permalink')
                         }
                     }
 
-                    if (mapParams.catalogLayers !== undefined) {
-                        for (const layerName of mapParams.catalogLayers) {
-                            const visible = mapParams.visibleCatalogLayers &&
-                                mapParams.visibleCatalogLayers.indexOf(layerName) > -1;
-                            CatalogService.addToMap(layerName, visible);
-                        }
-                    }
-
                     var catalogGroupPromises = [];
                     if (mapParams.catalogGroups !== undefined) {
                         for (const groupName of mapParams.catalogGroups) {
-                            const visible = mapParams.visibleCatalogGroups &&
-                                mapParams.visibleCatalogGroups.indexOf(groupName) > -1;
-                            var group = CatalogService.addGroupToMap(groupName, visible);
+                            var group = CatalogService.addGroupToMap(groupName, false);
                             if (group) {
                                 catalogGroupPromises.push(group);
-                                group.then(function (group) {
-                                    if (group.layers.length > 1) {
-                                        for (const layer of group.layers) {
-                                            if (mapParams.visibleCatalogLayers) {
-                                                const visible = mapParams.visibleCatalogLayers.indexOf(layer.name) > -1;
-                                                layer.setVisible(visible);
-                                            }
-                                        }
-                                    }
-                                });
                             }
                         }
                     }
@@ -528,7 +447,41 @@ angular.module('anol.permalink')
                         });
                     }
 
-                    return $q.all(catalogGroupPromises).then(function () {
+                    return $q.all(catalogGroupPromises).then(function (groups) {
+                        const available = angular.isDefined(mapParams.catalogLayers) ?
+                            angular.extend(mapParams.catalogLayers) : [];
+
+                        let toRemove = [];
+
+                        for (const group of groups) {
+                            if (group.layers.length > 1) {
+                                for (const layer of group.layers) {
+                                    const idx = available.indexOf(layer.name);
+                                    if (idx > -1) {
+                                        if (mapParams.visibleCatalogLayers) {
+                                            const visible = mapParams.visibleCatalogLayers.indexOf(layer.name) > -1;
+                                            layer.setVisible(visible);
+                                        }
+                                        available.splice(idx, 1);
+                                    } else {
+                                        toRemove.push(layer);
+                                    }
+                                }
+                            }
+                        }
+
+                        for (const layerName of available) {
+                            const visible = mapParams.visibleCatalogLayers &&
+                                mapParams.visibleCatalogLayers.indexOf(layerName) > -1;
+                            CatalogService.addToMap(layerName, visible);
+                        }
+
+                        return $timeout(() => toRemove, 0);
+                    }).then(function (toRemove) {
+                        for (const layer of toRemove) {
+                            CatalogService.removeFromMap(layer);
+                        }
+
                         if (angular.isDefined(self.deferred)) {
                             self.deferred.resolve();
                         }
@@ -547,7 +500,6 @@ angular.module('anol.permalink')
                         catalogLayers: this.catalogLayers.map(l => l.name),
                         visibleCatalogLayers: this.visibleCatalogLayers.map(l => l.name),
                         catalogGroups: this.catalogGroups.map(l => l.name),
-                        visibleCatalogGroups: this.visibleCatalogGroups.map(l => l.name),
                         sidebar: sidebar,
                         sidebarStatus: sidebarStatus
                     };
