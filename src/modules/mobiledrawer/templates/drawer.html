@@ -1,0 +1,8 @@
+<div class="anol-mobiledrawer" ng-class="{'anol-mobiledrawer-open': open, 'anol-mobiledrawer-closed': !open}">
+    <span class="anol-mobiledrawer-button btn btn-default" ng-click="open = !open">
+        <span class="glyphicon" ng-class="{'glyphicon-menu-left': !open, 'glyphicon-menu-right': open}"></span>
+    </span>
+    <div class="anol-mobiledrawer-content" ng-if="open" ng-class="{'hide-on-mobile': true}">
+        <ng-transclude></ng-transclude>
+    </div>
+</div>

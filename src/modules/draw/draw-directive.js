@@ -52,7 +52,8 @@ angular.module('anol.draw')
                     pointTooltipPlacement: '@',
                     lineTooltipPlacement: '@',
                     polygonTooltipPlacement: '@',
-                    liveMeasure: '<'
+                    liveMeasure: '<',
+                    shortText: '<?'
                 },
                 template: function(tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -84,6 +85,8 @@ angular.module('anol.draw')
                         scope.lineTooltipPlacement : 'right';
                     scope.polygonTooltipPlacement = angular.isDefined(scope.polygonTooltipPlacement) ?
                         scope.polygonTooltipPlacement : 'right';
+                    scope.shortText = angular.isDefined(scope.shortText) ?
+                        scope.shortText : false
 
                     scope.activeLayer = undefined;
                     scope.selectedFeature = undefined;
@@ -105,7 +108,7 @@ angular.module('anol.draw')
                             'anol.draw.BADGE_MAX'
                         ]).then(function(translations) {
                             scope.badgeTexts = {
-                                current: translations['anol.draw.BADGE_CURRENT'],
+                                current: scope.shortText ? '#' : translations['anol.draw.BADGE_CURRENT'],
                                 min: translations['anol.draw.BADGE_MIN'],
                                 max: translations['anol.draw.BADGE_MAX']
                             };
