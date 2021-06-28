@@ -253,7 +253,7 @@ $screen-xs: 480px
 
   button
     background-image: url('../img/anol-geolocate.svg')
-    background-repeat: no-repeat;
+    background-repeat: no-repeat
     background-position: center
     background-size: 100%
 
@@ -270,7 +270,7 @@ $screen-xs: 480px
 
   button
     background-image: url('../img/anol-measure-line.svg')
-    background-repeat: no-repeat;
+    background-repeat: no-repeat
     background-position: center
     background-size: 100%
 
@@ -286,7 +286,7 @@ $screen-xs: 480px
 
   button
     background-image: url('../img/anol-measure-area.svg')
-    background-repeat: no-repeat;
+    background-repeat: no-repeat
     background-position: center
     background-size: 100%
 
@@ -298,20 +298,20 @@ $screen-xs: 480px
  */
 .anol-print
   pre
-    background-color: inherit;
-    border: none;
-    border-radius: 0;
-    color: inherit;
-    display: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    margin: 0;
-    padding: 0;
-    word-break: inherit;
-    word-wrap: inherit;
-    font-family: inherit;
-    font-size: inherit;
-    overflow: inherit;
+    background-color: inherit
+    border: none
+    border-radius: 0
+    color: inherit
+    display: inherit
+    font-size: inherit
+    line-height: inherit
+    margin: 0
+    padding: 0
+    word-break: inherit
+    word-wrap: inherit
+    font-family: inherit
+    font-size: inherit
+    overflow: inherit
 
 /**
  * anol-searchbox
@@ -441,6 +441,35 @@ $screen-xs: 480px
     display: none
 
 /**
+ * mobiledrawer
+ */
+.anol-mobiledrawer
+  @media (min-width: $screen-xs)
+    display: none
+  @media (max-width: $screen-xs)
+    position: absolute
+    z-index: 1
+    top: 4em
+    right: 0.5em
+    &.anol-mobiledrawer-open
+      width: 300px
+
+    background-color: white
+
+    border: 1px solid lightgrey
+    border-radius: 2px
+
+    .anol-mobiledrawer-content
+      padding: 0.2em
+
+    > *
+      display: table-cell
+    .anol-mobiledrawer-button
+      position: relative
+      vertical-align: center
+      border: none
+
+/**
  * common
  */
 .pointer
@@ -449,5 +478,6 @@ $screen-xs: 480px
 .spinner
   width: 16px
   height: 16px
-  margin: 0.5em auto 0 auto;
+  margin: 0.5em auto 0 auto
   background-image: url('data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==')
+
