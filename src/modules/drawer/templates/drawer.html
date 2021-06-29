@@ -1,0 +1,8 @@
+<div class="anol-drawer" ng-class="{'anol-drawer-open': open, 'anol-drawer-closed': !open}">
+    <span class="anol-drawer-button btn btn-default" ng-click="open = !open">
+        <span class="glyphicon" ng-class="{'glyphicon-menu-left': !open, 'glyphicon-menu-right': open}"></span>
+    </span>
+    <div class="anol-drawer-content" ng-if="open">
+        <ng-transclude></ng-transclude>
+    </div>
+</div>
