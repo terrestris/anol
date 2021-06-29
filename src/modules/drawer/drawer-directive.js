@@ -1,7 +1,7 @@
 import './module.js';
 
-angular.module('anol.mobiledrawer')
-    .directive('anolMobiledrawer', [
+angular.module('anol.drawer')
+    .directive('anolDrawer', [
         function() {
             return {
                 restrict: 'A',

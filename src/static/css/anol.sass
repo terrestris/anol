@@ -441,33 +441,30 @@ $screen-xs: 480px
     display: none
 
 /**
- * mobiledrawer
+ * drawer
  */
-.anol-mobiledrawer
-  @media (min-width: $screen-xs)
-    display: none
-  @media (max-width: $screen-xs)
-    position: absolute
-    z-index: 1
-    top: 4em
-    right: 0.5em
-    &.anol-mobiledrawer-open
-      width: 300px
+.anol-drawer
+  position: absolute
+  z-index: 1
+  top: 4em
+  right: 0.5em
+  &.anol-drawer-open
+    width: 300px
 
-    background-color: white
+  background-color: white
 
-    border: 1px solid lightgrey
-    border-radius: 2px
+  border: 1px solid lightgrey
+  border-radius: 2px
 
-    .anol-mobiledrawer-content
-      padding: 0.2em
+  .anol-drawer-content
+    padding: 0.2em
 
-    > *
-      display: table-cell
-    .anol-mobiledrawer-button
-      position: relative
-      vertical-align: center
-      border: none
+  > *
+    display: table-cell
+  .anol-drawer-button
+    position: relative
+    vertical-align: center
+    border: none
 
 /**
  * common
