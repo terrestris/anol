@@ -128,12 +128,12 @@ angular.module('anol.measure')
                             width: 2,
                             opacity: 0.75
                         }),
-                        fill: new _style.Fill({
+                        fill: new Fill({
                             color: 'rgba(227, 0, 20, 0.75)'
                         })
                     })
                 }),
-                
+
                 new Style({
                     stroke: new Stroke({
                         color: 'rgba(227, 0, 20, 0.75)',

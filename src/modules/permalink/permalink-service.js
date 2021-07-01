@@ -424,7 +424,7 @@ angular.module('anol.permalink')
                     }
 
                     if (angular.isDefined(mapParams.layers)) {
-                        for (const layer of permalinkLayers(LayersService.layers())) {
+                        for (const layer of permalinkLayers(LayersService.flattedLayers())) {
                             const visible = mapParams.layers.indexOf(layer.name) !== -1;
                             layer.setVisible(visible);
                         }
