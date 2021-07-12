@@ -6,7 +6,8 @@ angular.module('anol.drawer')
             return {
                 restrict: 'A',
                 scope: {
-                    'open': '<?'
+                    'open': '<?',
+                    'label': '<?'
                 },
                 replace: true,
                 transclude: true,

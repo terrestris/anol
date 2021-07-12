@@ -5,4 +5,7 @@
     <div class="anol-drawer-content" ng-if="open">
         <ng-transclude></ng-transclude>
     </div>
+    <div class="anol-drawer-label" ng-if="label && !open">
+        <h5>{{ label }}</h5>
+    </div>
 </div>

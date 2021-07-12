@@ -53,7 +53,10 @@ angular.module('anol.draw')
                     lineTooltipPlacement: '@',
                     polygonTooltipPlacement: '@',
                     liveMeasure: '<',
-                    shortText: '<?'
+                    shortText: '<?',
+                    drawTitle: '<?',
+                    modifyLabel: '<?',
+                    removeLabel: '<?'
                 },
                 template: function(tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -86,7 +89,7 @@ angular.module('anol.draw')
                     scope.polygonTooltipPlacement = angular.isDefined(scope.polygonTooltipPlacement) ?
                         scope.polygonTooltipPlacement : 'right';
                     scope.shortText = angular.isDefined(scope.shortText) ?
-                        scope.shortText : false
+                        scope.shortText : false;
 
                     scope.activeLayer = undefined;
                     scope.selectedFeature = undefined;
