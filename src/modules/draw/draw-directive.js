@@ -97,10 +97,6 @@ angular.module('anol.draw')
                     var controls = [];
                     var drawPointControl, drawLineControl, drawPolygonControl, modifyControl;
 
-                    // disabled by default. Will be enabled, when feature selected
-                    var removeButtonElement = element.find('.draw-remove');
-                    removeButtonElement.addClass('disabled');
-
                     function translateBadgeTexts() {
                         $translate([
                             'anol.draw.BADGE_CURRENT',
@@ -237,11 +233,9 @@ angular.module('anol.draw')
                         $olOn(selectInteraction, 'select', function(evt) {
                             if(evt.selected.length === 0) {
                                 scope.selectedFeature = undefined;
-                                removeButtonElement.addClass('disabled');
                                 ensureMeasureOverlayRemoved();
                             } else {
                                 scope.selectedFeature = evt.selected[0];
-                                removeButtonElement.removeClass('disabled');
                                 if (angular.isFunction(scope.onModifySelect)) {
                                     scope.onModifySelect({ layer: scope.activeLayer, feature: scope.selectedFeature });
                                 }
@@ -372,15 +366,16 @@ angular.module('anol.draw')
                         }
                     };
 
-                    scope.modify = function() {
+                    scope.toggleModify = function() {
+                        scope.modifyActive = !scope.modifyActive;
                         if(modifyControl.disabled === true) {
                             return;
                         }
-                        if(modifyControl.active) {
+                        if (scope.modifyActive) {
+                            modifyControl.activate();
+                        } else {
                             modifyControl.deactivate();
                             ensureMeasureOverlayRemoved();
-                        } else {
-                            modifyControl.activate();
                         }
                     };
 
@@ -510,8 +505,7 @@ angular.module('anol.draw')
                     modifyControl.onActivate(function() {
                         MapService.addCursorPointerCondition(changeCursorCondition);
                     });
-                    modifyControl.onDeactivate(function(control) {
-                        removeButtonElement.addClass('disabled');
+                    modifyControl.onDeactivate(function() {
                         MapService.removeCursorPointerCondition(changeCursorCondition);
                     });
                     controls.push(modifyControl);
@@ -582,7 +576,6 @@ angular.module('anol.draw')
                         modifyControl.disable();
                         modifyControl.interactions = [];
 
-
                         if(angular.isDefined(visibleDewatcher)) {
                             visibleDewatcher();
                         }
@@ -606,12 +599,6 @@ angular.module('anol.draw')
                         if(angular.isDefined(newActiveLayer)) {
                             bindActiveLayer(newActiveLayer);
                         }
-                    });
-
-                    scope.$watch(function() {
-                        return modifyControl.active;
-                    }, function() {
-                        scope.modifyActive = modifyControl.active;
                     });
 
                     $document.on('keypress', function(e) {
