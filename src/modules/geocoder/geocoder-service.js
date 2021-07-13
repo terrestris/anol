@@ -54,7 +54,7 @@ angular.module('anol.geocoder')
                 });
             }
         });
-        
+
         this.$get = [function() {
         /**
          * @ngdoc service
@@ -64,6 +64,7 @@ angular.module('anol.geocoder')
             var Geocoder = function(configs) {
                 var self = this;
                 self.configs = configs;
+                self.geocoders = {};
             };
 
             Geocoder.prototype.addConfig = function(config, type) {
@@ -102,9 +103,22 @@ angular.module('anol.geocoder')
             };
 
             Geocoder.prototype.configByName = function(name) {
-                return this.configs[name];
+                return this.configs.filter(c => c.name === name)[0];
             };
-     
+
+            Geocoder.prototype.getGeocoder = function (name) {
+                if (this.geocoders[name] === undefined) {
+                    const config = this.configByName(name);
+                    if (!config) {
+                        throw new Error(`Config with name ${name} not found`);
+                    }
+
+                    this.geocoders[name] = new anol.geocoder[config.geocoder](config.geocoderOptions);
+                }
+
+                return this.geocoders[name];
+            }
+
             return new Geocoder(_configs);
         }];
     }]);

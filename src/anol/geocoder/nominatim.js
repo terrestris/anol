@@ -14,14 +14,14 @@ import BaseGeocoder from './base.js';
 
 class Nominatim extends BaseGeocoder {
 
-    constructor(_options) {
-        if(angular.isUndefined(_options)) {
+    constructor(options) {
+        if(angular.isUndefined(options)) {
             super();
             return;
         }
-        _options.url = 'http://nominatim.openstreetmap.org/search?';
-        super(_options);
-        this.options = _options;
+        options.url = 'http://nominatim.openstreetmap.org/search?';
+        super(options);
+        this.options = options;
         this.CLASS_NAME = 'anol.geocoder.Nominatim';
         this.RESULT_PROJECTION = 'EPSG:4326';
     }
