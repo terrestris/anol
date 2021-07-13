@@ -349,7 +349,9 @@ angular.module('anol.draw')
 
                     var unselectFeature = function () {
                         var select = modifyControl.interactions.find(function (i) { return i instanceof Select; });
-                        select.getFeatures().clear();
+                        if (select) {
+                            select.getFeatures().clear();
+                        }
                         scope.selectedFeature = undefined;
                     };
 
