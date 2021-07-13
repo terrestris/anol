@@ -94,7 +94,9 @@ angular.module('anol.draw')
                     scope.activeLayer = undefined;
                     scope.selectedFeature = undefined;
                     scope.modifyActive = false;
+                    scope.removeActive = false;
                     scope.badgeTexts = {};
+                    scope.activeDrawType = undefined;
                     translateBadgeTexts();
 
                     var controls = [];
@@ -196,6 +198,10 @@ angular.module('anol.draw')
                             });
                         }
 
+                        $olOn(draw, 'drawend', function () {
+                            scope.activeDrawType = undefined;
+                        });
+
                         // bind post draw actions
                         angular.forEach(postDrawActions, function(postDrawAction) {
                             $olOn(draw, 'drawend', postDrawAction);
@@ -238,9 +244,21 @@ angular.module('anol.draw')
                                 scope.selectedFeature = undefined;
                                 ensureMeasureOverlayRemoved();
                             } else {
-                                scope.selectedFeature = evt.selected[0];
-                                if (angular.isFunction(scope.onModifySelect)) {
-                                    scope.onModifySelect({ layer: scope.activeLayer, feature: scope.selectedFeature });
+                                const feat = evt.selected[0];
+                                if (scope.removeActive) {
+                                    layer.getSource().removeFeature(feat);
+                                    if (angular.isFunction(scope.postDeleteAction)) {
+                                        scope.postDeleteAction({ feature: feat, layer: layer });
+                                    }
+                                    scope.toggleRemove();
+                                } else {
+                                    scope.selectedFeature = feat;
+                                    if (angular.isFunction(scope.onModifySelect)) {
+                                        scope.onModifySelect({
+                                            layer: scope.activeLayer,
+                                            feature: feat
+                                        });
+                                    }
                                 }
                             }
                         });
@@ -343,6 +361,7 @@ angular.module('anol.draw')
                         if(drawPointControl.active) {
                             drawPointControl.deactivate();
                         } else {
+                            scope.activeDrawType = 'Point';
                             drawPointControl.activate();
                         }
                     };
@@ -354,6 +373,7 @@ angular.module('anol.draw')
                         if(drawLineControl.active) {
                             drawLineControl.deactivate();
                         } else {
+                            scope.activeDrawType = 'LineString';
                             drawLineControl.activate();
                         }
                     };
@@ -365,11 +385,13 @@ angular.module('anol.draw')
                         if(drawPolygonControl.active) {
                             drawPolygonControl.deactivate();
                         } else {
+                            scope.activeDrawType = 'Polygon';
                             drawPolygonControl.activate();
                         }
                     };
 
                     scope.toggleModify = function() {
+                        scope.removeActive = false;
                         scope.modifyActive = !scope.modifyActive;
                         if(modifyControl.disabled === true) {
                             return;
@@ -382,14 +404,18 @@ angular.module('anol.draw')
                         }
                     };
 
-                    scope.remove = function() {
-                        if(angular.isDefined(scope.selectedFeature)) {
-                            scope.activeLayer.olLayer.getSource().removeFeature(scope.selectedFeature);
-                            if (angular.isFunction(scope.postDeleteAction)) {
-                                scope.postDeleteAction({ feature: scope.selectedFeature, layer: scope.activeLayer });
-                            }
-                            unselectFeature();
-                            ensureMeasureOverlayRemoved();
+                    scope.toggleRemove = function() {
+                        scope.modifyActive = false;
+                        unselectFeature();
+                        ensureMeasureOverlayRemoved();
+                        scope.removeActive = !scope.removeActive;
+                        if(modifyControl.disabled === true) {
+                            return;
+                        }
+                        if (scope.removeActive) {
+                            modifyControl.activate();
+                        } else {
+                            modifyControl.deactivate();
                         }
                     };
 
