@@ -7,4 +7,24 @@ angular.module('anol')
                 });
             });
         }
+    }])
+    .service('ReadyService', ['$rootScope', function ($rootScope) {
+        class ReadyService {
+            constructor () {
+                this.required = [];
+            }
+
+            waitFor (name) {
+                this.required.push(name);
+            }
+
+            notifyAboutReady (name) {
+                this.required = this.required.flatMap(elem => elem === name ? [] : [elem]);
+                if (this.required.length === 0) {
+                    $rootScope.appReady = true;
+                }
+            }
+        }
+
+        return new ReadyService();
     }]);
