@@ -57,15 +57,15 @@ angular.module('anol.geocoder')
                     if (scope.geocoderConfigs.length === 1) {
                         scope.searchDropdown = false;
                     }
-                    scope.activeGeocoder = undefined;
+                    scope.activeGeocoderConfig = undefined;
                     angular.forEach(scope.geocoderConfigs, function(geocoder) {
                         if (geocoder.selected) {
-                            scope.activeGeocoder = geocoder;
+                            scope.activeGeocoderConfig = geocoder;
                         }
                     });
 
-                    if (angular.isUndefined(scope.activeGeocoder)) {
-                        scope.activeGeocoder = scope.geocoderConfigs[0]
+                    if (angular.isUndefined(scope.activeGeocoderConfig)) {
+                        scope.activeGeocoderConfig = scope.geocoderConfigs[0]
                     }
 
                     var removeMarkerInteraction;
@@ -73,8 +73,8 @@ angular.module('anol.geocoder')
                         'anol.geocoder.PLACEHOLDER',
                     ]).then(function(translations) {
                         scope.placeholderBase = translations['anol.geocoder.PLACEHOLDER'];
-                        scope.geocoder = setAnolGeocoder(scope.activeGeocoder);
-                        scope.markerLayer = createMarkerLayer(scope.activeGeocoder);
+                        scope.geocoder = setAnolGeocoder(scope.activeGeocoderConfig);
+                        scope.markerLayer = createMarkerLayer(scope.activeGeocoderConfig);
                     });
 
                     scope.searchTerm = '';
@@ -210,27 +210,27 @@ angular.module('anol.geocoder')
                         }
                     };
 
-                    function createMarkerStyle(activeGeocoder) {
+                    function createMarkerStyle(activeGeocoderConfig) {
                         var markerStyle = {};
-                        if (angular.isDefined(activeGeocoder.resultMarker)) {
+                        if (angular.isDefined(activeGeocoderConfig.resultMarker)) {
                             markerStyle = {
-                              'externalGraphic': scope.graphicFileUrl + activeGeocoder.resultMarker.graphicFile,
-                              'graphicWidth': activeGeocoder.resultMarker.graphicWidth,
-                              'graphicHeight': activeGeocoder.resultMarker.graphicHeight,
-                              'graphicYAnchor': activeGeocoder.resultMarker.graphicYAnchor,
-                              'graphicScale': activeGeocoder.resultMarker.graphicScale,
-                              'strokeColor': activeGeocoder.resultMarker.strokeColor,
-                              'strokeWidth': activeGeocoder.resultMarker.strokeWidth,
-                              'strokeOpacity': activeGeocoder.resultMarker.strokeOpacity,
-                              'fillOpacity': activeGeocoder.resultMarker.fillOpacity,
-                              'fillColor': activeGeocoder.resultMarker.fillColor,
+                              'externalGraphic': scope.graphicFileUrl + activeGeocoderConfig.resultMarker.graphicFile,
+                              'graphicWidth': activeGeocoderConfig.resultMarker.graphicWidth,
+                              'graphicHeight': activeGeocoderConfig.resultMarker.graphicHeight,
+                              'graphicYAnchor': activeGeocoderConfig.resultMarker.graphicYAnchor,
+                              'graphicScale': activeGeocoderConfig.resultMarker.graphicScale,
+                              'strokeColor': activeGeocoderConfig.resultMarker.strokeColor,
+                              'strokeWidth': activeGeocoderConfig.resultMarker.strokeWidth,
+                              'strokeOpacity': activeGeocoderConfig.resultMarker.strokeOpacity,
+                              'fillOpacity': activeGeocoderConfig.resultMarker.fillOpacity,
+                              'fillColor': activeGeocoderConfig.resultMarker.fillColor,
                             }
                         }
                         return markerStyle;
                     }
 
-                    function createMarkerLayer(activeGeocoder) {
-                        var markerStyle = createMarkerStyle(activeGeocoder)
+                    function createMarkerLayer(activeGeocoderConfig) {
+                        var markerStyle = createMarkerStyle(activeGeocoderConfig)
                         var markerLayer = new anol.layer.Feature({
                             name: 'geocoderLayer',
                             displayInLayerswitcher: false,
@@ -243,14 +243,14 @@ angular.module('anol.geocoder')
                         return markerLayer;
                     }
 
-                    function setAnolGeocoder(activeGeocoder) {
-                        scope.highlight = angular.isDefined(activeGeocoder.highlight) ? parseInt(activeGeocoder.highlight) : false;
-                        scope.highlight = activeGeocoder.resultMarkerVisible;
-                        scope.zoomLevel = activeGeocoder.zoom;
-                        scope.urlMarkerColor = activeGeocoder.urlMarkerColor;
-                        scope.placeholder = activeGeocoder.title;
+                    function setAnolGeocoder(activeGeocoderConfig) {
+                        scope.highlight = angular.isDefined(activeGeocoderConfig.highlight) ? parseInt(activeGeocoderConfig.highlight) : false;
+                        scope.highlight = activeGeocoderConfig.resultMarkerVisible;
+                        scope.zoomLevel = activeGeocoderConfig.zoom;
+                        scope.urlMarkerColor = activeGeocoderConfig.urlMarkerColor;
+                        scope.placeholder = activeGeocoderConfig.title;
 
-                        return GeocoderService.getGeocoder(activeGeocoder.name);
+                        return GeocoderService.getGeocoder(activeGeocoderConfig.name);
                     }
 
                     scope.$watchCollection('geocoderConfigs', function(newValue) {
@@ -259,7 +259,7 @@ angular.module('anol.geocoder')
                         var layerGeocoderConfigs = [];
 
                         angular.forEach(newValue, function(geocoder) {
-                            if (geocoder.name === scope.activeGeocoder.name) {
+                            if (geocoder.name === scope.activeGeocoderConfig.name) {
                                 found = true;
                             }
                             if (geocoder.type === 'base') {
@@ -301,8 +301,8 @@ angular.module('anol.geocoder')
                             }
                         }
 
-                        if (scope.activeGeocoder.autoSearchChars && !scope.geocoder.isCatalog) {
-                            if (value.length >= scope.activeGeocoder.autoSearchChars) {
+                        if (scope.activeGeocoderConfig.autoSearchChars && !scope.geocoder.isCatalog) {
+                            if (value.length >= scope.activeGeocoderConfig.autoSearchChars) {
                                 scope.noResults = false;
                                 scope.startSearch();
                             } else {
@@ -357,7 +357,7 @@ angular.module('anol.geocoder')
                             return;
                         }
 
-                        if (scope.activeGeocoder.autoSearchChars) {
+                        if (scope.activeGeocoderConfig.autoSearchChars) {
                             var found = false;
                             angular.forEach(scope.searchResults, function(result) {
                                 if (result.sml === 1) {
@@ -401,7 +401,7 @@ angular.module('anol.geocoder')
                         element.find('.anol-searchbox').removeClass('open');
                         if (!scope.geocoder.isCatalog) {
                             if (angular.isUndefined(scope.searchString) ||
-                                scope.searchString.length < scope.activeGeocoder.autoSearchChars) {
+                                scope.searchString.length < scope.activeGeocoderConfig.autoSearchChars) {
                                     return;
                             }
                         }
@@ -438,8 +438,8 @@ angular.module('anol.geocoder')
                     };
 
                     scope.activateGeocoder = function(geocoder) {
-                        scope.activeGeocoder = geocoder;
-                        scope.geocoder = setAnolGeocoder(scope.activeGeocoder);
+                        scope.activeGeocoderConfig = geocoder;
+                        scope.geocoder = setAnolGeocoder(scope.activeGeocoderConfig);
                         scope.showGeocoderList = false;
                         scope.searchResults = [];
                         scope.showResultList = false;
@@ -450,7 +450,7 @@ angular.module('anol.geocoder')
                         scope.searchTerm = undefined;
 
                         // update style and clear source
-                        var markerStyle = createMarkerStyle(scope.activeGeocoder);
+                        var markerStyle = createMarkerStyle(scope.activeGeocoderConfig);
                         var markerSource = scope.markerLayer.olLayer.getSource();
                         markerSource.clear();
                         scope.markerLayer.style = markerStyle;
