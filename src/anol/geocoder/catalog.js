@@ -2,16 +2,11 @@ import BaseGeocoder from './base.js';
 
 class Catalog extends BaseGeocoder {
 
-    constructor(_options) {
-        if(angular.isUndefined(_options)) {
+    constructor(options) {
+        if(angular.isUndefined(options)) {
             super();
             return;
         }
-        var defaults = {};
-        var options = $.extend({},
-            defaults,
-            _options
-        );        
         super(options);
         this.options = options;
         this.step = 0;
@@ -71,9 +66,9 @@ class Catalog extends BaseGeocoder {
         }
         return true;
     }
-    
+
     getData(searchString) {
-        var catalog = this.getStep(); 
+        var catalog = this.getStep();
         var data = {
             catalog: catalog,
             term: searchString

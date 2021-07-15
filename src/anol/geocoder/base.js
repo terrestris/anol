@@ -1,12 +1,22 @@
 
 class BaseGeocoder {
 
-    constructor(_options) {
-        if(angular.isUndefined(_options)) {
+    constructor(options) {
+        if(angular.isUndefined(options)) {
             return;
         }
-        this.url = _options.url;
-        this.options = _options;
+        let url = options.url;
+        if (options.proxyUrl) {
+            let proxyUrl = options.proxyUrl;
+            if (proxyUrl[proxyUrl.length - 1] !== '/') {
+                proxyUrl += '/';
+            }
+            url = proxyUrl + url;
+        }
+
+        this.url = url;
+
+        this.options = options;
         this.isCatalog = false;
         this.CLASS_NAME = 'anol.geocoder.Base';
     }
