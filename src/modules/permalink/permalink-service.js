@@ -1,5 +1,6 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
+import {getArrayParam, getObjectParam} from "../urlmarkers/util";
 
 angular.module('anol.permalink')
 
@@ -10,40 +11,6 @@ angular.module('anol.permalink')
     .provider('PermalinkService', [function () {
         var _urlCrs;
         var _precision = 100000;
-
-        /**
-         * @param {string} param
-         * @param {string[]} params
-         * @return {boolean|string}
-         */
-        var getParamString = function (param, params) {
-            if (angular.isUndefined(params[param])) {
-                return false;
-            }
-            var p = params[param];
-            if (angular.isArray(p)) {
-                p = p[p.length - 1];
-            }
-            return p;
-        };
-
-        const getArrayParam = function (param, params) {
-            const paramString = getParamString(param, params);
-            if (paramString !== false && paramString !== '') {
-                return paramString.split(',');
-            }
-        };
-
-        const getObjectParam = function (param, params) {
-            const paramString = getParamString(param, params);
-            if (paramString !== false && paramString !== '') {
-                const result = {};
-                for (const [key, value] of paramString.split('|').map(value => value.split(':'))) {
-                    result[key] = value;
-                }
-                return result;
-            }
-        };
 
         var extractMapParams = function (params) {
             var mapParams = getArrayParam('map', params);
@@ -455,7 +422,7 @@ angular.module('anol.permalink')
                             if ($rootScope.searchConfigsReady && $rootScope.layersReady) {
                                 const geocoder = GeocoderService.getGeocoder(config)
 
-                                geocodePromise = geocoder.request(term)
+                                geocodePromise = $q.resolve(geocoder.request(term))
                                     .then(results => {
                                         ReadyService.notifyAboutReady('geocoding');
                                         $rootScope.$broadcast('showSearchResult', results[0], false);
