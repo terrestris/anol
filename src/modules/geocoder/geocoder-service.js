@@ -1,4 +1,5 @@
 import './module.js';
+import WKT from 'ol/format/WKT.js';
 
 angular.module('anol.geocoder')
 
@@ -124,7 +125,15 @@ angular.module('anol.geocoder')
                 }
 
                 return this.geocoders[name];
-            }
+            };
+
+            Geocoder.prototype.parseFeature = function (result, projection) {
+                const format = new WKT();
+                return format.readFeature(result.wkt, {
+                    dataProjection: result.projectionCode,
+                    featureProjection: projection
+                });
+            };
 
             return new Geocoder(_configs);
         }];
