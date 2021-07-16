@@ -39,7 +39,7 @@ angular.module('anol.map')
             _removeLayerHandlers.push(handler);
         };
 
-        this.$get = ['PopupsService', function( PopupsService) {
+        this.$get = ['$rootScope', 'PopupsService', function($rootScope, PopupsService) {
         /**
          * @ngdoc service
          * @name anol.map.LayersService
@@ -90,6 +90,8 @@ angular.module('anol.map')
                 angular.forEach(self.backgroundLayers, function(backgroundLayer) {
                     backgroundLayer.setVisible(angular.equals(activeBackgroundLayer, backgroundLayer));
                 });
+
+                $rootScope.layersReady = true;
             };
             /**
          * @ngdoc method

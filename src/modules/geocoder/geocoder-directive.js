@@ -27,8 +27,10 @@ angular.module('anol.geocoder')
  * Search for a location string on given geocoder, display and select results
  */
 
-    .directive('anolGeocoderSearchbox', ['$templateRequest', '$filter', '$compile', '$timeout', '$location', '$translate', 'MapService', 'ControlsService', 'InteractionsService', 'LayersService', 'GeocoderService', 'UrlMarkersService',
-        function($templateRequest, $filter, $compile, $timeout, $location, $translate, MapService, ControlsService, InteractionsService, LayersService, GeocoderService, UrlMarkersService) {
+    .directive('anolGeocoderSearchbox', ['$rootScope', '$templateRequest', '$filter', '$compile', '$timeout', '$location',
+        '$translate', 'MapService', 'ControlsService', 'InteractionsService', 'LayersService', 'GeocoderService', 'UrlMarkersService',
+        function($rootScope, $templateRequest, $filter, $compile, $timeout, $location, $translate, MapService,
+                 ControlsService, InteractionsService, LayersService, GeocoderService, UrlMarkersService) {
             return {
                 restrict: 'A',
                 require: '?^anolMap',
@@ -36,7 +38,7 @@ angular.module('anol.geocoder')
                 scope: {
                     graphicFileUrl: '@',
                     showSearchDropdown: '=',
-                    toUrlMarker: '=?',
+                    toUrlMarker: '=?'
                 },
                 template: function(tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -271,9 +273,9 @@ angular.module('anol.geocoder')
                         })
 
                         if (!found) {
-                            angular.forEach(scope.geocoderConfigs, function(geocoder) {
-                                if (geocoder.selected) {
-                                    scope.activateGeocoder(geocoder)
+                            angular.forEach(scope.geocoderConfigs, function(geocoderConfig) {
+                                if (geocoderConfig.selected) {
+                                    scope.activateGeocoder(geocoderConfig)
                                 }
                             });
                         };
@@ -313,6 +315,10 @@ angular.module('anol.geocoder')
                                 scope.searchInProgress = false;
                             }
                         }
+                    });
+
+                    scope.$on('showSearchResult', function (evt, result) {
+                        scope.showResult(result, false, { animate: false });
                     });
 
                     scope.filterCatalogResults = function() {
@@ -437,8 +443,8 @@ angular.module('anol.geocoder')
                             });
                     };
 
-                    scope.activateGeocoder = function(geocoder) {
-                        scope.activeGeocoderConfig = geocoder;
+                    scope.activateGeocoder = function(geocoderConfig) {
+                        scope.activeGeocoderConfig = geocoderConfig;
                         scope.geocoder = setAnolGeocoder(scope.activeGeocoderConfig);
                         scope.showGeocoderList = false;
                         scope.searchResults = [];
@@ -553,8 +559,8 @@ angular.module('anol.geocoder')
                         }
                     };
 
-                    scope.showResult = function(result, fromResultList) {
-                        if (this.geocoder.isCatalog && this.geocoder.hasNextStep()) {
+                    scope.showResult = function(result, fromResultList, { animate = true } = {}) {
+                        if (this.geocoder && this.geocoder.isCatalog && this.geocoder.hasNextStep()) {
                             scope.selectCatalogResult(result);
                             return;
                         }
@@ -578,7 +584,7 @@ angular.module('anol.geocoder')
                         view.fit(
                             scope.markerLayer.olLayer.getSource().getExtent(),
                             {
-                                duration: 1000,
+                                duration: animate ? 1000 : undefined,
                                 maxZoom: scope.zoomLevel,
                             }
                         );

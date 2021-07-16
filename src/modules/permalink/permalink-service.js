@@ -27,42 +27,38 @@ angular.module('anol.permalink')
             return p;
         };
 
+        const getArrayParam = function (param, params) {
+            const paramString = getParamString(param, params);
+            if (paramString !== false && paramString !== '') {
+                return paramString.split(',');
+            }
+        };
+
+        const getObjectParam = function (param, params) {
+            const paramString = getParamString(param, params);
+            if (paramString !== false && paramString !== '') {
+                const result = {};
+                for (const [key, value] of paramString.split('|').map(value => value.split(':'))) {
+                    result[key] = value;
+                }
+                return result;
+            }
+        };
+
         var extractMapParams = function (params) {
-            var mapParam = getParamString('map', params);
-            var mapParams;
-            if (mapParam !== false) {
-                mapParams = mapParam.split(',');
-            }
+            var mapParams = getArrayParam('map', params);
 
-            var layersParam = getParamString('layers', params);
-            var layers;
-            if (layersParam !== false && layersParam !== '') {
-                layers = layersParam.split(',');
-            }
+            var layers = getArrayParam('layers', params);
 
-            var visibleCatalogLayersParam = getParamString('visibleCatalogLayers', params);
-            var visibleCatalogLayers;
-            if (visibleCatalogLayersParam !== false && visibleCatalogLayersParam !== '') {
-                visibleCatalogLayers = visibleCatalogLayersParam.split(',');
-            }
+            var visibleCatalogLayers = getArrayParam('visibleCatalogLayers', params);
 
-            var catalogLayersParam = getParamString('catalogLayers', params);
-            var catalogLayers;
-            if (catalogLayersParam !== false && catalogLayersParam !== '') {
-                catalogLayers = catalogLayersParam.split(',');
-            }
+            var catalogLayers = getArrayParam('catalogLayers', params);
 
-            var catalogGroupsParam = getParamString('catalogGroups', params);
-            var catalogGroups;
-            if (catalogGroupsParam !== false && catalogGroupsParam !== '') {
-                catalogGroups = catalogGroupsParam.split(',');
-            }
+            var catalogGroups = getArrayParam('catalogGroups', params);
 
-            var fitParam = getParamString('fit', params);
-            var fitParams;
-            if (fitParam !== false && fitParam !== '') {
-                fitParams = fitParam.split(',');
-            }
+            var fitParams = getArrayParam('fit', params);
+
+            var geocode = getObjectParam('geocode', params);
 
             var result = {}
             if (angular.isDefined(mapParams)) {
@@ -107,6 +103,10 @@ angular.module('anol.permalink')
                 }
             }
 
+            if (angular.isDefined(geocode)) {
+                result.geocode = geocode;
+            }
+
             return result;
         };
 
@@ -134,8 +134,8 @@ angular.module('anol.permalink')
             _precision = precision;
         };
 
-        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService',
-            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService) {
+        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService',
+            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService) {
 
                 function arrayChanges(newArray, oldArray) {
                     newArray = angular.isDefined(newArray) ? newArray : [];
@@ -447,7 +447,28 @@ angular.module('anol.permalink')
                         });
                     }
 
-                    return $q.all(catalogGroupPromises).then(function (groups) {
+                    let geocodePromise;
+                    if (mapParams.geocode !== undefined) {
+                        const { config, term } = mapParams.geocode;
+                        ReadyService.waitFor('geocoding');
+                        $rootScope.$watch(scope => scope.searchConfigsReady && scope.layersReady, function () {
+                            if ($rootScope.searchConfigsReady && $rootScope.layersReady) {
+                                const geocoder = GeocoderService.getGeocoder(config)
+
+                                geocodePromise = geocoder.request(term)
+                                    .then(results => {
+                                        ReadyService.notifyAboutReady('geocoding');
+                                        $rootScope.$broadcast('showSearchResult', results[0], false);
+                                        $location.search('geocode', undefined);
+                                        $location.replace();
+                                    });
+                            }
+                        });
+                    } else {
+                        geocodePromise = $q.resolve();
+                    }
+
+                    const groupPromise = $q.all(catalogGroupPromises).then(function (groups) {
                         const available = angular.isDefined(mapParams.catalogLayers) ?
                             angular.extend(mapParams.catalogLayers) : [];
 
@@ -476,12 +497,14 @@ angular.module('anol.permalink')
                             CatalogService.addToMap(layerName, visible);
                         }
 
-                        return $timeout(() => toRemove, 0);
+                        return $timeout(() => toRemove);
                     }).then(function (toRemove) {
                         for (const layer of toRemove) {
                             CatalogService.removeFromMap(layer);
                         }
+                    });
 
+                    return $q.all([geocodePromise, groupPromise]).then(() => {
                         if (angular.isDefined(self.deferred)) {
                             self.deferred.resolve();
                         }
