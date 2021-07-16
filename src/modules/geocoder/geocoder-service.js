@@ -55,7 +55,7 @@ angular.module('anol.geocoder')
             }
         });
 
-        this.$get = [function() {
+        this.$get = ['$rootScope', function($rootScope) {
         /**
          * @ngdoc service
          * @name anol.map.GeocoderService
@@ -66,6 +66,13 @@ angular.module('anol.geocoder')
                 self.configs = configs;
                 self.geocoders = {};
             };
+
+            Geocoder.prototype.addConfigs = function (configs) {
+                for (const config of configs) {
+                    this.addConfig(config);
+                }
+                $rootScope.searchConfigsReady = true;
+            }
 
             Geocoder.prototype.addConfig = function(config, type) {
                 var self = this;

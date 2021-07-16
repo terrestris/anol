@@ -8,7 +8,7 @@ angular.module('anol')
             });
         }
     }])
-    .service('ReadyService', ['$rootScope', function ($rootScope) {
+    .service('ReadyService', ['$rootScope', '$timeout', 'MapService', function ($rootScope, $timeout, MapService) {
         class ReadyService {
             constructor () {
                 this.required = [];
@@ -22,6 +22,8 @@ angular.module('anol')
                 this.required = this.required.flatMap(elem => elem === name ? [] : [elem]);
                 if (this.required.length === 0) {
                     $rootScope.appReady = true;
+                    // must happen after next cycle, i.e. after $timeout(.., 0)
+                    $timeout(() => MapService.getMap().updateSize(), 10);
                 }
             }
         }
