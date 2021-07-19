@@ -196,7 +196,6 @@ angular.module('anol.permalink')
                     self.map = MapService.getMap();
                     self.view = self.map.getView();
                     self.visibleLayers = [];
-                    self.visibleCatalogLayers = [];
                     self.catalogLayers = [];
                     self.catalogGroups = [];
 
@@ -225,7 +224,7 @@ angular.module('anol.permalink')
                             layer.onVisibleChange(self.handleVisibleChange, self);
                             self.catalogLayers.push(layer);
                             if (layer.getVisible()) {
-                                self.visibleCatalogLayers.push(layer);
+                                self.visibleLayers.push(layer);
                             }
                         }
                     }
@@ -239,7 +238,7 @@ angular.module('anol.permalink')
                         for (const layer of catalogLayers(layers)) {
                             layer.offVisibleChange(self.handleVisibleChange);
                             remove(self.catalogLayers, layer);
-                            remove(self.visibleCatalogLayers, layer);
+                            remove(self.visibleLayers, layer);
                         }
                     }
 
@@ -322,9 +321,9 @@ angular.module('anol.permalink')
 
                     if (layer.catalogLayer === true && !isLayerGroup) {
                         if (angular.isDefined(layerName) && layer.getVisible()) {
-                            self.visibleCatalogLayers.push(layer);
+                            self.visibleLayers.push(layer);
                         } else {
-                            remove(self.visibleCatalogLayers, layer);
+                            remove(self.visibleLayers, layer);
                         }
                     }
                     self.generatePermalink();
@@ -367,13 +366,7 @@ angular.module('anol.permalink')
 
                     $location.search('layers', this.visibleLayers.map(l => l.name).join(','));
 
-                    if (self.visibleCatalogLayers.length !== 0) {
-                        $location.search('visibleCatalogLayers', self.visibleCatalogLayers
-                            .map(layer => layer.name)
-                            .join(','));
-                    } else {
-                        $location.search('visibleCatalogLayers', null);
-                    }
+                    $location.search('visibleCatalogLayers', null);
 
                     if (self.catalogLayers.length !== 0) {
                         $location.search('catalogLayers', self.catalogLayers
@@ -408,7 +401,7 @@ angular.module('anol.permalink')
 
                     if (angular.isDefined(mapParams.layers)) {
                         for (const layer of permalinkLayers(LayersService.flattedLayers())) {
-                            const visible = mapParams.layers.indexOf(layer.name) !== -1;
+                            const visible = mapParams.layers.includes(layer.name);
                             layer.setVisible(visible);
                         }
                     }
@@ -455,8 +448,8 @@ angular.module('anol.permalink')
                                 for (const layer of group.layers) {
                                     const idx = available.indexOf(layer.name);
                                     if (idx > -1) {
-                                        if (mapParams.visibleCatalogLayers) {
-                                            const visible = mapParams.visibleCatalogLayers.indexOf(layer.name) > -1;
+                                        if (mapParams.layers) {
+                                            const visible = mapParams.layers.indexOf(layer.name) > -1;
                                             layer.setVisible(visible);
                                         }
                                         available.splice(idx, 1);
@@ -468,8 +461,8 @@ angular.module('anol.permalink')
                         }
 
                         for (const layerName of available) {
-                            const visible = mapParams.visibleCatalogLayers &&
-                                mapParams.visibleCatalogLayers.indexOf(layerName) > -1;
+                            const visible = mapParams.layers &&
+                                mapParams.layers.indexOf(layerName) > -1;
                             CatalogService.addToMap(layerName, visible);
                         }
 
@@ -503,7 +496,6 @@ angular.module('anol.permalink')
                         crs: this.urlCrs,
                         layers: this.visibleLayers.map(l => l.name),
                         catalogLayers: this.catalogLayers.map(l => l.name),
-                        visibleCatalogLayers: this.visibleCatalogLayers.map(l => l.name),
                         catalogGroups: this.catalogGroups.map(l => l.name),
                         sidebar: sidebar,
                         sidebarStatus: sidebarStatus
