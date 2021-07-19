@@ -81,7 +81,7 @@ angular.module('anol.urlmarkers')
         this.$get = ['$location', 'MapService', 'LayersService', function ($location, MapService, LayersService) {
             /**
              * @ngdoc service
-             * @name anol.urlmarkers.UrlMarkersService
+             * @name anol.urlmarkers.UrlMarkerService
              *
              * @description
              * Adds markers specified in url. A valid url marker looks like marker=color:ff0000|label:foobar|coord:8.21,53.15|srs:4326
