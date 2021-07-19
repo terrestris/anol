@@ -3,9 +3,9 @@ import Overlay from 'ol/Overlay';
 
 angular.module('anol.urlmarkers')
 
-    .directive('anolUrlMarkers', ['$compile', 'UrlMarkersService', 'MapService', function($compile, UrlMarkersService, MapService) {
+    .directive('anolUrlMarkers', ['$compile', 'UrlMarkerService', 'MapService', function($compile, UrlMarkerService, MapService) {
         return function(scope) {
-            if(!UrlMarkersService.usePopup) {
+            if(!UrlMarkerService.usePopup) {
                 return;
             }
 
@@ -17,8 +17,8 @@ angular.module('anol.urlmarkers')
                             '</div>' +
                             '</div>';
 
-            scope.$watchCollection(() => UrlMarkersService.getFeatures(), function () {
-                for (const feature of UrlMarkersService.getFeatures()) {
+            scope.$watchCollection(() => UrlMarkerService.getFeatures(), function () {
+                for (const feature of UrlMarkerService.getFeatures()) {
                     if (feature.get('label')) {
                         var overlayTemplate = angular.element(angular.copy(popupTemplate));
                         overlayTemplate.find('.anol-popup-content').text(feature.get('label'));

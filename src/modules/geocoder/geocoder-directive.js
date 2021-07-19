@@ -129,9 +129,9 @@ angular.module('anol.geocoder')
                         }
                         // var urlMarkerParams = [];
                         // angular.forEach(urlMarker, function(v, k) {
-                        //   urlMarkerParams.push(k + UrlMarkersService.keyValueDelimiter + v);
+                        //   urlMarkerParams.push(k + UrlMarkerService.keyValueDelimiter + v);
                         // });
-                        // var urlMarkerString = urlMarkerParams.join(UrlMarkersService.propertiesDelimiter);
+                        // var urlMarkerString = urlMarkerParams.join(UrlMarkerService.propertiesDelimiter);
                         // urlMarkers.push(urlMarkerString);
                         // $location.search('marker', urlMarkers);
                         // scope.urlMarkerAdded = true;

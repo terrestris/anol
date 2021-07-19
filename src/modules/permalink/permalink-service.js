@@ -101,8 +101,8 @@ angular.module('anol.permalink')
             _precision = precision;
         };
 
-        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService', 'UrlMarkersService',
-            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService, UrlMarkersService) {
+        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService', 'UrlMarkerService',
+            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService, UrlMarkerService) {
 
                 function arrayChanges(newArray, oldArray) {
                     newArray = angular.isDefined(newArray) ? newArray : [];
@@ -416,32 +416,14 @@ angular.module('anol.permalink')
 
                     let geocodePromise;
                     if (mapParams.geocode !== undefined) {
-                        const { config, term, label } = mapParams.geocode;
+                        const { config, term, highlight, label } = mapParams.geocode;
                         ReadyService.waitFor('geocoding');
-                        $rootScope.$watch(scope => scope.searchConfigsReady && scope.layersReady, function () {
-                            if ($rootScope.searchConfigsReady && $rootScope.layersReady) {
-                                const geocoder = GeocoderService.getGeocoder(config)
-
-                                geocodePromise = $q.resolve(geocoder.request(term))
-                                    .then(results => {
-                                        ReadyService.notifyAboutReady('geocoding');
-                                        const proj = MapService.getMap().getView().getProjection();
-
-                                        const feature = GeocoderService.parseFeature(results[0], proj);
-
-                                        UrlMarkersService.createMarker({
-                                            geometry: feature.getGeometry(),
-                                            label,
-                                            fit: true
-                                        });
-
-                                        $location.search('geocode', undefined);
-                                        $location.replace();
-
-                                        UrlMarkersService.updateUrl();
-                                    });
-                            }
-                        });
+                        geocodePromise = GeocoderService.handleUrlGeocode(term, config, highlight, label)
+                            .then(() => {
+                                ReadyService.notifyAboutReady('geocoding');
+                                $location.search('geocode', undefined);
+                                $location.replace();
+                            });
                     } else {
                         geocodePromise = $q.resolve();
                     }
