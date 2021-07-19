@@ -140,23 +140,32 @@ angular.module('anol.geocoder')
                     return $q(resolve => {
                         $rootScope.$watch(scope => scope.searchConfigsReady && scope.layersReady, () => {
                             if ($rootScope.searchConfigsReady && $rootScope.layersReady) {
-                                const geocoder = this.getGeocoder(config)
-                                resolve(geocoder.request(term))
+                                const geocoder = config ?
+                                    this.getGeocoder(config) :
+                                    this.getGeocoder(this.getConfigs()[0]);
+                                resolve(geocoder.request(term));
                             }
                         });
                     })
                         .then(results => {
+                            if (results.length === 0) {
+                                $rootScope.geocodeFailed = true;
+                                return;
+                            }
+
                             const proj = MapService.getMap().getView().getProjection();
 
                             const feature = this.parseFeature(results[0], proj);
 
-                            UrlMarkerService.createMarker({
-                                geometry: feature.getGeometry(),
-                                label,
-                                fit: true
-                            });
+                            if (highlight) {
+                                UrlMarkerService.createMarker({
+                                    geometry: feature.getGeometry(),
+                                    label,
+                                    fit: true
+                                });
 
-                            UrlMarkerService.updateUrl();
+                                UrlMarkerService.updateUrl();
+                            }
                         });
                 }
             }
