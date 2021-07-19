@@ -361,6 +361,7 @@ angular.module('anol.draw')
                             return;
                         }
                         if(drawPointControl.active) {
+                            scope.activeDrawType = undefined;
                             drawPointControl.deactivate();
                         } else {
                             scope.activeDrawType = 'Point';
@@ -373,6 +374,7 @@ angular.module('anol.draw')
                             return;
                         }
                         if(drawLineControl.active) {
+                            scope.activeDrawType = undefined;
                             drawLineControl.deactivate();
                         } else {
                             scope.activeDrawType = 'LineString';
@@ -385,6 +387,7 @@ angular.module('anol.draw')
                             return;
                         }
                         if(drawPolygonControl.active) {
+                            scope.activeDrawType = undefined;
                             drawPolygonControl.deactivate();
                         } else {
                             scope.activeDrawType = 'Polygon';
