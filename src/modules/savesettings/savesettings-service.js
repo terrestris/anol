@@ -135,7 +135,7 @@ angular.module('anol.savesettings')
                     // save all map settings from permalink
                     var permalinkData = PermalinkService.getParameters();
                     // save all layer settings
-                    var layers = LayersService.overLayersAsArray();
+                    var layers = LayersService.overlayLayersAsArray();
                     var deletedLayers = LayersService.deletedOverlayLayers;
 
                     var groups = LayersService.getCollapsedGroups();

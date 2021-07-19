@@ -1,6 +1,38 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
-import {getArrayParam, getObjectParam} from "../urlmarkers/util";
+import {getArrayParam, getObjectParam, getParamString} from "./util";
+
+function parseLayerOrder(params) {
+    const layerOrderParamString = getParamString('layerOrder', params);
+    if (layerOrderParamString !== false && layerOrderParamString !== '') {
+        return layerOrderParamString
+            .split('|')
+            .map(param => {
+                const splitted = param.split(':');
+                return {
+                    name: splitted[0],
+                    layers: splitted.length === 1
+                        ? []
+                        : splitted[1].split(',')
+                };
+            });
+    }
+}
+
+function stringifyLayerOrder(layers) {
+    return layers
+        .map(layer => {
+            if (layer.layers && layer.layers.length > 0) {
+                return layer.name + ':' + layer.layers.join(',')
+            } else if (layer.name) {
+                return layer.name;
+            } else {
+                return undefined;
+            }
+        })
+        .filter(l => l)
+        .join('|');
+}
 
 angular.module('anol.permalink')
 
@@ -27,6 +59,8 @@ angular.module('anol.permalink')
 
             var geocode = getObjectParam('geocode', params);
 
+            const layerOrder = parseLayerOrder(params);
+
             var result = {}
             if (angular.isDefined(mapParams)) {
                 if (mapParams.length === 4) {
@@ -50,7 +84,7 @@ angular.module('anol.permalink')
             }
 
             if (angular.isDefined(visibleCatalogLayers)) {
-                result.visibleCatalogLayers = visibleCatalogLayers;
+                result.layers = (result.layers || []).concat(visibleCatalogLayers);
             }
 
             if (angular.isDefined(catalogGroups)) {
@@ -72,6 +106,10 @@ angular.module('anol.permalink')
 
             if (angular.isDefined(geocode)) {
                 result.geocode = geocode;
+            }
+
+            if (angular.isDefined(layerOrder)) {
+                result.layerOrder = layerOrder;
             }
 
             return result;
@@ -101,8 +139,8 @@ angular.module('anol.permalink')
             _precision = precision;
         };
 
-        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService', 'UrlMarkerService',
-            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService, UrlMarkerService) {
+        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService',
+            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService) {
 
                 function arrayChanges(newArray, oldArray) {
                     newArray = angular.isDefined(newArray) ? newArray : [];
@@ -237,12 +275,11 @@ angular.module('anol.permalink')
                             }, function (newVal, oldVal) {
                                 const {added, removed} = arrayChanges(newVal, oldVal);
 
-                                if (added.length + removed.length === 0) {
-                                    return;
+                                if (added.length > 0 || removed.length > 0) {
+                                    addLayers(added);
+                                    removeLayers(removed);
                                 }
 
-                                addLayers(added);
-                                removeLayers(removed);
                                 self.generatePermalink();
                             });
 
@@ -251,12 +288,11 @@ angular.module('anol.permalink')
                             }, function (newVal, oldVal) {
                                 const {added, removed} = arrayChanges(newVal, oldVal);
 
-                                if (added.length + removed.length === 0) {
-                                    return;
+                                if (added.length > 0 || removed.length > 0) {
+                                    addCatalogGroups(added);
+                                    removeCatalogGroups(removed);
                                 }
 
-                                addCatalogGroups(added);
-                                removeCatalogGroups(removed);
                                 self.generatePermalink();
                             });
                         });
@@ -314,28 +350,6 @@ angular.module('anol.permalink')
                 };
 
                 /**
-                 * Sorts layers by group and returns name.
-                 * @return {sting[]}
-                 */
-                Permalink.prototype.sortedLayerNames = function () {
-                    return this.visibleLayers.sort(function (a, b) {
-                        if (angular.isDefined(a.anolGroup)) {
-                            if (angular.isDefined(b.anolGroup)) {
-                                return a.anolGroup.name.localeCompare(b.anolGroup.name, 'de');
-                            } else {
-                                return 1;
-                            }
-                        } else {
-                            if (angular.isDefined(b.anolGroup)) {
-                                return -1;
-                            } else {
-                                return 0;
-                            }
-                        }
-                    }).map(layer => layer.name);
-                };
-
-                /**
                  * @private
                  * @name generatePermalink
                  * @methodOf anol.permalink.PermalinkService
@@ -351,7 +365,7 @@ angular.module('anol.permalink')
 
                     $location.search('map', [self.zoom, self.lon, self.lat, self.urlCrs].join(','));
 
-                    $location.search('layers', this.sortedLayerNames().join(','));
+                    $location.search('layers', this.visibleLayers.map(l => l.name).join(','));
 
                     if (self.visibleCatalogLayers.length !== 0) {
                         $location.search('visibleCatalogLayers', self.visibleCatalogLayers
@@ -378,6 +392,8 @@ angular.module('anol.permalink')
                     }
 
                     $location.search('fit', null);
+
+                    $location.search('layerOrder', stringifyLayerOrder(LayersService.overlayLayersAsArray()));
 
                     $location.replace();
                 };
@@ -462,6 +478,12 @@ angular.module('anol.permalink')
                         for (const layer of toRemove) {
                             CatalogService.removeFromMap(layer);
                         }
+
+                        // layer order
+
+                        if (mapParams.layerOrder !== undefined) {
+                            LayersService.setLayerOrder(mapParams.layerOrder);
+                        }
                     });
 
                     return $q.all([geocodePromise, groupPromise]).then(() => {
@@ -479,7 +501,7 @@ angular.module('anol.permalink')
                         zoom: this.zoom,
                         center: [this.lon, this.lat],
                         crs: this.urlCrs,
-                        layers: this.sortedLayerNames(),
+                        layers: this.visibleLayers.map(l => l.name),
                         catalogLayers: this.catalogLayers.map(l => l.name),
                         visibleCatalogLayers: this.visibleCatalogLayers.map(l => l.name),
                         catalogGroups: this.catalogGroups.map(l => l.name),
@@ -493,7 +515,7 @@ angular.module('anol.permalink')
                         zoom: this.zoom,
                         center: [this.lon, this.lat],
                         crs: this.urlCrs,
-                        layers: this.sortedLayerNames()
+                        layers: this.visibleLayers.map(l => l.name)
                     };
                 };
 
