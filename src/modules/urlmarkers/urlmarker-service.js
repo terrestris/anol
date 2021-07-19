@@ -7,9 +7,9 @@ import {getObjectParam, stringifyObject} from "./util";
 angular.module('anol.urlmarkers')
     /**
      * @ngdoc object
-     * @name anol.urlmarkers.UrlMarkersServiceProvider
+     * @name anol.urlmarkers.UrlMarkerServiceProvider
      */
-    .provider('UrlMarkersService', [function () {
+    .provider('UrlMarkerService', [function () {
         var _defaultSrs;
         var _propertiesDelimiter = '|';
         var _keyValueDelimiter = ':';
@@ -20,7 +20,7 @@ angular.module('anol.urlmarkers')
         /**
          * @ngdoc method
          * @name setDefaultSrs
-         * @methodOf anol.urlmarkers.UrlMarkersServiceProvider
+         * @methodOf anol.urlmarkers.UrlMarkerServiceProvider
          * @param {string} srs default EPSG code of marker coordinates in url
          */
         this.setDefaultSrs = function (srs) {
@@ -30,7 +30,7 @@ angular.module('anol.urlmarkers')
         /**
          * @ngdoc method
          * @name setPropertiesDelimiter
-         * @methodOf anol.urlmarkers.UrlMarkersServiceProvider
+         * @methodOf anol.urlmarkers.UrlMarkerServiceProvider
          * @param {string} delimiter Delimiter separating marker properties
          */
         this.setPropertiesDelimiter = function (delimiter) {
@@ -40,7 +40,7 @@ angular.module('anol.urlmarkers')
         /**
          * @ngdoc method
          * @name setKeyValueDelimiter
-         * @methodOf anol.urlmarkers.UrlMarkersServiceProvider
+         * @methodOf anol.urlmarkers.UrlMarkerServiceProvider
          * @param {string} delimiter Delimiter separating properties keys from values
          */
         this.setKeyValueDelimiter = function (delimiter) {
@@ -50,7 +50,7 @@ angular.module('anol.urlmarkers')
         /**
          * @ngdoc method
          * @name setMarkerStyle
-         * @methodOf anol.urlmarkers.UrlMarkersServiceProvider
+         * @methodOf anol.urlmarkers.UrlMarkerServiceProvider
          * @param {object} style marker style
          */
         this.setMarkerStyle = function (style) {
@@ -60,7 +60,7 @@ angular.module('anol.urlmarkers')
         /**
          * @ngdoc method
          * @name setPopup
-         * @methodOf anol.urlmarkers.UrlMarkersServiceProvider
+         * @methodOf anol.urlmarkers.UrlMarkerServiceProvider
          * @param {boolean} usePopup
          * @description When not using popup a label text is added. This can be styled by markerStyle
          */
@@ -71,7 +71,7 @@ angular.module('anol.urlmarkers')
         /**
          * @ngdoc method
          * @name setPopupOffset
-         * @methodOf anol.urlmarkers.UrlMarkersServiceProvider
+         * @methodOf anol.urlmarkers.UrlMarkerServiceProvider
          * @param {Array.<number>} popupOffset Offset of placed popup. First value is x- second value is y-offset in px
          */
         this.setPopupOffset = function (popupOffset) {
@@ -81,7 +81,7 @@ angular.module('anol.urlmarkers')
         this.$get = ['$location', 'MapService', 'LayersService', function ($location, MapService, LayersService) {
             /**
              * @ngdoc service
-             * @name anol.urlmarkers.UrlMarkersService
+             * @name anol.urlmarkers.UrlMarkerService
              *
              * @description
              * Adds markers specified in url. A valid url marker looks like marker=color:ff0000|label:foobar|coord:8.21,53.15|srs:4326
