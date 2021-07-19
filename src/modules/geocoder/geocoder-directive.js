@@ -1,7 +1,6 @@
 import './module.js';
 import {transform} from 'ol/proj';
 import {unByKey} from 'ol/Observable.js';
-import WKT from 'ol/format/WKT.js';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Select from 'ol/interaction/Select';
@@ -28,9 +27,9 @@ angular.module('anol.geocoder')
  */
 
     .directive('anolGeocoderSearchbox', ['$rootScope', '$templateRequest', '$filter', '$compile', '$timeout', '$location',
-        '$translate', 'MapService', 'ControlsService', 'InteractionsService', 'LayersService', 'GeocoderService', 'UrlMarkersService',
+        '$translate', 'MapService', 'ControlsService', 'InteractionsService', 'LayersService', 'GeocoderService',
         function($rootScope, $templateRequest, $filter, $compile, $timeout, $location, $translate, MapService,
-                 ControlsService, InteractionsService, LayersService, GeocoderService, UrlMarkersService) {
+                 ControlsService, InteractionsService, LayersService, GeocoderService) {
             return {
                 restrict: 'A',
                 require: '?^anolMap',
@@ -559,7 +558,7 @@ angular.module('anol.geocoder')
                         }
                     };
 
-                    scope.showResult = function(result, fromResultList, { animate = true } = {}) {
+                    scope.showResult = function(result, fromResultList) {
                         if (this.geocoder && this.geocoder.isCatalog && this.geocoder.hasNextStep()) {
                             scope.selectCatalogResult(result);
                             return;
@@ -568,11 +567,7 @@ angular.module('anol.geocoder')
                         scope.byResultList = true;
                         var view = MapService.getMap().getView();
 
-                        var format = new WKT();
-                        var feature = format.readFeature(result.wkt, {
-                            dataProjection: result.projectionCode,
-                            featureProjection: view.getProjection().getCode()
-                        });
+                        const feature = GeocoderService.parseFeature(result, view.getProjection());
 
                         // clear marker if result was selected from list
                         if (angular.isDefined(fromResultList) && fromResultList === true) {
@@ -584,7 +579,7 @@ angular.module('anol.geocoder')
                         view.fit(
                             scope.markerLayer.olLayer.getSource().getExtent(),
                             {
-                                duration: animate ? 1000 : undefined,
+                                duration: 1000,
                                 maxZoom: scope.zoomLevel,
                             }
                         );

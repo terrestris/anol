@@ -81,26 +81,29 @@ angular.module('anol.urlmarkers')
         this.$get = ['$location', 'MapService', 'LayersService', function ($location, MapService, LayersService) {
             /**
              * @ngdoc service
-             * @name anol.urlmarkers.UrlMarkersService
+             * @name anol.urlmarkers.UrlMarkerService
              *
              * @description
              * Adds markers specified in url. A valid url marker looks like marker=color:ff0000|label:foobar|coord:8.21,53.15|srs:4326
              */
             class UrlMarkerService {
                 constructor(defaultSrs, propertiesDelimiter, keyValueDelimiter, style, usePopup, popupOffset) {
-                    var self = this;
-                    self.defaultSrs = defaultSrs || MapService.view.getProjection();
-                    self.propertiesDelimiter = propertiesDelimiter;
-                    self.keyValueDelimiter = keyValueDelimiter;
-                    self.style = style;
-                    self.usePopup = usePopup;
-                    self.popupOffset = popupOffset;
+                    this.defaultSrs = defaultSrs || MapService.getMap().getView().getProjection();
+                    this.propertiesDelimiter = propertiesDelimiter;
+                    this.keyValueDelimiter = keyValueDelimiter;
+                    this.style = style;
+                    this.usePopup = usePopup;
+                    this.popupOffset = popupOffset;
 
-                    self.layer = self.createLayer();
+                    this.layer = this.createLayer();
 
-                    self.extractFeaturesFromUrl();
+                    this.extractFeaturesFromUrl();
 
-                    LayersService.addSystemLayer(self.layer);
+                    LayersService.addSystemLayer(this.layer);
+                }
+
+                getFeatures() {
+                    return this.layer.olLayer.getSource().getFeatures();
                 }
 
                 extractFeaturesFromUrl() {
@@ -154,7 +157,7 @@ angular.module('anol.urlmarkers')
 
                 updateUrl() {
                     const mapProjection = MapService.getMap().getView().getProjection().getCode();
-                    const markers = this.layer.olLayer.getSource().getFeatures().map(f => {
+                    const markers = this.getFeatures().map(f => {
                         const params = {};
 
                         let srs = this.defaultSrs;
