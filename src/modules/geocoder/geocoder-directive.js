@@ -53,7 +53,7 @@ angular.module('anol.geocoder')
                             $compile(template)(scope);
                         });
                     }
-                    scope.geocoderConfigs = GeocoderService.getConfigs();
+                    scope.geocoderConfigs = GeocoderService.getSearchBoxConfigs();
 
                     if (scope.geocoderConfigs.length === 1) {
                         scope.searchDropdown = false;
