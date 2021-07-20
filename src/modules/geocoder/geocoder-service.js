@@ -107,8 +107,12 @@ angular.module('anol.geocoder')
                     });
                 }
 
-                getConfigs() {
-                    return this.configs;
+                getSearchBoxConfigs() {
+                    return this.configs.filter(c => c.availableInSearchBox !== false);
+                }
+
+                getUrlGeocodeConfigs() {
+                    return this.configs.filter(c => c.availableInUrlGeocode === true);
                 }
 
                 configByName(name) {
@@ -136,17 +140,33 @@ angular.module('anol.geocoder')
                     });
                 }
 
-                async handleUrlGeocode(term, config, highlight, label) {
-                    const results = await new Promise(resolve => {
+                async handleUrlGeocode(term, configName, highlight, label) {
+                    await new Promise(resolve => {
                         $rootScope.$watch(scope => scope.searchConfigsReady && scope.layersReady, () => {
                             if ($rootScope.searchConfigsReady && $rootScope.layersReady) {
-                                const geocoder = config ?
-                                    this.getGeocoder(config) :
-                                    this.getGeocoder(this.getConfigs()[0]);
-                                resolve(geocoder.request(term));
+                                resolve();
                             }
                         });
                     });
+
+                    let geocoder;
+                    const config = this.configByName(configName);
+                    if (config) {
+                        if (!config.availableInUrlGeocode) {
+                            console.error('Search config is not available in url geocode (missing `availableInUrlGeocode` configuration).')
+                            return;
+                        }
+                        geocoder = this.getGeocoder(configName);
+                    } else {
+                        geocoder = this.getGeocoder(this.getUrlGeocodeConfigs()[0].name);
+                    }
+
+                    if (!geocoder) {
+                        console.error('No geocode config available.')
+                        return;
+                    }
+
+                    const results = await geocoder.request(term);
 
                     if (results.length === 0) {
                         $rootScope.geocodeFailed = true;
@@ -155,16 +175,19 @@ angular.module('anol.geocoder')
 
                     const proj = MapService.getMap().getView().getProjection();
 
-                    const feature = this.parseFeature(results[0], proj);
+                    const geometry = this.parseFeature(results[0], proj).getGeometry();
 
                     if (highlight) {
                         UrlMarkerService.createMarker({
-                            geometry: feature.getGeometry(),
+                            geometry,
                             label,
                             fit: true
                         });
-
-                        UrlMarkerService.updateUrl();
+                    } else {
+                        const map = MapService.getMap();
+                        map.once('postrender', () => {
+                            map.getView().fit(geometry);
+                        });
                     }
                 }
             }
