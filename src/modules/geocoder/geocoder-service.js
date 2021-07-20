@@ -136,8 +136,8 @@ angular.module('anol.geocoder')
                     });
                 }
 
-                handleUrlGeocode(term, config, highlight, label) {
-                    return $q(resolve => {
+                async handleUrlGeocode(term, config, highlight, label) {
+                    const results = await new Promise(resolve => {
                         $rootScope.$watch(scope => scope.searchConfigsReady && scope.layersReady, () => {
                             if ($rootScope.searchConfigsReady && $rootScope.layersReady) {
                                 const geocoder = config ?
@@ -146,27 +146,26 @@ angular.module('anol.geocoder')
                                 resolve(geocoder.request(term));
                             }
                         });
-                    })
-                        .then(results => {
-                            if (results.length === 0) {
-                                $rootScope.geocodeFailed = true;
-                                return;
-                            }
+                    });
 
-                            const proj = MapService.getMap().getView().getProjection();
+                    if (results.length === 0) {
+                        $rootScope.geocodeFailed = true;
+                        return;
+                    }
 
-                            const feature = this.parseFeature(results[0], proj);
+                    const proj = MapService.getMap().getView().getProjection();
 
-                            if (highlight) {
-                                UrlMarkerService.createMarker({
-                                    geometry: feature.getGeometry(),
-                                    label,
-                                    fit: true
-                                });
+                    const feature = this.parseFeature(results[0], proj);
 
-                                UrlMarkerService.updateUrl();
-                            }
+                    if (highlight) {
+                        UrlMarkerService.createMarker({
+                            geometry: feature.getGeometry(),
+                            label,
+                            fit: true
                         });
+
+                        UrlMarkerService.updateUrl();
+                    }
                 }
             }
 
