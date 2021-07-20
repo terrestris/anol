@@ -4,7 +4,7 @@
  * @param {boolean} multi
  * @return {string|string[]}
  */
-function getParamString(param, params, multi = false) {
+export function getParamString(param, params, multi = false) {
     if (angular.isUndefined(params[param])) {
         return '';
     }

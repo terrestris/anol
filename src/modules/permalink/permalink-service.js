@@ -1,6 +1,38 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
-import {getArrayParam, getObjectParam} from "../urlmarkers/util";
+import {getArrayParam, getObjectParam, getParamString} from "./util";
+
+function parseLayerOrder(params) {
+    const layerOrderParamString = getParamString('layerOrder', params);
+    if (layerOrderParamString !== false && layerOrderParamString !== '') {
+        return layerOrderParamString
+            .split('|')
+            .map(param => {
+                const splitted = param.split(':');
+                return {
+                    name: splitted[0],
+                    layers: splitted.length === 1
+                        ? []
+                        : splitted[1].split(',')
+                };
+            });
+    }
+}
+
+function stringifyLayerOrder(layers) {
+    return layers
+        .map(layer => {
+            if (layer.layers && layer.layers.length > 0) {
+                return layer.name + ':' + layer.layers.join(',')
+            } else if (layer.name) {
+                return layer.name;
+            } else {
+                return undefined;
+            }
+        })
+        .filter(l => l)
+        .join('|');
+}
 
 angular.module('anol.permalink')
 
@@ -27,6 +59,8 @@ angular.module('anol.permalink')
 
             var geocode = getObjectParam('geocode', params);
 
+            const layerOrder = parseLayerOrder(params);
+
             var result = {}
             if (angular.isDefined(mapParams)) {
                 if (mapParams.length === 4) {
@@ -50,7 +84,7 @@ angular.module('anol.permalink')
             }
 
             if (angular.isDefined(visibleCatalogLayers)) {
-                result.visibleCatalogLayers = visibleCatalogLayers;
+                result.layers = (result.layers || []).concat(visibleCatalogLayers);
             }
 
             if (angular.isDefined(catalogGroups)) {
@@ -72,6 +106,10 @@ angular.module('anol.permalink')
 
             if (angular.isDefined(geocode)) {
                 result.geocode = geocode;
+            }
+
+            if (angular.isDefined(layerOrder)) {
+                result.layerOrder = layerOrder;
             }
 
             return result;
@@ -101,8 +139,8 @@ angular.module('anol.permalink')
             _precision = precision;
         };
 
-        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService', 'UrlMarkerService',
-            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService, UrlMarkerService) {
+        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService',
+            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService) {
 
                 function arrayChanges(newArray, oldArray) {
                     newArray = angular.isDefined(newArray) ? newArray : [];
@@ -158,7 +196,6 @@ angular.module('anol.permalink')
                     self.map = MapService.getMap();
                     self.view = self.map.getView();
                     self.visibleLayers = [];
-                    self.visibleCatalogLayers = [];
                     self.catalogLayers = [];
                     self.catalogGroups = [];
 
@@ -187,7 +224,7 @@ angular.module('anol.permalink')
                             layer.onVisibleChange(self.handleVisibleChange, self);
                             self.catalogLayers.push(layer);
                             if (layer.getVisible()) {
-                                self.visibleCatalogLayers.push(layer);
+                                self.visibleLayers.push(layer);
                             }
                         }
                     }
@@ -201,7 +238,7 @@ angular.module('anol.permalink')
                         for (const layer of catalogLayers(layers)) {
                             layer.offVisibleChange(self.handleVisibleChange);
                             remove(self.catalogLayers, layer);
-                            remove(self.visibleCatalogLayers, layer);
+                            remove(self.visibleLayers, layer);
                         }
                     }
 
@@ -237,12 +274,11 @@ angular.module('anol.permalink')
                             }, function (newVal, oldVal) {
                                 const {added, removed} = arrayChanges(newVal, oldVal);
 
-                                if (added.length + removed.length === 0) {
-                                    return;
+                                if (added.length > 0 || removed.length > 0) {
+                                    addLayers(added);
+                                    removeLayers(removed);
                                 }
 
-                                addLayers(added);
-                                removeLayers(removed);
                                 self.generatePermalink();
                             });
 
@@ -251,12 +287,11 @@ angular.module('anol.permalink')
                             }, function (newVal, oldVal) {
                                 const {added, removed} = arrayChanges(newVal, oldVal);
 
-                                if (added.length + removed.length === 0) {
-                                    return;
+                                if (added.length > 0 || removed.length > 0) {
+                                    addCatalogGroups(added);
+                                    removeCatalogGroups(removed);
                                 }
 
-                                addCatalogGroups(added);
-                                removeCatalogGroups(removed);
                                 self.generatePermalink();
                             });
                         });
@@ -286,9 +321,9 @@ angular.module('anol.permalink')
 
                     if (layer.catalogLayer === true && !isLayerGroup) {
                         if (angular.isDefined(layerName) && layer.getVisible()) {
-                            self.visibleCatalogLayers.push(layer);
+                            self.visibleLayers.push(layer);
                         } else {
-                            remove(self.visibleCatalogLayers, layer);
+                            remove(self.visibleLayers, layer);
                         }
                     }
                     self.generatePermalink();
@@ -314,28 +349,6 @@ angular.module('anol.permalink')
                 };
 
                 /**
-                 * Sorts layers by group and returns name.
-                 * @return {sting[]}
-                 */
-                Permalink.prototype.sortedLayerNames = function () {
-                    return this.visibleLayers.sort(function (a, b) {
-                        if (angular.isDefined(a.anolGroup)) {
-                            if (angular.isDefined(b.anolGroup)) {
-                                return a.anolGroup.name.localeCompare(b.anolGroup.name, 'de');
-                            } else {
-                                return 1;
-                            }
-                        } else {
-                            if (angular.isDefined(b.anolGroup)) {
-                                return -1;
-                            } else {
-                                return 0;
-                            }
-                        }
-                    }).map(layer => layer.name);
-                };
-
-                /**
                  * @private
                  * @name generatePermalink
                  * @methodOf anol.permalink.PermalinkService
@@ -351,15 +364,9 @@ angular.module('anol.permalink')
 
                     $location.search('map', [self.zoom, self.lon, self.lat, self.urlCrs].join(','));
 
-                    $location.search('layers', this.sortedLayerNames().join(','));
+                    $location.search('layers', this.visibleLayers.map(l => l.name).join(','));
 
-                    if (self.visibleCatalogLayers.length !== 0) {
-                        $location.search('visibleCatalogLayers', self.visibleCatalogLayers
-                            .map(layer => layer.name)
-                            .join(','));
-                    } else {
-                        $location.search('visibleCatalogLayers', null);
-                    }
+                    $location.search('visibleCatalogLayers', null);
 
                     if (self.catalogLayers.length !== 0) {
                         $location.search('catalogLayers', self.catalogLayers
@@ -379,6 +386,8 @@ angular.module('anol.permalink')
 
                     $location.search('fit', null);
 
+                    $location.search('layerOrder', stringifyLayerOrder(LayersService.overlayLayersAsArray()));
+
                     $location.replace();
                 };
 
@@ -392,7 +401,7 @@ angular.module('anol.permalink')
 
                     if (angular.isDefined(mapParams.layers)) {
                         for (const layer of permalinkLayers(LayersService.flattedLayers())) {
-                            const visible = mapParams.layers.indexOf(layer.name) !== -1;
+                            const visible = mapParams.layers.includes(layer.name);
                             layer.setVisible(visible);
                         }
                     }
@@ -439,8 +448,8 @@ angular.module('anol.permalink')
                                 for (const layer of group.layers) {
                                     const idx = available.indexOf(layer.name);
                                     if (idx > -1) {
-                                        if (mapParams.visibleCatalogLayers) {
-                                            const visible = mapParams.visibleCatalogLayers.indexOf(layer.name) > -1;
+                                        if (mapParams.layers) {
+                                            const visible = mapParams.layers.indexOf(layer.name) > -1;
                                             layer.setVisible(visible);
                                         }
                                         available.splice(idx, 1);
@@ -452,8 +461,8 @@ angular.module('anol.permalink')
                         }
 
                         for (const layerName of available) {
-                            const visible = mapParams.visibleCatalogLayers &&
-                                mapParams.visibleCatalogLayers.indexOf(layerName) > -1;
+                            const visible = mapParams.layers &&
+                                mapParams.layers.indexOf(layerName) > -1;
                             CatalogService.addToMap(layerName, visible);
                         }
 
@@ -461,6 +470,12 @@ angular.module('anol.permalink')
                     }).then(function (toRemove) {
                         for (const layer of toRemove) {
                             CatalogService.removeFromMap(layer);
+                        }
+
+                        // layer order
+
+                        if (mapParams.layerOrder !== undefined) {
+                            LayersService.setLayerOrder(mapParams.layerOrder);
                         }
                     });
 
@@ -479,9 +494,8 @@ angular.module('anol.permalink')
                         zoom: this.zoom,
                         center: [this.lon, this.lat],
                         crs: this.urlCrs,
-                        layers: this.sortedLayerNames(),
+                        layers: this.visibleLayers.map(l => l.name),
                         catalogLayers: this.catalogLayers.map(l => l.name),
-                        visibleCatalogLayers: this.visibleCatalogLayers.map(l => l.name),
                         catalogGroups: this.catalogGroups.map(l => l.name),
                         sidebar: sidebar,
                         sidebarStatus: sidebarStatus
@@ -493,7 +507,7 @@ angular.module('anol.permalink')
                         zoom: this.zoom,
                         center: [this.lon, this.lat],
                         crs: this.urlCrs,
-                        layers: this.sortedLayerNames()
+                        layers: this.visibleLayers.map(l => l.name)
                     };
                 };
 

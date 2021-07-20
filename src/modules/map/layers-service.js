@@ -1,53 +1,53 @@
 import './module.js';
-import { PopupsService } from '../featurepopup/featurepopup-service.js';
+import {PopupsService} from '../featurepopup/featurepopup-service.js';
 
 angular.module('anol.map')
 
-/**
- * @ngdoc object
- * @name anol.map.LayersServiceProvider
- */
-    .provider('LayersService', [function() {
+    /**
+     * @ngdoc object
+     * @name anol.map.LayersServiceProvider
+     */
+    .provider('LayersService', [function () {
         var _layers = [];
         var _addLayerHandlers = [];
         var _removeLayerHandlers = [];
         var _clusterDistance = 50;
         /**
-     * @ngdoc method
-     * @name setLayers
-     * @methodOf anol.map.LayersServiceProvider
-     * @param {Array.<Object>} layers ol3 layers
-     */
-        this.setLayers = function(layers) {
+         * @ngdoc method
+         * @name setLayers
+         * @methodOf anol.map.LayersServiceProvider
+         * @param {Array.<Object>} layers ol3 layers
+         */
+        this.setLayers = function (layers) {
             _layers = _layers.concat(layers);
         };
-        this.setClusterDistance = function(distance) {
+        this.setClusterDistance = function (distance) {
             _clusterDistance = distance;
         };
         /**
-     * @ngdoc method
-     * @name registerAddLayerHandler
-     * @methodOf anol.map.LayersServiceProvider
-     * @param {function} handler
-     * register a handler called for each added layer
-     */
-        this.registerAddLayerHandler = function(handler) {
+         * @ngdoc method
+         * @name registerAddLayerHandler
+         * @methodOf anol.map.LayersServiceProvider
+         * @param {function} handler
+         * register a handler called for each added layer
+         */
+        this.registerAddLayerHandler = function (handler) {
             _addLayerHandlers.push(handler);
         };
 
-        this.registerRemoveLayerHandler = function(handler) {
+        this.registerRemoveLayerHandler = function (handler) {
             _removeLayerHandlers.push(handler);
         };
 
-        this.$get = ['$rootScope', 'PopupsService', function($rootScope, PopupsService) {
-        /**
-         * @ngdoc service
-         * @name anol.map.LayersService
-         *
-         * @description
-         * Stores ol3 layerss and add them to map, if map present
-         */
-            var Layers = function(layers, addLayerHandlers, removeLayerHandlers, clusterDistance) {
+        this.$get = ['$rootScope', 'PopupsService', function ($rootScope, PopupsService) {
+            /**
+             * @ngdoc service
+             * @name anol.map.LayersService
+             *
+             * @description
+             * Stores ol3 layerss and add them to map, if map present
+             */
+            var Layers = function (layers, addLayerHandlers, removeLayerHandlers, clusterDistance) {
                 var self = this;
                 self.map = undefined;
                 self.addLayerHandlers = addLayerHandlers;
@@ -69,8 +69,8 @@ angular.module('anol.map')
                 self.idx = 0;
                 self.addedLayers = [];
 
-                angular.forEach(layers, function(layer) {
-                    if(layer.isBackground) {
+                angular.forEach(layers, function (layer) {
+                    if (layer.isBackground) {
                         self.addBackgroundLayer(layer);
                     } else {
                         self.addOverlayLayer(layer);
@@ -79,86 +79,86 @@ angular.module('anol.map')
                 self.reorderGroupLayers();
 
                 var activeBackgroundLayer;
-                angular.forEach(self.backgroundLayers, function(backgroundLayer) {
-                    if(angular.isUndefined(activeBackgroundLayer) && backgroundLayer.getVisible()) {
+                angular.forEach(self.backgroundLayers, function (backgroundLayer) {
+                    if (angular.isUndefined(activeBackgroundLayer) && backgroundLayer.getVisible()) {
                         activeBackgroundLayer = backgroundLayer;
                     }
                 });
-                if(angular.isUndefined(activeBackgroundLayer) && self.backgroundLayers.length > 0) {
+                if (angular.isUndefined(activeBackgroundLayer) && self.backgroundLayers.length > 0) {
                     activeBackgroundLayer = self.backgroundLayers[0];
                 }
-                angular.forEach(self.backgroundLayers, function(backgroundLayer) {
+                angular.forEach(self.backgroundLayers, function (backgroundLayer) {
                     backgroundLayer.setVisible(angular.equals(activeBackgroundLayer, backgroundLayer));
                 });
 
                 $rootScope.layersReady = true;
             };
             /**
-         * @ngdoc method
-         * @name registerMap
-         * @methodOf anol.map.LayersService
-         * @param {Object} map ol3 map object
-         * @description
-         * Register an ol3 map in `LayersService`
-         */
-            Layers.prototype.registerMap = function(map) {
+             * @ngdoc method
+             * @name registerMap
+             * @methodOf anol.map.LayersService
+             * @param {Object} map ol3 map object
+             * @description
+             * Register an ol3 map in `LayersService`
+             */
+            Layers.prototype.registerMap = function (map) {
                 var self = this;
                 self.map = map;
-                angular.forEach(self.backgroundLayers, function(layer) {
+                angular.forEach(self.backgroundLayers, function (layer) {
                     if (angular.isUndefined(layer)) {
                         return true;
                     }
                     self._addLayer(layer, true);
                 });
-                angular.forEach(self.overlayLayers, function(layer, idx) {
+                angular.forEach(self.overlayLayers, function (layer, idx) {
                     if (angular.isUndefined(layer)) {
                         return true;
                     }
 
-                    if(layer instanceof anol.layer.Group) {
-                        angular.forEach(layer.layers.slice().reverse(), function(grouppedLayer, idx) {
-                            if(self.olLayers.indexOf(grouppedLayer.olLayer) < 0) {
+                    if (layer instanceof anol.layer.Group) {
+                        angular.forEach(layer.layers.slice().reverse(), function (grouppedLayer, idx) {
+                            if (self.olLayers.indexOf(grouppedLayer.olLayer) < 0) {
                                 self._addLayer(grouppedLayer, false);
                             }
                         });
                     } else {
-                        if(self.olLayers.indexOf(layer.olLayer) < 0) {
+                        if (self.olLayers.indexOf(layer.olLayer) < 0) {
                             self._addLayer(layer, false);
                         }
                     }
                 });
-                angular.forEach(self.systemLayers, function(layer) {
+                angular.forEach(self.systemLayers, function (layer) {
                     self._addLayer(layer, true);
                 });
             };
             /**
-         * @ngdoc method
-         * @name addBackgroundLayer
-         * @methodOf anol.map.LayersService
-         * @param {anol.layer} layer Background layer to add
-         * @param {number} idx Position to add background layer at
-         * @description
-         * Adds a background layer
-         */
-            Layers.prototype.addBackgroundLayer = function(layer, idx) {
+             * @ngdoc method
+             * @name addBackgroundLayer
+             * @methodOf anol.map.LayersService
+             * @param {anol.layer} layer Background layer to add
+             * @param {number} idx Position to add background layer at
+             * @description
+             * Adds a background layer
+             */
+            Layers.prototype.addBackgroundLayer = function (layer, idx) {
                 var self = this;
                 idx = idx || self.backgroundLayers.length;
                 self.backgroundLayers.splice(idx, 0, layer);
                 self._prepareLayer(layer);
             };
             /**
-         * @ngdoc method
-         * @name addOverlayLayer
-         * @methodOf anol.map.LayersService
-         * @param {anol.layer} layer Overlay layer to add
-         * @param {number} idx Position to add overlay layer at
-         * @description
-         * Adds a overlay layer
-         */
-            Layers.prototype.addOverlayLayer = function(layer, idx) {
+             * @ngdoc method
+             * @name addOverlayLayer
+             * @methodOf anol.map.LayersService
+             * @param {anol.layer} layer Overlay layer to add
+             * @param {number} idx Position to add overlay layer at
+             * @description
+             * Adds a overlay layer
+             */
+            Layers.prototype.addOverlayLayer = function (layer, idx) {
                 var self = this;
                 // prevent adding layer twice
-                if(self.overlayLayers.indexOf(layer) > -1) {
+                if (self.overlayLayers.indexOf(layer) > -1) {
                     return false;
                 }
 
@@ -173,48 +173,48 @@ angular.module('anol.map')
                 }
                 self._prepareLayer(layer);
 
-                if(layer instanceof anol.layer.Group) {
-                    angular.forEach(layer.layers, function(_layer) {
-                        _layer.onVisibleChange(function() {
+                if (layer instanceof anol.layer.Group) {
+                    angular.forEach(layer.layers, function (_layer) {
+                        _layer.onVisibleChange(function () {
                             PopupsService.closeAll();
                         });
                     });
                 } else {
-                    layer.onVisibleChange(function() {
+                    layer.onVisibleChange(function () {
                         PopupsService.closeAll();
                     });
                 }
                 return true;
             };
-            Layers.prototype.removeOverlayLayer = function(layer) {
+            Layers.prototype.removeOverlayLayer = function (layer) {
                 var self = this;
 
-                if(layer instanceof anol.layer.Group) {
+                if (layer instanceof anol.layer.Group) {
                     var group = layer;
-                    if(self.overlayLayers.indexOf(group) === -1) {
+                    if (self.overlayLayers.indexOf(group) === -1) {
                         return false;
                     }
-                    if(angular.isDefined(group.name)) {
+                    if (angular.isDefined(group.name)) {
                         delete self.nameGroupsMap[group.name];
                     }
 
                     var overlayLayerIdx = self.overlayLayers.indexOf(group);
-                    if(overlayLayerIdx > -1) {
+                    if (overlayLayerIdx > -1) {
                         self.overlayLayers.splice(overlayLayerIdx, 1);
                         if (!layer.catalogLayer) {
                             self.deletedOverlayLayers.push(group.name)
                         }
                     }
-                    angular.forEach(group.layers, function(_layer) {
+                    angular.forEach(group.layers, function (_layer) {
                         // _layer.setVisible(false);
-                        if(angular.isDefined(self.map)) {
+                        if (angular.isDefined(self.map)) {
                             var olLayerIdx = self.olLayers.indexOf(_layer.olLayer);
-                            if(olLayerIdx > -1) {
+                            if (olLayerIdx > -1) {
                                 self.map.removeLayer(_layer.olLayer);
                                 self.olLayers.splice(olLayerIdx, 1);
                             }
                         }
-                        angular.forEach(self.removeLayerHandlers, function(handler) {
+                        angular.forEach(self.removeLayerHandlers, function (handler) {
                             handler(_layer);
                         });
                         _layer.removeOlLayer();
@@ -225,7 +225,7 @@ angular.module('anol.map')
                     return true;
                 } else {
                     var addedLayersIdx = self.addedLayers.indexOf(layer);
-                    if(addedLayersIdx > -1) {
+                    if (addedLayersIdx > -1) {
                         self.addedLayers.splice(addedLayersIdx, 1);
                     }
 
@@ -233,9 +233,9 @@ angular.module('anol.map')
                     var overlayLayerIdx = self.overlayLayers.indexOf(layer);
                     if (overlayLayerIdx > -1) {
                         self.overlayLayers.splice(overlayLayerIdx, 1);
-                        if(angular.isDefined(self.map)) {
+                        if (angular.isDefined(self.map)) {
                             var olLayerIdx = self.olLayers.indexOf(layer.olLayer);
-                            if(olLayerIdx > -1) {
+                            if (olLayerIdx > -1) {
                                 self.map.removeLayer(layer.olLayer);
                                 self.olLayers.splice(olLayerIdx, 1);
                             }
@@ -255,7 +255,7 @@ angular.module('anol.map')
                         if (!layer.combined) {
                             // remove not combined layer directly
                             const olIndex = self.olLayers.indexOf(layer.olLayer);
-                            if(olIndex > -1) {
+                            if (olIndex > -1) {
                                 self.map.removeLayer(layer.olLayer);
                                 self.olLayers.splice(olIndex, 1);
                             }
@@ -277,43 +277,43 @@ angular.module('anol.map')
                         var anolLayers = olSource.get('anolLayers');
                         if (anolLayers.length === 0 && angular.isDefined(self.map)) {
                             var olLayerIdx = self.olLayers.indexOf(layer.olLayer);
-                            if(olLayerIdx > -1) {
+                            if (olLayerIdx > -1) {
                                 self.map.removeLayer(layer.olLayer);
                                 self.olLayers.splice(olLayerIdx, 1);
                             }
                         }
                     }
-                    angular.forEach(self.overlayLayers, function(layer, idx) {
-                        if(layer instanceof anol.layer.Group && layer.layers.length === 0) {
+                    angular.forEach(self.overlayLayers, function (layer, idx) {
+                        if (layer instanceof anol.layer.Group && layer.layers.length === 0) {
                             self.overlayLayers.splice(idx, 1);
                         }
                     });
 
-                    angular.forEach(self.removeLayerHandlers, function(handler) {
+                    angular.forEach(self.removeLayerHandlers, function (handler) {
                         handler(layer);
                     });
                 }
             };
             /**
-         * @ngdoc method
-         * @name addSystemLayer
-         * @methodOf anol.map.LayersService
-         * @param {anol.layer} layer Overlay layer to add
-         * @param {number} idx Position to add overlay layer at
-         * @description
-         * Adds a system layer. System layers should only created and added by
-         * anol components
-         */
-            Layers.prototype.addSystemLayer = function(layer, idx) {
+             * @ngdoc method
+             * @name addSystemLayer
+             * @methodOf anol.map.LayersService
+             * @param {anol.layer} layer Overlay layer to add
+             * @param {number} idx Position to add overlay layer at
+             * @description
+             * Adds a system layer. System layers should only created and added by
+             * anol components
+             */
+            Layers.prototype.addSystemLayer = function (layer, idx) {
                 var self = this;
                 idx = idx || 0;
                 self.systemLayers.splice(idx, 0, layer);
             };
 
-            Layers.prototype.getSystemLayerByName = function(layername) {
+            Layers.prototype.getSystemLayerByName = function (layername) {
                 var self = this;
                 var systemlayer = undefined;
-                angular.forEach(self.systemLayers, function(layer, idx) {
+                angular.forEach(self.systemLayers, function (layer, idx) {
                     if (layer.name == layername) {
                         systemlayer = layer;
                     }
@@ -321,24 +321,24 @@ angular.module('anol.map')
                 return systemlayer
             };
             /**
-         * private function
-         * Creates olLayer
-         */
-            Layers.prototype.createOlLayer = function(layer) {
+             * private function
+             * Creates olLayer
+             */
+            Layers.prototype.createOlLayer = function (layer) {
                 var olSource;
                 var lastAddedLayer = this.lastAddedLayer();
-                if(angular.isDefined(lastAddedLayer) && lastAddedLayer.isCombinable(layer)) {
+                if (angular.isDefined(lastAddedLayer) && lastAddedLayer.isCombinable(layer)) {
                     olSource = lastAddedLayer.getCombinedSource(layer);
-                    if(layer instanceof anol.layer.DynamicGeoJSON && layer.isClustered()) {
+                    if (layer instanceof anol.layer.DynamicGeoJSON && layer.isClustered()) {
                         layer.unclusteredSource = lastAddedLayer.unclusteredSource;
                     }
                     layer.combined = true;
                     lastAddedLayer.combined = true;
                 }
 
-                if(angular.isUndefined(olSource)) {
+                if (angular.isUndefined(olSource)) {
                     var sourceOptions = angular.extend({}, layer.olSourceOptions);
-                    if(layer.isClustered()) {
+                    if (layer.isClustered()) {
                         sourceOptions.distance = this.clusterDistance;
                     }
                     olSource = new layer.OL_SOURCE_CLASS(sourceOptions);
@@ -349,13 +349,13 @@ angular.module('anol.map')
                 var olLayer = new layer.OL_LAYER_CLASS(layerOpts);
                 // only instances of BaseWMS are allowed to share olLayers
                 // TODO allow also DynamicGeoJSON layer to share olLayers
-            //     if(layer.combined && layer instanceof anol.layer.BaseWMS &&
-            //    angular.equals(layer.olLayerOptions,lastAddedLayer.olLayerOptions)
-            //     ) {
-            //         layer.setOlLayer(lastAddedLayer.olLayer);
-            //         // TODO add layer to anolLayers of lastAddedLayer when anolLayer refactored anolLayers
-            //         return lastAddedLayer.olLayer;
-            //     }
+                //     if(layer.combined && layer instanceof anol.layer.BaseWMS &&
+                //    angular.equals(layer.olLayerOptions,lastAddedLayer.olLayerOptions)
+                //     ) {
+                //         layer.setOlLayer(lastAddedLayer.olLayer);
+                //         // TODO add layer to anolLayers of lastAddedLayer when anolLayer refactored anolLayers
+                //         return lastAddedLayer.olLayer;
+                //     }
                 // TODO refactor to anolLayers with list of layers
                 // HINT olLayer.anolLayer is used in featurepopup-, geocoder- and geolocation-directive
                 //      this will only affacts DynamicGeoJsonLayer
@@ -364,33 +364,33 @@ angular.module('anol.map')
                 return olLayer;
             };
             /**
-         * private function
-         * Adds layer to internal lists, executes addLayer handlers and calls _addLayer
-         */
-            Layers.prototype._prepareLayer = function(layer) {
+             * private function
+             * Adds layer to internal lists, executes addLayer handlers and calls _addLayer
+             */
+            Layers.prototype._prepareLayer = function (layer) {
                 var self = this;
 
                 var layers = [layer];
-                if(layer instanceof anol.layer.Group) {
-                    if(angular.isDefined(layer.name)) {
+                if (layer instanceof anol.layer.Group) {
+                    if (angular.isDefined(layer.name)) {
                         self.nameGroupsMap[layer.name] = layer;
                     }
                     layers = layer.layers;
                 }
 
-                angular.forEach(layers, function(_layer) {
-                    if(angular.isDefined(_layer.name)) {
+                angular.forEach(layers, function (_layer) {
+                    if (angular.isDefined(_layer.name)) {
                         self.nameLayersMap[_layer.name] = _layer;
                     }
                 });
 
-                angular.forEach(layers, function(_layer) {
+                angular.forEach(layers, function (_layer) {
                     self.createOlLayer(_layer);
                     self.addedLayers.push(_layer);
                     if (_layer.options !== undefined && _layer.options.visible) {
                         _layer.setVisible(true);
                     }
-                    angular.forEach(self.addLayerHandlers, function(handler) {
+                    angular.forEach(self.addLayerHandlers, function (handler) {
                         handler(_layer);
                     });
                 });
@@ -400,57 +400,57 @@ angular.module('anol.map')
                 // after that, this.map is registered
                 // so, when map is defined, added layers are not in map
                 // and must be added
-                if(angular.isDefined(self.map)) {
-                    if(layer instanceof anol.layer.Group) {
-                        angular.forEach(layer.layers, function(_layer, idx) {
-                            if(self.olLayers.indexOf(_layer.olLayer) < 0) {
+                if (angular.isDefined(self.map)) {
+                    if (layer instanceof anol.layer.Group) {
+                        angular.forEach(layer.layers, function (_layer, idx) {
+                            if (self.olLayers.indexOf(_layer.olLayer) < 0) {
                                 self._addLayer(_layer, false);
                             }
                         });
                     } else {
-                        if(self.olLayers.indexOf(layer.olLayer) < 0) {
+                        if (self.olLayers.indexOf(layer.olLayer) < 0) {
                             self._addLayer(layer, false);
                         }
                     }
                 }
             };
             /**
-         * private function
-         * Add layer to map and execute postAddToMap function of layer
-         */
-            Layers.prototype._addLayer = function(layer, skipLayerIndex) {
+             * private function
+             * Add layer to map and execute postAddToMap function of layer
+             */
+            Layers.prototype._addLayer = function (layer, skipLayerIndex) {
                 this.map.addLayer(layer.olLayer);
                 layer.map = this.map;
 
-                if(skipLayerIndex !== true) {
+                if (skipLayerIndex !== true) {
                     this.olLayers.push(layer.olLayer);
                 }
             };
             /**
-         * @ngdoc method
-         * @name layers
-         * @methodOf anol.map.LayersService
-         * @returns {array.<anol.layer.Layer>} All layers, including groups
-         * @description
-         * Get all layers managed by layers service
-         */
-            Layers.prototype.layers = function() {
+             * @ngdoc method
+             * @name layers
+             * @methodOf anol.map.LayersService
+             * @returns {array.<anol.layer.Layer>} All layers, including groups
+             * @description
+             * Get all layers managed by layers service
+             */
+            Layers.prototype.layers = function () {
                 var self = this;
                 return self.backgroundLayers.concat(self.overlayLayers);
             };
             /**
-         * @ngdoc method
-         * @name flattedLayers
-         * @methodOf anol.map.LayersService
-         * @returns {Array.<anol.layer.Layer>} flattedLayers
-         * @description
-         * Returns all layers except groups. Grouped layers extracted from their gropus.
-         */
-            Layers.prototype.flattedLayers = function() {
+             * @ngdoc method
+             * @name flattedLayers
+             * @methodOf anol.map.LayersService
+             * @returns {Array.<anol.layer.Layer>} flattedLayers
+             * @description
+             * Returns all layers except groups. Grouped layers extracted from their gropus.
+             */
+            Layers.prototype.flattedLayers = function () {
                 var self = this;
                 var flattedLayers = [];
-                angular.forEach(self.layers(), function(layer) {
-                    if(layer instanceof anol.layer.Group) {
+                angular.forEach(self.layers(), function (layer) {
+                    if (layer instanceof anol.layer.Group) {
                         flattedLayers = flattedLayers.concat(layer.layers);
                     } else {
                         flattedLayers.push(layer);
@@ -459,35 +459,35 @@ angular.module('anol.map')
                 return flattedLayers;
             };
             /**
-         * @ngdoc method
-         * @name activeBackgroundLayer
-         * @methodOf anol.map.LayersService
-         * @returns {anol.layer.Layer} backgroundLayer visible background layer
-         * @description
-         * Returns the visible background layer
-         */
-        Layers.prototype.activeBackgroundLayer = function() {
-            var self = this;
-            var backgroundLayer;
-            angular.forEach(self.backgroundLayers, function(layer) {
-                if(layer.getVisible() === true) {
-                    backgroundLayer = layer;
-                }
-            });
-            return backgroundLayer;
-        };
+             * @ngdoc method
+             * @name activeBackgroundLayer
+             * @methodOf anol.map.LayersService
+             * @returns {anol.layer.Layer} backgroundLayer visible background layer
+             * @description
+             * Returns the visible background layer
+             */
+            Layers.prototype.activeBackgroundLayer = function () {
+                var self = this;
+                var backgroundLayer;
+                angular.forEach(self.backgroundLayers, function (layer) {
+                    if (layer.getVisible() === true) {
+                        backgroundLayer = layer;
+                    }
+                });
+                return backgroundLayer;
+            };
             /**
-         * @ngdoc method
-         * @name activeLayers
-         * @methodOf anol.map.LayersService
-         * @returns {anol.layer.Layer}
-         * @description
-         * Returns the visible layers
-         */
-            Layers.prototype.layerIsActive = function(layerName) {
+             * @ngdoc method
+             * @name activeLayers
+             * @methodOf anol.map.LayersService
+             * @returns {anol.layer.Layer}
+             * @description
+             * Returns the visible layers
+             */
+            Layers.prototype.layerIsActive = function (layerName) {
                 var self = this;
                 var active = false;
-                angular.forEach(self.flattedLayers(), function(layer) {
+                angular.forEach(self.flattedLayers(), function (layer) {
                     if (layer.name === layerName && layer.getVisible() === true) {
                         active = true;
                     }
@@ -496,34 +496,34 @@ angular.module('anol.map')
                 return active;
             };
             /**
-         * @ngdoc method
-         * @name layerByName
-         * @methodOf anol.map.LayersService
-         * @param {string} name
-         * @returns {anol.layer.Layer} layer
-         * @description Gets a layer by it's name
-         */
-            Layers.prototype.layerByName = function(name) {
+             * @ngdoc method
+             * @name layerByName
+             * @methodOf anol.map.LayersService
+             * @param {string} name
+             * @returns {anol.layer.Layer} layer
+             * @description Gets a layer by it's name
+             */
+            Layers.prototype.layerByName = function (name) {
                 return this.nameLayersMap[name];
             };
             /**
-         * @ngdoc method
-         * @name groupByName
-         * @methodOf anol.map.LayersService
-         * @param {string} name
-         * @returns {anol.layer.Group} group
-         * @description Gets a group by it's name
-         */
-            Layers.prototype.groupByName = function(name) {
+             * @ngdoc method
+             * @name groupByName
+             * @methodOf anol.map.LayersService
+             * @param {string} name
+             * @returns {anol.layer.Group} group
+             * @description Gets a group by it's name
+             */
+            Layers.prototype.groupByName = function (name) {
                 return this.nameGroupsMap[name];
             };
 
-            Layers.prototype.deleteLayers = function(deletedLayers) {
+            Layers.prototype.deleteLayers = function (deletedLayers) {
                 var self = this;
                 if (angular.isUndefined(deletedLayers)) {
                     return;
                 }
-                angular.forEach(deletedLayers, function(overlayLayer) {
+                angular.forEach(deletedLayers, function (overlayLayer) {
                     var layer = self.layerByName(overlayLayer);
                     if (angular.isUndefined(layer)) {
                         layer = self.groupByName(overlayLayer);
@@ -534,48 +534,38 @@ angular.module('anol.map')
                 });
             };
 
-            Layers.prototype.setLayerOrder = function(layers) {
-                var self = this;
-                self.zIndex = 0;
-                $.each(layers, function(newIdx, layer) {
-                    $.each(self.overlayLayers, function(oldIdx, overlayLayer) {
-                        if (angular.isUndefined(overlayLayer)) {
-                            return true;
-                        }
-                        if(layer.name == overlayLayer.name) {
-                            anol.helper.array_move(self.overlayLayers, oldIdx, newIdx);
-                            if(overlayLayer instanceof anol.layer.Group) {
-                                $.each(layer.layers, function(gNewIdx, grouppedLayer) {
-                                    $.each(overlayLayer.layers, function(goldIdx, singleLayer) {
-                                        if(grouppedLayer == singleLayer.name) {
-                                            if (goldIdx !== gNewIdx) {
-                                                anol.helper.array_move(overlayLayer.layers, goldIdx, gNewIdx);
-                                            }
-                                        }
-                                    });
-                                });
-                            }
-                            return;
-                        }
-                    });
+            Layers.prototype.setLayerOrder = function (layers) {
+                // in this function the original arrays need to be preserved.
+
+                layers.forEach((layer, newIndex) => {
+                    const oldIndex = this.overlayLayers.findIndex(l => angular.isDefined(l) && l.name === layer.name);
+                    const overlayLayer = this.overlayLayers[oldIndex];
+                    anol.helper.array_move(this.overlayLayers, oldIndex, newIndex);
+                    if (overlayLayer instanceof anol.layer.Group) {
+                        layer.layers.forEach((childLayerName, newGroupIndex) => {
+                            const oldGroupIndex = overlayLayer.layers.findIndex(l => l.name === childLayerName);
+                            anol.helper.array_move(overlayLayer.layers, oldGroupIndex, newGroupIndex);
+                        });
+                    }
                 });
+
                 this.reorderOverlayLayers();
             };
 
-            Layers.prototype.setCollapsedGroups = function(groupLayers) {
-                this.overlayLayers.forEach(function(layer) {
-                    if(layer instanceof anol.layer.Group) {
-                        if(groupLayers.indexOf(layer.name) >= 0) {
+            Layers.prototype.setCollapsedGroups = function (groupLayers) {
+                this.overlayLayers.forEach(function (layer) {
+                    if (layer instanceof anol.layer.Group) {
+                        if (groupLayers.indexOf(layer.name) >= 0) {
                             layer.options.collapsed = false;
                         }
                     }
                 });
             };
 
-            Layers.prototype.getCollapsedGroups = function() {
+            Layers.prototype.getCollapsedGroups = function () {
                 var groups = [];
-                this.overlayLayers.forEach(function(layer) {
-                    if(layer instanceof anol.layer.Group) {
+                this.overlayLayers.forEach(function (layer) {
+                    if (layer instanceof anol.layer.Group) {
                         if (!layer.options.collapsed) {
                             groups.push(layer.name);
                         }
@@ -584,31 +574,25 @@ angular.module('anol.map')
                 return groups;
             };
 
-            Layers.prototype.overLayersAsArray = function() {
-                var sortedLayers = [];
-
-                this.overlayLayers.forEach(function(layer) {
-                    var sortedGroupLayers = [];
-                    if(layer instanceof anol.layer.Group) {
-                        layer.layers.forEach(function(grouppedLayer, idx) {
-                            sortedGroupLayers.push(grouppedLayer.name);
-                        });
+            Layers.prototype.overlayLayersAsArray = function () {
+                return this.overlayLayers.map(layer => {
+                    let layers = [];
+                    if (layer instanceof anol.layer.Group) {
+                        layers = layer.layers.map(l => l.name);
                     }
-                    sortedLayers.push({
-                        'name': layer.name,
-                        'layers': sortedGroupLayers
-                    });
-
+                    return {
+                        name: layer.name,
+                        layers
+                    };
                 });
-                return sortedLayers;
             };
-            Layers.prototype.reorderGroupLayers = function() {
+            Layers.prototype.reorderGroupLayers = function () {
                 var lastOlLayerUid = undefined;
                 var self = this;
                 self.zIndex = 0;
-                self.overlayLayers.slice().reverse().forEach(function(layer) {
-                    if(layer instanceof anol.layer.Group) {
-                        layer.layers.slice().reverse().forEach(function(grouppedLayer, idx) {
+                self.overlayLayers.slice().reverse().forEach(function (layer) {
+                    if (layer instanceof anol.layer.Group) {
+                        layer.layers.slice().reverse().forEach(function (grouppedLayer, idx) {
                             if (lastOlLayerUid !== grouppedLayer.olLayer.ol_uid) {
                                 grouppedLayer.olLayer.setZIndex(self.zIndex);
                                 self.zIndex = self.zIndex + 1;
@@ -622,24 +606,24 @@ angular.module('anol.map')
                 });
 
             };
-            Layers.prototype.reorderOverlayLayers = function() {
+            Layers.prototype.reorderOverlayLayers = function () {
                 var lastOlLayerUid = undefined;
                 var self = this;
                 self.zIndex = 0;
-                self.overlayLayers.slice().reverse().forEach(function(layer) {
+                self.overlayLayers.slice().reverse().forEach(function (layer) {
                     if (angular.isUndefined(layer)) {
                         return true;
                     }
 
-                    if(layer instanceof anol.layer.Group) {
-                        layer.layers.slice().reverse().forEach(function(grouppedLayer, idx) {
-                            if(grouppedLayer.combined) {
+                    if (layer instanceof anol.layer.Group) {
+                        layer.layers.slice().reverse().forEach(function (grouppedLayer, idx) {
+                            if (grouppedLayer.combined) {
                                 grouppedLayer.reOrderLayerParams(layer.layers);
                             }
                             if (lastOlLayerUid !== grouppedLayer.olLayer.ol_uid) {
                                 grouppedLayer.olLayer.setZIndex(self.zIndex);
                                 self.zIndex = self.zIndex + 1;
-                             }
+                            }
                             lastOlLayerUid = grouppedLayer.olLayer.ol_uid;
                         });
                     } else {
@@ -648,16 +632,16 @@ angular.module('anol.map')
                     }
                 });
             };
-            Layers.prototype.lastAddedLayer = function() {
+            Layers.prototype.lastAddedLayer = function () {
                 var idx = this.addedLayers.length - 1;
-                if(idx > -1) {
+                if (idx > -1) {
                     return this.addedLayers[idx];
                 }
             };
-            Layers.prototype.registerRemoveLayerHandler = function(handler) {
+            Layers.prototype.registerRemoveLayerHandler = function (handler) {
                 this.removeLayerHandlers.push(handler);
             };
-            Layers.prototype.registerAddLayerHandler = function(handler) {
+            Layers.prototype.registerAddLayerHandler = function (handler) {
                 this.addLayerHandlers.push(handler);
             };
             return new Layers(_layers, _addLayerHandlers, _removeLayerHandlers, _clusterDistance);

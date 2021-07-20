@@ -2,7 +2,7 @@ import './module.js';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import {fromExtent} from 'ol/geom/Polygon';
-import {getObjectParam, stringifyObject} from "./util";
+import {getObjectParam, stringifyObject} from "../permalink/util";
 
 angular.module('anol.urlmarkers')
     /**
