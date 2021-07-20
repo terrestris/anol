@@ -306,6 +306,9 @@ angular.module('anol.map')
              */
             Layers.prototype.addSystemLayer = function (layer, idx) {
                 var self = this;
+                if (angular.isUndefined(layer.olLayer)) {
+                    self._prepareLayer(layer);
+                }
                 idx = idx || 0;
                 self.systemLayers.splice(idx, 0, layer);
             };
