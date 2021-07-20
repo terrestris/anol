@@ -158,7 +158,7 @@ angular.module('anol.geocoder')
                         }
                         geocoder = this.getGeocoder(configName);
                     } else {
-                        geocoder = this.getGeocoder(this.getUrlGeocodeConfigs()[0]);
+                        geocoder = this.getGeocoder(this.getUrlGeocodeConfigs()[0].name);
                     }
 
                     if (!geocoder) {
