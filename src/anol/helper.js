@@ -94,6 +94,7 @@ class Helper {
             return arr;
         }
         if (new_index >= arr.length) {
+            console.warn('Adding undefined to array. Maybe you are calling this too early in the life cycle?');
             var k = new_index - arr.length + 1;
             while (k--) {
                 arr.push(undefined);

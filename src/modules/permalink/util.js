@@ -45,6 +45,6 @@ export function getObjectParam(param, params, multi = false) {
 
 export function stringifyObject(object) {
     return Object.keys(object)
-        .map(k => `${k}:${encodeURIComponent(object[k])}`)
+        .map(k => `${k}:${object[k]}`)
         .join('|');
 }

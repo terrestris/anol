@@ -186,265 +186,260 @@ angular.module('anol.permalink')
                  *
                  * Updates browser-url with current zoom and location when map moved
                  */
-                var Permalink = function (urlCrs, precision) {
-                    var self = this;
-                    self.precision = precision;
-                    self.zoom = undefined;
-                    self.lon = undefined;
-                    self.lat = undefined;
-                    self.deferred = undefined;
-                    self.map = MapService.getMap();
-                    self.view = self.map.getView();
-                    self.visibleLayers = [];
-                    self.catalogLayers = [];
-                    self.catalogGroups = [];
+                class Permalink {
+                    constructor(urlCrs, precision) {
+                        var self = this;
+                        self.precision = precision;
+                        self.zoom = undefined;
+                        self.lon = undefined;
+                        self.lat = undefined;
+                        self.map = MapService.getMap();
+                        self.view = self.map.getView();
+                        self.visibleLayers = [];
+                        self.catalogLayers = [];
+                        self.catalogGroups = [];
 
-                    self.urlCrs = urlCrs;
-                    if (angular.isUndefined(self.urlCrs)) {
-                        var projection = self.view.getProjection();
-                        self.urlCrs = projection.getCode();
+                        self.urlCrs = urlCrs;
+                        if (angular.isUndefined(self.urlCrs)) {
+                            var projection = self.view.getProjection();
+                            self.urlCrs = projection.getCode();
+                        }
+
+                        self.map.on('moveend', function () {
+                            self.moveendHandler();
+                        }.bind(self));
+
+                        this.asyncInitialize();
                     }
 
-                    self.map.on('moveend', function () {
-                        self.moveendHandler();
-                    }.bind(self));
+                    /**
+                     * @private
+                     */
+                    async asyncInitialize() {
+                        const self = this;
 
-                    // This will be called on layers from LayersService.flattedLayers().
-                    // This contains all background and overlay layers including
-                    // catalog layers but no groups.
-                    function addLayers(layers) {
-                        for (const layer of permalinkLayers(layers)) {
-                            layer.onVisibleChange(self.handleVisibleChange, self);
-                            if (layer.getVisible()) {
-                                self.visibleLayers.push(layer);
+                        // This will be called on layers from LayersService.flattedLayers().
+                        // This contains all background and overlay layers including
+                        // catalog layers but no groups.
+                        function addLayers(layers) {
+                            for (const layer of permalinkLayers(layers)) {
+                                layer.onVisibleChange(self.handleVisibleChange, self);
+                                if (layer.getVisible()) {
+                                    self.visibleLayers.push(layer);
+                                }
+                            }
+
+                            for (const layer of catalogLayers(layers)) {
+                                layer.onVisibleChange(self.handleVisibleChange, self);
+                                self.catalogLayers.push(layer);
+                                if (layer.getVisible()) {
+                                    self.visibleLayers.push(layer);
+                                }
                             }
                         }
 
-                        for (const layer of catalogLayers(layers)) {
-                            layer.onVisibleChange(self.handleVisibleChange, self);
-                            self.catalogLayers.push(layer);
-                            if (layer.getVisible()) {
-                                self.visibleLayers.push(layer);
+                        function removeLayers(layers) {
+                            for (const layer of permalinkLayers(layers)) {
+                                layer.offVisibleChange(self.handleVisibleChange);
+                                remove(self.visibleLayers, layer);
+                            }
+
+                            for (const layer of catalogLayers(layers)) {
+                                layer.offVisibleChange(self.handleVisibleChange);
+                                remove(self.catalogLayers, layer);
+                                remove(self.visibleLayers, layer);
                             }
                         }
-                    }
 
-                    function removeLayers(layers) {
-                        for (const layer of permalinkLayers(layers)) {
-                            layer.offVisibleChange(self.handleVisibleChange);
-                            remove(self.visibleLayers, layer);
+                        // This will be called on layers from CatalogService.addedCatalogGroups().
+                        // This contains all catalog layer groups.
+                        function addCatalogGroups(groups) {
+                            for (const group of groups) {
+                                group.onVisibleChange(self.handleVisibleChange, self);
+                                self.catalogGroups.push(group);
+                            }
                         }
 
-                        for (const layer of catalogLayers(layers)) {
-                            layer.offVisibleChange(self.handleVisibleChange);
-                            remove(self.catalogLayers, layer);
-                            remove(self.visibleLayers, layer);
+                        function removeCatalogGroups(groups) {
+                            for (const group of groups) {
+                                group.offVisibleChange(self.handleVisibleChange);
+                                remove(self.catalogGroups, group);
+                            }
                         }
-                    }
 
-                    // This will be called on layers from CatalogService.addedCatalogGroups().
-                    // This contains all catalog layer groups.
-                    function addCatalogGroups(groups) {
-                        for (const group of groups) {
-                            group.onVisibleChange(self.handleVisibleChange, self);
-                            self.catalogGroups.push(group);
-                        }
-                    }
+                        const mapParams = extractMapParams($location.search() || {});
 
-                    function removeCatalogGroups(groups) {
-                        for (const group of groups) {
-                            group.offVisibleChange(self.handleVisibleChange);
-                            remove(self.catalogGroups, group);
-                        }
-                    }
+                        await this.updateMapFromParameters(mapParams);
+                        await $timeout();
 
-                    var params = $location.search();
+                        addLayers(LayersService.flattedLayers());
+                        addCatalogGroups(CatalogService.addedCatalogGroups());
+                        this.generatePermalink();
 
-                    self.updateMapFromParameters(extractMapParams(params) || {})
-                        .then(() => {
-                            return $timeout(() => {}, 0);
-                        })
-                        .then(() => {
-                            addLayers(LayersService.flattedLayers());
-                            addCatalogGroups(CatalogService.addedCatalogGroups());
+                        $rootScope.$watchCollection(function () {
+                            return LayersService.flattedLayers();
+                        }, function (newVal, oldVal) {
+                            const {added, removed} = arrayChanges(newVal, oldVal);
+
+                            if (added.length > 0 || removed.length > 0) {
+                                addLayers(added);
+                                removeLayers(removed);
+                            }
+
                             self.generatePermalink();
-
-                            $rootScope.$watchCollection(function () {
-                                return LayersService.flattedLayers();
-                            }, function (newVal, oldVal) {
-                                const {added, removed} = arrayChanges(newVal, oldVal);
-
-                                if (added.length > 0 || removed.length > 0) {
-                                    addLayers(added);
-                                    removeLayers(removed);
-                                }
-
-                                self.generatePermalink();
-                            });
-
-                            $rootScope.$watchCollection(function () {
-                                return CatalogService.addedCatalogGroups();
-                            }, function (newVal, oldVal) {
-                                const {added, removed} = arrayChanges(newVal, oldVal);
-
-                                if (added.length > 0 || removed.length > 0) {
-                                    addCatalogGroups(added);
-                                    removeCatalogGroups(removed);
-                                }
-
-                                self.generatePermalink();
-                            });
                         });
-                };
 
-                /**
-                 * @private
-                 */
-                Permalink.prototype.handleVisibleChange = function (evt) {
-                    const self = evt.data.context;
-                    // this in this context is the layer, visible changed for
-                    const layer = this;
-                    let layerName = layer.name;
+                        $rootScope.$watchCollection(function () {
+                            return CatalogService.addedCatalogGroups();
+                        }, function (newVal, oldVal) {
+                            const {added, removed} = arrayChanges(newVal, oldVal);
 
-                    if (layer.permalink !== false) {
-                        if (angular.isDefined(layerName) && layer.getVisible()) {
-                            if (self.visibleLayers.length === 1 && self.visibleLayers[0].name === '') {
-                                self.visibleLayers.splice(0, 1);
+                            if (added.length > 0 || removed.length > 0) {
+                                addCatalogGroups(added);
+                                removeCatalogGroups(removed);
                             }
-                            self.visibleLayers.push(layer);
-                        } else {
-                            remove(self.visibleLayers, layer);
-                        }
+
+                            self.generatePermalink();
+                        });
                     }
 
-                    const isLayerGroup = layer instanceof anol.layer.Group || (layer.hasGroup() && layer.anolGroup.layers.length == 1);
+                    /**
+                     * @private
+                     */
+                    handleVisibleChange(evt) {
+                        const self = evt.data.context;
+                        // this in this context is the layer, visible changed for
+                        const layer = this;
+                        let layerName = layer.name;
 
-                    if (layer.catalogLayer === true && !isLayerGroup) {
-                        if (angular.isDefined(layerName) && layer.getVisible()) {
-                            self.visibleLayers.push(layer);
-                        } else {
-                            remove(self.visibleLayers, layer);
+                        if (layer.permalink !== false) {
+                            if (angular.isDefined(layerName) && layer.getVisible()) {
+                                if (self.visibleLayers.length === 1 && self.visibleLayers[0].name === '') {
+                                    self.visibleLayers.splice(0, 1);
+                                }
+                                self.visibleLayers.push(layer);
+                            } else {
+                                remove(self.visibleLayers, layer);
+                            }
                         }
-                    }
-                    self.generatePermalink();
-                };
-                /**
-                 * @private
-                 * @name moveendHandler
-                 * @methodOf anol.permalink.PermalinkService
-                 * @param {Object} evt ol3 event object
-                 * @description
-                 * Get lat, lon and zoom after map stoped moving
-                 */
-                Permalink.prototype.moveendHandler = function () {
-                    var self = this;
-                    var center = transform(self.view.getCenter(), self.view.getProjection().getCode(), self.urlCrs);
-                    self.lon = Math.round(center[0] * self.precision) / self.precision;
-                    self.lat = Math.round(center[1] * self.precision) / self.precision;
 
-                    self.zoom = self.view.getZoom();
-                    $rootScope.$apply(function () {
+                        const isLayerGroup = layer instanceof anol.layer.Group || (layer.hasGroup() && layer.anolGroup.layers.length == 1);
+
+                        if (layer.catalogLayer === true && !isLayerGroup) {
+                            if (angular.isDefined(layerName) && layer.getVisible()) {
+                                self.visibleLayers.push(layer);
+                            } else {
+                                remove(self.visibleLayers, layer);
+                            }
+                        }
                         self.generatePermalink();
-                    });
-                };
-
-                /**
-                 * @private
-                 * @name generatePermalink
-                 * @methodOf anol.permalink.PermalinkService
-                 * @param {Object} evt ol3 event object
-                 * @description
-                 * Builds the permalink url addon
-                 */
-                Permalink.prototype.generatePermalink = function () {
-                    var self = this;
-                    if (angular.isUndefined(self.zoom) || angular.isUndefined(self.lon) || angular.isUndefined(self.lat)) {
-                        return;
                     }
 
-                    $location.search('map', [self.zoom, self.lon, self.lat, self.urlCrs].join(','));
+                    /**
+                     * @private
+                     * @name moveendHandler
+                     * @methodOf anol.permalink.PermalinkService
+                     * @param {Object} evt ol3 event object
+                     * @description
+                     * Get lat, lon and zoom after map stoped moving
+                     */
+                    moveendHandler() {
+                        var self = this;
+                        var center = transform(self.view.getCenter(), self.view.getProjection().getCode(), self.urlCrs);
+                        self.lon = Math.round(center[0] * self.precision) / self.precision;
+                        self.lat = Math.round(center[1] * self.precision) / self.precision;
 
-                    $location.search('layers', this.visibleLayers.map(l => l.name).join(','));
-
-                    $location.search('visibleCatalogLayers', null);
-
-                    if (self.catalogLayers.length !== 0) {
-                        $location.search('catalogLayers', self.catalogLayers
-                            .map(layer => layer.name)
-                            .join(','));
-                    } else {
-                        $location.search('catalogLayers', null);
-                    }
-
-                    if (self.catalogGroups.length !== 0) {
-                        $location.search('catalogGroups', self.catalogGroups
-                            .map(layer => layer.name)
-                            .join(','));
-                    } else {
-                        $location.search('catalogGroups', null);
-                    }
-
-                    $location.search('fit', null);
-
-                    $location.search('layerOrder', stringifyLayerOrder(LayersService.overlayLayersAsArray()));
-
-                    $location.replace();
-                };
-
-                Permalink.prototype.updateMapFromParameters = function (mapParams) {
-                    var self = this;
-                    if (mapParams.center !== undefined) {
-                        var center = transform(mapParams.center, mapParams.crs, self.view.getProjection().getCode());
-                        self.view.setCenter(center);
-                        self.view.setZoom(mapParams.zoom);
-                    }
-
-                    if (angular.isDefined(mapParams.layers)) {
-                        for (const layer of permalinkLayers(LayersService.flattedLayers())) {
-                            const visible = mapParams.layers.includes(layer.name);
-                            layer.setVisible(visible);
-                        }
-                    }
-
-                    var catalogGroupPromises = [];
-                    if (mapParams.catalogGroups !== undefined) {
-                        for (const groupName of mapParams.catalogGroups) {
-                            var group = CatalogService.addGroupToMap(groupName, false);
-                            if (group) {
-                                catalogGroupPromises.push(group);
-                            }
-                        }
-                    }
-
-                    if (mapParams.fit !== undefined) {
-                        var extent = transformExtent(mapParams.fit.extent, mapParams.fit.crs, self.view.getProjection().getCode());
-                        this.map.once('postrender', function () {
-                            self.view.fit(extent);
+                        self.zoom = self.view.getZoom();
+                        $rootScope.$apply(function () {
+                            self.generatePermalink();
                         });
                     }
 
-                    let geocodePromise;
-                    if (mapParams.geocode !== undefined) {
-                        const { config, term, highlight, label } = mapParams.geocode;
-                        ReadyService.waitFor('geocoding');
-                        geocodePromise = GeocoderService.handleUrlGeocode(term, config, highlight, label)
-                            .then(() => {
-                                ReadyService.notifyAboutReady('geocoding');
-                                $location.search('geocode', undefined);
-                                $location.replace();
-                            });
-                    } else {
-                        geocodePromise = $q.resolve();
+                    /**
+                     * @private
+                     * @name generatePermalink
+                     * @methodOf anol.permalink.PermalinkService
+                     * @param {Object} evt ol3 event object
+                     * @description
+                     * Builds the permalink url addon
+                     */
+                    generatePermalink() {
+                        var self = this;
+                        if (angular.isUndefined(self.zoom) || angular.isUndefined(self.lon) || angular.isUndefined(self.lat)) {
+                            return;
+                        }
+
+                        $location.search('map', [self.zoom, self.lon, self.lat, self.urlCrs].join(','));
+
+                        $location.search('layers', this.visibleLayers.map(l => l.name).join(','));
+
+                        $location.search('visibleCatalogLayers', null);
+
+                        if (self.catalogLayers.length !== 0) {
+                            $location.search('catalogLayers', self.catalogLayers
+                                .map(layer => layer.name)
+                                .join(','));
+                        } else {
+                            $location.search('catalogLayers', null);
+                        }
+
+                        if (self.catalogGroups.length !== 0) {
+                            $location.search('catalogGroups', self.catalogGroups
+                                .map(layer => layer.name)
+                                .join(','));
+                        } else {
+                            $location.search('catalogGroups', null);
+                        }
+
+                        $location.search('fit', null);
+
+                        $location.search('layerOrder', stringifyLayerOrder(LayersService.overlayLayersAsArray()));
+
+                        $location.replace();
                     }
 
-                    const groupPromise = $q.all(catalogGroupPromises).then(function (groups) {
-                        const available = angular.isDefined(mapParams.catalogLayers) ?
-                            angular.extend(mapParams.catalogLayers) : [];
+                    updateMapFromParameters(mapParams) {
+                        var self = this;
+                        if (mapParams.center !== undefined) {
+                            var center = transform(mapParams.center, mapParams.crs, self.view.getProjection().getCode());
+                            self.view.setCenter(center);
+                            self.view.setZoom(mapParams.zoom);
+                        }
 
-                        let toRemove = [];
+                        if (angular.isDefined(mapParams.layers)) {
+                            for (const layer of permalinkLayers(LayersService.flattedLayers())) {
+                                const visible = mapParams.layers.includes(layer.name);
+                                layer.setVisible(visible);
+                            }
+                        }
 
-                        for (const group of groups) {
-                            if (group.layers.length > 1) {
+                        if (mapParams.fit !== undefined) {
+                            var extent = transformExtent(mapParams.fit.extent, mapParams.fit.crs, self.view.getProjection().getCode());
+                            this.map.once('postrender', function () {
+                                self.view.fit(extent);
+                            });
+                        }
+
+                        return Promise.all([
+                            this.updateMapFromCatalogParameters(mapParams),
+                            this.updateMapFromGeocodeParameters(mapParams)
+                        ]);
+                    }
+
+                    async updateMapFromCatalogParameters(mapParams) {
+                        if (mapParams.catalogGroups !== undefined) {
+                            const groups = await Promise.all(
+                                mapParams.catalogGroups.flatMap(groupName => {
+                                    const group = CatalogService.addGroupToMap(groupName, false);
+                                    return group ? [group] : [];
+                                }));
+
+                            const available = angular.isDefined(mapParams.catalogLayers) ?
+                                angular.extend(mapParams.catalogLayers) : [];
+
+                            let toRemove = [];
+
+                            for (const group of groups) {
                                 for (const layer of group.layers) {
                                     const idx = available.indexOf(layer.name);
                                     if (idx > -1) {
@@ -458,18 +453,18 @@ angular.module('anol.permalink')
                                     }
                                 }
                             }
-                        }
 
-                        for (const layerName of available) {
-                            const visible = mapParams.layers &&
-                                mapParams.layers.indexOf(layerName) > -1;
-                            CatalogService.addToMap(layerName, visible);
-                        }
+                            for (const layerName of available) {
+                                const visible = mapParams.layers &&
+                                    mapParams.layers.indexOf(layerName) > -1;
+                                CatalogService.addToMap(layerName, visible);
+                            }
 
-                        return $timeout(() => toRemove);
-                    }).then(function (toRemove) {
-                        for (const layer of toRemove) {
-                            CatalogService.removeFromMap(layer);
+                            await $timeout();
+
+                            for (const layer of toRemove) {
+                                CatalogService.removeFromMap(layer);
+                            }
                         }
 
                         // layer order
@@ -477,46 +472,48 @@ angular.module('anol.permalink')
                         if (mapParams.layerOrder !== undefined) {
                             LayersService.setLayerOrder(mapParams.layerOrder);
                         }
-                    });
+                    }
 
-                    return $q.all([geocodePromise, groupPromise]).then(() => {
-                        if (angular.isDefined(self.deferred)) {
-                            self.deferred.resolve();
+                    async updateMapFromGeocodeParameters(mapParams) {
+                        if (mapParams.geocode !== undefined) {
+                            const {config, term, highlight, label} = mapParams.geocode;
+                            ReadyService.waitFor('geocoding');
+                            await GeocoderService.handleUrlGeocode(term, config, highlight, label)
+                            ReadyService.notifyAboutReady('geocoding');
+                            $location.search('geocode', undefined);
+                            $location.replace();
                         }
-                    });
-                };
+                    }
 
-                Permalink.prototype.getParameters = function () {
-                    var sidebarStatus = $location.search().sidebarStatus;
-                    var sidebar = $location.search().sidebar;
+                    getParameters() {
+                        var sidebarStatus = $location.search().sidebarStatus;
+                        var sidebar = $location.search().sidebar;
 
-                    return {
-                        zoom: this.zoom,
-                        center: [this.lon, this.lat],
-                        crs: this.urlCrs,
-                        layers: this.visibleLayers.map(l => l.name),
-                        catalogLayers: this.catalogLayers.map(l => l.name),
-                        catalogGroups: this.catalogGroups.map(l => l.name),
-                        sidebar: sidebar,
-                        sidebarStatus: sidebarStatus
-                    };
-                };
+                        return {
+                            zoom: this.zoom,
+                            center: [this.lon, this.lat],
+                            crs: this.urlCrs,
+                            layers: this.visibleLayers.map(l => l.name),
+                            catalogLayers: this.catalogLayers.map(l => l.name),
+                            catalogGroups: this.catalogGroups.map(l => l.name),
+                            sidebar: sidebar,
+                            sidebarStatus: sidebarStatus
+                        };
+                    }
 
-                Permalink.prototype.getPermalinkParameters = function () {
-                    return {
-                        zoom: this.zoom,
-                        center: [this.lon, this.lat],
-                        crs: this.urlCrs,
-                        layers: this.visibleLayers.map(l => l.name)
-                    };
-                };
+                    getPermalinkParameters() {
+                        return {
+                            zoom: this.zoom,
+                            center: [this.lon, this.lat],
+                            crs: this.urlCrs,
+                            layers: this.visibleLayers.map(l => l.name)
+                        };
+                    }
 
-                Permalink.prototype.setPermalinkParameters = function (params) {
-                    var self = this;
-                    self.deferred = $q.defer();
-                    self.updateMapFromParameters(params);
-                    return self.deferred.promise;
-                };
+                    async setPermalinkParameters(params) {
+                        return this.updateMapFromParameters(params);
+                    }
+                }
 
                 return new Permalink(_urlCrs, _precision);
             }];
