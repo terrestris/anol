@@ -41,7 +41,7 @@ angular.module('anol.measure')
         function($templateRequest, $compile, $timeout, ControlsService, LayersService, MapService, MeasureService) {
             // create a sphere whose radius is equal to the semi-major axis of the WGS84 ellipsoid
             // var wgs84Sphere = new ol.Sphere(6378137);
-            var measureStyle = MeasureService.measureStyle;
+            var measureStyle = MeasureService.dashedMeasureStyle;
 
 
             var calculateCoordinate = function(geometry) {
@@ -258,9 +258,7 @@ angular.module('anol.measure')
                         });
                         var _measureLayer = new VectorLayer({
                             source: scope.measureSource,
-                            style: scope.style || function(feature) {
-                                return measureStyle(feature, scope.labelSegments)
-                            },
+                            style: scope.style || measureStyle(scope.labelSegments),
                             zIndex: 2000
                         });
 
