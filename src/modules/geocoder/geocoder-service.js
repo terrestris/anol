@@ -56,7 +56,7 @@ angular.module('anol.geocoder')
             }
         });
 
-        this.$get = ['$rootScope', '$q', 'MapService', 'UrlMarkerService', function ($rootScope, $q, MapService, UrlMarkerService) {
+        this.$get = ['$rootScope', 'MapService', 'UrlMarkerService', function ($rootScope, MapService, UrlMarkerService) {
             /**
              * @ngdoc service
              * @name anol.map.GeocoderService
