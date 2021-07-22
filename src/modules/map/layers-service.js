@@ -544,7 +544,7 @@ angular.module('anol.map')
                     const oldIndex = this.overlayLayers.findIndex(l => angular.isDefined(l) && l.name === layer.name);
                     const overlayLayer = this.overlayLayers[oldIndex];
                     anol.helper.array_move(this.overlayLayers, oldIndex, newIndex);
-                    if (overlayLayer instanceof anol.layer.Group) {
+                    if (overlayLayer instanceof anol.layer.Group && layer.layers !== undefined) {
                         layer.layers.forEach((childLayerName, newGroupIndex) => {
                             const oldGroupIndex = overlayLayer.layers.findIndex(l => l.name === childLayerName);
                             anol.helper.array_move(overlayLayer.layers, oldGroupIndex, newGroupIndex);

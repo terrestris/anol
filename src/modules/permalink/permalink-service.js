@@ -1,38 +1,6 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
-import {getArrayParam, getObjectParam, getParamString} from "./util";
-
-function parseLayerOrder(params) {
-    const layerOrderParamString = getParamString('layerOrder', params);
-    if (layerOrderParamString !== false && layerOrderParamString !== '') {
-        return layerOrderParamString
-            .split('|')
-            .map(param => {
-                const splitted = param.split(':');
-                return {
-                    name: splitted[0],
-                    layers: splitted.length === 1
-                        ? []
-                        : splitted[1].split(',')
-                };
-            });
-    }
-}
-
-function stringifyLayerOrder(layers) {
-    return layers
-        .map(layer => {
-            if (layer.layers && layer.layers.length > 0) {
-                return layer.name + ':' + layer.layers.join(',')
-            } else if (layer.name) {
-                return layer.name;
-            } else {
-                return undefined;
-            }
-        })
-        .filter(l => l)
-        .join('|');
-}
+import {getArrayParam, getObjectParam} from "./util";
 
 angular.module('anol.permalink')
 
@@ -59,7 +27,7 @@ angular.module('anol.permalink')
 
             var geocode = getObjectParam('geocode', params);
 
-            const layerOrder = parseLayerOrder(params);
+            const groupOrder = getArrayParam('groupOrder', params);
 
             var result = {}
             if (angular.isDefined(mapParams)) {
@@ -108,8 +76,8 @@ angular.module('anol.permalink')
                 result.geocode = geocode;
             }
 
-            if (angular.isDefined(layerOrder)) {
-                result.layerOrder = layerOrder;
+            if (angular.isDefined(groupOrder)) {
+                result.groupOrder = groupOrder;
             }
 
             return result;
@@ -393,7 +361,12 @@ angular.module('anol.permalink')
 
                         $location.search('fit', null);
 
-                        $location.search('layerOrder', stringifyLayerOrder(LayersService.overlayLayersAsArray()));
+                        const groupOrder = LayersService.overlayLayers
+                            .map(l => l.name)
+                            .filter(l => l)
+                            .join(',');
+
+                        $location.search('groupOrder', groupOrder);
 
                         $location.replace();
                     }
@@ -469,8 +442,8 @@ angular.module('anol.permalink')
 
                         // layer order
 
-                        if (mapParams.layerOrder !== undefined) {
-                            LayersService.setLayerOrder(mapParams.layerOrder);
+                        if (mapParams.groupOrder !== undefined) {
+                            LayersService.setLayerOrder(mapParams.groupOrder.map(n => ({ name: n })));
                         }
                     }
 
