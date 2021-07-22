@@ -1,42 +1,46 @@
 import './module.js';
 import '../util.js';
 
-import { TOUCH as hasTouch } from 'ol/has';
+import {TOUCH as hasTouch} from 'ol/has';
 import Draw from 'ol/interaction/Draw';
 import Select from 'ol/interaction/Select';
 import Modify from 'ol/interaction/Modify';
 import Snap from 'ol/interaction/Snap';
 import {never as neverCondition, singleClick} from 'ol/events/condition';
+import Style, {createEditingStyle} from 'ol/style/Style';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
+import Text from 'ol/style/Text';
 
 angular.module('anol.draw')
-/**
- * @ngdoc directive
- * @name anol.draw.anolDraw
- *
- * @requires $compile
- * @requires $rootScope
- * @requires $translate
- * @requires anol.map.MapService
- * @requires anol.map.ControlsSerivce
- * @requires anol.map.DrawService
- *
- * @param {object} geometries The configuration of the geometries (e.g. min/max values).
- * @param {boolean} continueDrawing Don't deactivate drawing after feature is added
- * @param {function} postDrawAction Action to call after feature is drawn. Draw control will be deactivated when postDrawAction defined.
- * @param {boolean} freeDrawing Deactivate snapped drawing
- * @param {string} pointTooltipPlacement Position of point tooltip
- * @param {string} lineTooltipPlacement Position of line tooltip
- * @param {string} polygonTooltipPlacement Position of polygon tooltip
- * @param {number} tooltipDelay Time in milisecounds to wait before display tooltip
- * @param {boolean} tooltipEnable Enable tooltips. Default true for non-touch screens, default false for touchscreens
- * @param {boolean} liveMeasure Display length / area information, default: false
- * @param {string} templateUrl Url to template to use instead of default one
- *
- * @description
- * Provides controls to draw points, lines and polygons, modify and remove them
- */
+    /**
+     * @ngdoc directive
+     * @name anol.draw.anolDraw
+     *
+     * @requires $compile
+     * @requires $rootScope
+     * @requires $translate
+     * @requires anol.map.MapService
+     * @requires anol.map.ControlsSerivce
+     * @requires anol.map.DrawService
+     *
+     * @param {object} geometries The configuration of the geometries (e.g. min/max values).
+     * @param {boolean} continueDrawing Don't deactivate drawing after feature is added
+     * @param {function} postDrawAction Action to call after feature is drawn. Draw control will be deactivated when postDrawAction defined.
+     * @param {boolean} freeDrawing Deactivate snapped drawing
+     * @param {string} pointTooltipPlacement Position of point tooltip
+     * @param {string} lineTooltipPlacement Position of line tooltip
+     * @param {string} polygonTooltipPlacement Position of polygon tooltip
+     * @param {number} tooltipDelay Time in milisecounds to wait before display tooltip
+     * @param {boolean} tooltipEnable Enable tooltips. Default true for non-touch screens, default false for touchscreens
+     * @param {boolean} liveMeasure Display length / area information, default: false
+     * @param {string} templateUrl Url to template to use instead of default one
+     *
+     * @description
+     * Provides controls to draw points, lines and polygons, modify and remove them
+     */
     .directive('anolDraw', ['$templateRequest', '$compile', '$rootScope', '$translate', '$timeout', '$olOn', '$document', 'ControlsService', 'MapService', 'DrawService', 'MeasureService',
-        function($templateRequest, $compile, $rootScope, $translate, $timeout, $olOn, $document, ControlsService, MapService, DrawService, MeasureService) {
+        function ($templateRequest, $compile, $rootScope, $translate, $timeout, $olOn, $document, ControlsService, MapService, DrawService, MeasureService) {
             return {
                 restrict: 'A',
                 require: '?^anolMap',
@@ -58,15 +62,15 @@ angular.module('anol.draw')
                     modifyLabel: '<?',
                     removeLabel: '<?'
                 },
-                template: function(tElement, tAttrs) {
+                template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
                     return require('./templates/draw.html');
                 },
-                link: function(scope, element, attrs, AnolMapController) {
+                link: function (scope, element, attrs, AnolMapController) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
-                        $templateRequest(attrs.templateUrl).then(function(html){
+                        $templateRequest(attrs.templateUrl).then(function (html) {
                             var template = angular.element(html);
                             element.html(template);
                             $compile(template)(scope);
@@ -107,7 +111,7 @@ angular.module('anol.draw')
                             'anol.draw.BADGE_CURRENT',
                             'anol.draw.BADGE_MIN',
                             'anol.draw.BADGE_MAX'
-                        ]).then(function(translations) {
+                        ]).then(function (translations) {
                             scope.badgeTexts = {
                                 current: scope.shortText ? '#' : translations['anol.draw.BADGE_CURRENT'],
                                 min: translations['anol.draw.BADGE_MIN'],
@@ -132,30 +136,48 @@ angular.module('anol.draw')
                         return angular.merge(defaultGeometries, geometries);
                     }
 
-                    var executePostDrawCallback = function(evt) {
+                    var executePostDrawCallback = function (evt) {
                         if (angular.isFunction(scope.postDrawAction)) {
-                            scope.postDrawAction({ layer: scope.activeLayer, feature: evt.feature });
+                            scope.postDrawAction({layer: scope.activeLayer, feature: evt.feature});
                         }
                     };
 
                     let overlayAdded = false;
 
-                    function ensureMeasureOverlayAdded () {
+                    function ensureMeasureOverlayAdded() {
                         if (!overlayAdded) {
                             scope.map.addOverlay(scope.measureOverlay);
                         }
                         overlayAdded = true;
                     }
 
-                    function ensureMeasureOverlayRemoved () {
+                    function ensureMeasureOverlayRemoved() {
                         if (overlayAdded) {
                             scope.map.removeOverlay(scope.measureOverlay);
                             overlayAdded = false;
                         }
                     }
 
-                    var createDrawInteractions = function(drawType, source, control, layer, postDrawActions) {
+                    var createDrawInteractions = function (drawType, source, control, layer, postDrawActions) {
                         postDrawActions = postDrawActions || [];
+
+                        const editingStyles = createEditingStyle();
+                        const measureStyle = MeasureService.createMeasureStyle([
+                            ...editingStyles['Point'],
+                            ...editingStyles['LineString']
+                        ], new Style({
+                            text: new Text({
+                                font: '14px Calibri,sans-serif',
+                                fill: new Fill({
+                                    color: '#000'
+                                }),
+                                stroke: new Stroke({
+                                    color: '#fff',
+                                    width: 2
+                                })
+                            })
+                        }), editingStyles['Point'][0], true);
+
                         // create draw interaction
                         var draw = new Draw({
                             source: source,
@@ -185,15 +207,15 @@ angular.module('anol.draw')
                                     scope.measureOverlay.setPosition(geometry.getLastCoordinate());
                                     ensureMeasureOverlayAdded();
                                 }
-                                return MeasureService.measureStyle(feature, true);
+                                return measureStyle(feature);
                             }
                         });
 
                         postDrawActions.push(ensureMeasureOverlayRemoved);
                         postDrawActions.push(executePostDrawCallback);
 
-                        if(scope.continueDrawing === false && angular.isDefined(control)) {
-                            postDrawActions.push(function() {
+                        if (scope.continueDrawing === false && angular.isDefined(control)) {
+                            postDrawActions.push(function () {
                                 control.deactivate();
                             });
                         }
@@ -203,12 +225,12 @@ angular.module('anol.draw')
                         });
 
                         // bind post draw actions
-                        angular.forEach(postDrawActions, function(postDrawAction) {
+                        angular.forEach(postDrawActions, function (postDrawAction) {
                             $olOn(draw, 'drawend', postDrawAction);
                         });
 
                         var interactions = [draw];
-                        if(scope.freeDrawing !== false) {
+                        if (scope.freeDrawing !== false) {
                             var snapInteraction = new Snap({
                                 source: layer.getSource()
                             });
@@ -217,7 +239,7 @@ angular.module('anol.draw')
                         return interactions;
                     };
 
-                    var createModifyInteractions = function(layer) {
+                    var createModifyInteractions = function (layer) {
                         var selectInteraction = new Select({
                             toggleCondition: neverCondition,
                             layers: [layer],
@@ -225,10 +247,10 @@ angular.module('anol.draw')
                                 const geometry = feature.getGeometry();
                                 if (geometry.getType() !== 'Point') {
                                     const projection = MapService.getMap().getView().getProjection();
-                                    if (geometry.getType()  === 'LineString') {
+                                    if (geometry.getType() === 'LineString') {
                                         scope.measureOverlay.getElement().innerHTML =
                                             MeasureService.formatLineResult(geometry, projection, false);
-                                    } else if (geometry.getType()  === 'Polygon') {
+                                    } else if (geometry.getType() === 'Polygon') {
                                         scope.measureOverlay.getElement().innerHTML =
                                             MeasureService.formatAreaResult(geometry, projection, false, true);
                                     }
@@ -239,8 +261,8 @@ angular.module('anol.draw')
                             },
                             hitTolerance: 10
                         });
-                        $olOn(selectInteraction, 'select', function(evt) {
-                            if(evt.selected.length === 0) {
+                        $olOn(selectInteraction, 'select', function (evt) {
+                            if (evt.selected.length === 0) {
                                 scope.selectedFeature = undefined;
                                 ensureMeasureOverlayRemoved();
                             } else {
@@ -248,7 +270,7 @@ angular.module('anol.draw')
                                 if (scope.removeActive) {
                                     layer.getSource().removeFeature(feat);
                                     if (angular.isFunction(scope.postDeleteAction)) {
-                                        scope.postDeleteAction({ feature: feat, layer: layer });
+                                        scope.postDeleteAction({feature: feat, layer: layer});
                                     }
                                     scope.toggleRemove();
                                 } else {
@@ -274,14 +296,14 @@ angular.module('anol.draw')
                         return [snapInteraction, selectInteraction, modifyInteraction];
                     };
 
-                    var createDrawControl = function(controlElement, controlTarget) {
+                    var createDrawControl = function (controlElement, controlTarget) {
                         var controlOptions = {
                             element: controlElement,
                             target: controlTarget,
                             exclusive: true,
                             disabled: true
                         };
-                        if(AnolMapController === null) {
+                        if (AnolMapController === null) {
                             controlOptions.olControl = null;
                         }
                         var drawControl = new anol.control.Control(controlOptions);
@@ -290,14 +312,14 @@ angular.module('anol.draw')
                         return drawControl;
                     };
 
-                    var createModifyControl = function(controlElement, controlTarget) {
+                    var createModifyControl = function (controlElement, controlTarget) {
                         var controlOptions = {
                             element: controlElement,
                             target: controlTarget,
                             exclusive: true,
                             disabled: true
                         };
-                        if(AnolMapController === null) {
+                        if (AnolMapController === null) {
                             controlOptions.olControl = null;
                         }
                         var _modifyControl = new anol.control.Control(controlOptions);
@@ -307,40 +329,40 @@ angular.module('anol.draw')
                         // until modify control is enabled twice by user
                         // reproducable with featureexchange module when uploading a geojson
                         // and try to select uploaded feature for modify
-                        _modifyControl.onDeactivate(function(targetControl) {
-                            angular.forEach(targetControl.interactions, function(interaction) {
+                        _modifyControl.onDeactivate(function (targetControl) {
+                            angular.forEach(targetControl.interactions, function (interaction) {
                                 interaction.setActive(false);
                                 MapService.getMap().removeInteraction(interaction);
                             });
                         });
-                        _modifyControl.onActivate(function(targetControl) {
+                        _modifyControl.onActivate(function (targetControl) {
                             targetControl.interactions = createModifyInteractions(scope.activeLayer.olLayer);
-                            angular.forEach(targetControl.interactions, function(interaction) {
+                            angular.forEach(targetControl.interactions, function (interaction) {
                                 interaction.setActive(true);
                                 scope.map.addInteraction(interaction);
                             });
                         });
-                        _modifyControl.onDeactivate(function() {
+                        _modifyControl.onDeactivate(function () {
                             unselectFeature();
                         });
                         return _modifyControl;
                     };
 
-                    var deactivate = function(targetControl) {
-                        angular.forEach(targetControl.interactions, function(interaction) {
+                    var deactivate = function (targetControl) {
+                        angular.forEach(targetControl.interactions, function (interaction) {
                             interaction.setActive(false);
                         });
                     };
 
-                    var activate = function(targetControl) {
-                        angular.forEach(targetControl.interactions, function(interaction) {
+                    var activate = function (targetControl) {
+                        angular.forEach(targetControl.interactions, function (interaction) {
                             interaction.setActive(true);
                         });
                     };
 
-                    var changeCursorCondition = function(pixel) {
+                    var changeCursorCondition = function (pixel) {
                         return scope.map.hasFeatureAtPixel(pixel, {
-                            layerFunction: function(layer) {
+                            layerFunction: function (layer) {
                                 return layer === scope.activeLayer.olLayer;
                             },
                             hitTolerance: 10
@@ -348,7 +370,9 @@ angular.module('anol.draw')
                     };
 
                     var unselectFeature = function () {
-                        var select = modifyControl.interactions.find(function (i) { return i instanceof Select; });
+                        var select = modifyControl.interactions.find(function (i) {
+                            return i instanceof Select;
+                        });
                         if (select) {
                             select.getFeatures().clear();
                         }
@@ -356,11 +380,11 @@ angular.module('anol.draw')
                     };
 
                     // Button binds
-                    scope.drawPoint = function() {
-                        if(drawPointControl.disabled === true) {
+                    scope.drawPoint = function () {
+                        if (drawPointControl.disabled === true) {
                             return;
                         }
-                        if(drawPointControl.active) {
+                        if (drawPointControl.active) {
                             scope.activeDrawType = undefined;
                             drawPointControl.deactivate();
                         } else {
@@ -369,11 +393,11 @@ angular.module('anol.draw')
                         }
                     };
 
-                    scope.drawLine = function() {
-                        if(drawLineControl.disabled === true) {
+                    scope.drawLine = function () {
+                        if (drawLineControl.disabled === true) {
                             return;
                         }
-                        if(drawLineControl.active) {
+                        if (drawLineControl.active) {
                             scope.activeDrawType = undefined;
                             drawLineControl.deactivate();
                         } else {
@@ -382,11 +406,11 @@ angular.module('anol.draw')
                         }
                     };
 
-                    scope.drawPolygon = function() {
-                        if(drawPolygonControl.disabled === true) {
+                    scope.drawPolygon = function () {
+                        if (drawPolygonControl.disabled === true) {
                             return;
                         }
-                        if(drawPolygonControl.active) {
+                        if (drawPolygonControl.active) {
                             scope.activeDrawType = undefined;
                             drawPolygonControl.deactivate();
                         } else {
@@ -395,10 +419,10 @@ angular.module('anol.draw')
                         }
                     };
 
-                    scope.toggleModify = function() {
+                    scope.toggleModify = function () {
                         scope.removeActive = false;
                         scope.modifyActive = !scope.modifyActive;
-                        if(modifyControl.disabled === true) {
+                        if (modifyControl.disabled === true) {
                             return;
                         }
                         if (scope.modifyActive) {
@@ -409,12 +433,12 @@ angular.module('anol.draw')
                         }
                     };
 
-                    scope.toggleRemove = function() {
+                    scope.toggleRemove = function () {
                         scope.modifyActive = false;
                         unselectFeature();
                         ensureMeasureOverlayRemoved();
                         scope.removeActive = !scope.removeActive;
-                        if(modifyControl.disabled === true) {
+                        if (modifyControl.disabled === true) {
                             return;
                         }
                         if (scope.removeActive) {
@@ -425,13 +449,13 @@ angular.module('anol.draw')
                     };
 
                     // extra action for a really customised draw experience
-                    scope.drawCustom = function(drawType, postDrawCallback) {
+                    scope.drawCustom = function (drawType, postDrawCallback) {
                         // skip when no active layer present
-                        if(angular.isUndefined(scope.activeLayer)) {
+                        if (angular.isUndefined(scope.activeLayer)) {
                             return;
                         }
                         // deactivate other controls
-                        angular.forEach(controls, function(control) {
+                        angular.forEach(controls, function (control) {
                             control.deactivate();
                         });
 
@@ -445,13 +469,13 @@ angular.module('anol.draw')
                         var unregisters = [];
                         var deregisterActiveLayerChange;
                         var customInteractions;
-                        var removeCustomDraw = function() {
-                            angular.forEach(customInteractions, function(interaction) {
+                        var removeCustomDraw = function () {
+                            angular.forEach(customInteractions, function (interaction) {
                                 interaction.setActive(false);
                                 scope.map.removeInteraction(interaction);
                             });
                             deregisterActiveLayerChange();
-                            angular.forEach(unregisters, function(unregister) {
+                            angular.forEach(unregisters, function (unregister) {
                                 unregister[0].unActivate(unregister[1]);
                             });
 
@@ -460,13 +484,13 @@ angular.module('anol.draw')
                         };
 
                         // call the callback function
-                        var postDrawAction = function(evt) {
+                        var postDrawAction = function (evt) {
                             postDrawCallback(scope.activeLayer, evt.feature);
                         };
                         // remove custom draw after draw finish
-                        var postDrawRemoveCustomDraw = function() {
+                        var postDrawRemoveCustomDraw = function () {
                             // TODO remove when https://github.com/openlayers/ol3/issues/3610/ resolved
-                            $timeout(function() {
+                            $timeout(function () {
                                 removeCustomDraw();
                             }, 275);
                         };
@@ -475,24 +499,24 @@ angular.module('anol.draw')
                         customInteractions = createDrawInteractions(drawType, source, undefined, olLayer, [postDrawAction, postDrawRemoveCustomDraw]);
 
                         // remove custom draw when active layer changes
-                        deregisterActiveLayerChange = scope.$watch(function() {
+                        deregisterActiveLayerChange = scope.$watch(function () {
                             return DrawService.activeLayer;
-                        }, function(newActiveLayer) {
-                            if(newActiveLayer === scope.activeLayer && newActiveLayer !== undefined) {
+                        }, function (newActiveLayer) {
+                            if (newActiveLayer === scope.activeLayer && newActiveLayer !== undefined) {
                                 return;
                             }
                             removeCustomDraw();
                         });
 
                         // remove custom draw when one of the other controls get active
-                        angular.forEach(controls, function(control) {
-                            unregisters.push([control, control.oneActivate(function() {
+                        angular.forEach(controls, function (control) {
+                            unregisters.push([control, control.oneActivate(function () {
                                 removeCustomDraw();
                             })]);
                         });
 
                         // activate and add customInteractions
-                        angular.forEach(customInteractions, function(interaction) {
+                        angular.forEach(customInteractions, function (interaction) {
                             interaction.setActive(true);
                             scope.map.addInteraction(interaction);
                         });
@@ -506,7 +530,7 @@ angular.module('anol.draw')
 
                     element.addClass('anol-draw');
 
-                    if(AnolMapController !== null) {
+                    if (AnolMapController !== null) {
                         element.addClass('ol-control');
                         var drawControl = new anol.control.Control({
                             element: element
@@ -536,24 +560,24 @@ angular.module('anol.draw')
                         element.find('.draw-modify'),
                         element
                     );
-                    modifyControl.onActivate(function() {
+                    modifyControl.onActivate(function () {
                         MapService.addCursorPointerCondition(changeCursorCondition);
                     });
-                    modifyControl.onDeactivate(function() {
+                    modifyControl.onDeactivate(function () {
                         MapService.removeCursorPointerCondition(changeCursorCondition);
                     });
                     controls.push(modifyControl);
 
                     ControlsService.addControls(controls);
 
-                    var allInteractions = function() {
+                    var allInteractions = function () {
                         return drawPointControl.interactions
                             .concat(drawLineControl.interactions)
                             .concat(drawPolygonControl.interactions)
                             .concat(modifyControl.interactions);
                     };
 
-                    var updateGeometryCount = function() {
+                    var updateGeometryCount = function () {
                         scope.geometryCount = {
                             point: DrawService.countFeaturesFor('Point'),
                             line: DrawService.countFeaturesFor('LineString'),
@@ -563,7 +587,7 @@ angular.module('anol.draw')
 
                     var visibleDewatcher;
 
-                    var bindActiveLayer = function(layer) {
+                    var bindActiveLayer = function (layer) {
                         drawPointControl.interactions = createDrawInteractions(
                             'Point', layer.olLayer.getSource(), drawPointControl, layer.olLayer);
                         drawPointControl.enable();
@@ -575,7 +599,7 @@ angular.module('anol.draw')
                         drawPolygonControl.enable();
                         modifyControl.enable();
 
-                        angular.forEach(allInteractions(), function(interaction) {
+                        angular.forEach(allInteractions(), function (interaction) {
                             interaction.setActive(false);
                             scope.map.addInteraction(interaction);
                         });
@@ -586,17 +610,17 @@ angular.module('anol.draw')
 
                         $olOn(scope.activeLayer.olLayer.getSource(), 'change', updateGeometryCount);
 
-                        visibleDewatcher = scope.$watch(function() {
+                        visibleDewatcher = scope.$watch(function () {
                             return scope.activeLayer.getVisible();
-                        }, function(n) {
-                            if(n === false) {
+                        }, function (n) {
+                            if (n === false) {
                                 DrawService.changeLayer(undefined);
                             }
                         });
                     };
 
-                    var unbindActiveLayer = function() {
-                        angular.forEach(allInteractions(), function(interaction) {
+                    var unbindActiveLayer = function () {
+                        angular.forEach(allInteractions(), function (interaction) {
                             interaction.setActive(false);
                             scope.map.removeInteraction(interaction);
                         });
@@ -610,7 +634,7 @@ angular.module('anol.draw')
                         modifyControl.disable();
                         modifyControl.interactions = [];
 
-                        if(angular.isDefined(visibleDewatcher)) {
+                        if (angular.isDefined(visibleDewatcher)) {
                             visibleDewatcher();
                         }
 
@@ -621,24 +645,24 @@ angular.module('anol.draw')
                         scope.activeLayer = undefined;
                     };
 
-                    scope.$watch(function() {
+                    scope.$watch(function () {
                         return DrawService.activeLayer;
-                    }, function(newActiveLayer, oldActiveLayer) {
-                        if(newActiveLayer === scope.activeLayer) {
+                    }, function (newActiveLayer, oldActiveLayer) {
+                        if (newActiveLayer === scope.activeLayer) {
                             return;
                         }
-                        if(angular.isDefined(oldActiveLayer)) {
+                        if (angular.isDefined(oldActiveLayer)) {
                             unbindActiveLayer();
                         }
-                        if(angular.isDefined(newActiveLayer)) {
+                        if (angular.isDefined(newActiveLayer)) {
                             bindActiveLayer(newActiveLayer);
                         }
                     });
 
-                    $document.on('keypress', function(e) {
-                       if (e.code === 'Delete') {
-                           scope.remove();
-                       }
+                    $document.on('keypress', function (e) {
+                        if (e.code === 'Delete') {
+                            scope.remove();
+                        }
                     });
 
                     scope.getBadgeText = function (count, config) {

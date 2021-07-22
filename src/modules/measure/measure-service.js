@@ -1,12 +1,12 @@
 import './module.js';
 
-import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style.js';
+import {Circle as CircleStyle, Fill, Stroke, Style, Text} from 'ol/style.js';
 import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
-import { transform } from 'ol/proj';
+import {transform} from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import MultiPoint from 'ol/geom/MultiPoint.js';
-import { getArea as getSphereArea, getDistance } from 'ol/sphere';
+import {getArea as getSphereArea, getDistance} from 'ol/sphere';
 
 angular.module('anol.measure')
     /**
@@ -108,19 +108,124 @@ angular.module('anol.measure')
             return output;
         };
 
-        var measureStyle = function (feature, labelSegments) {
-            var geometry = feature.getGeometry();
-            var styles = [
+        var createMeasureStyle = function (baseDrawStyles, baseTextStyle, basePointStyle, labelSegments) {
+            return feature => {
+                var geometry = feature.getGeometry();
+                const styles = [...baseDrawStyles];
+
+                function lengthAsString(start, end) {
+                    var geometry = new LineString([start, end])
+                    var projection = MapService.getMap().getView().getProjection();
+
+                    var length;
+                    // TODO load from Service
+                    var geodesic = false;
+
+                    if (geodesic) {
+                        var coordinates = geometry.getCoordinates();
+                        length = 0;
+                        for (var i = 0, ii = coordinates.length - 1; i < ii; ++i) {
+                            var c1 = transform(coordinates[i], projection.getCode(), 'EPSG:4326');
+                            var c2 = transform(coordinates[i + 1], projection.getCode(), 'EPSG:4326');
+                            length += getDistance(c1, c2);
+                        }
+                    } else {
+                        length = Math.round(geometry.getLength() * 100) / 100;
+                    }
+
+                    var output;
+                    if (length > 1000) {
+                        output = anol.helper.round((length / 1000), 3) + ' ' + 'km';
+                    } else {
+                        output = anol.helper.round(length, 2) + ' ' + 'm';
+                    }
+                    output = output.replace('.', ',')
+                    return output;
+                }
+
+                function layoutSegments(start, end) {
+                    var newXY = [(end[0] + start[0]) / 2, (end[1] + start[1]) / 2];
+                    // text
+                    const textStyle = baseTextStyle.clone();
+                    textStyle.setGeometry(new Point(newXY));
+                    textStyle.getText().setText(lengthAsString(start, end));
+                    // points
+                    const pointStyle = basePointStyle.clone();
+                    pointStyle.setGeometry(new MultiPoint([start, end]));
+
+                    styles.push(textStyle, pointStyle);
+                }
+
+                if (labelSegments) {
+                    var geometryType = feature.getGeometry().getType();
+                    if (geometryType === 'LineString') {
+                        geometry.forEachSegment(function (start, end) {
+                            layoutSegments(start, end);
+                        });
+                    }
+                    if (geometryType === 'Polygon') {
+                        var coordinates = geometry.getCoordinates();
+                        var coords = coordinates[0];
+                        angular.forEach(coords, function (coord, idx) {
+                            if (idx !== coords.length - 1) {
+                                var start = coord;
+                                var end = coords[idx + 1];
+                                layoutSegments(start, end);
+                            }
+                        })
+                    }
+                }
+                return styles;
+            }
+        }
+
+        var dashedStyle = function (labelSegments) {
+            return createMeasureStyle([
+                    new Style({
+                        fill: new Fill({
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        }),
+                        stroke: new Stroke({
+                            color: 'rgba(255, 255, 255, 0.75)',
+                            lineDash: [10, 10],
+                            width: 5,
+                            opacity: 0.75
+                        }),
+                        image: new CircleStyle({
+                            radius: 5,
+                            stroke: new Stroke({
+                                color: 'rgba(255, 255, 255, 0.75)',
+                                width: 2,
+                                opacity: 0.75
+                            }),
+                            fill: new Fill({
+                                color: 'rgba(227, 0, 20, 0.75)'
+                            })
+                        })
+                    }),
+
+                    new Style({
+                        stroke: new Stroke({
+                            color: 'rgba(227, 0, 20, 0.75)',
+                            lineDash: [10, 10],
+                            width: 2,
+                            opacity: 0.75
+                        })
+                    })
+                ],
                 new Style({
-                    fill: new Fill({
-                        color: 'rgba(255, 255, 255, 0.2)'
-                    }),
-                    stroke: new Stroke({
-                        color: 'rgba(255, 255, 255, 0.75)',
-                        lineDash: [10, 10],
-                        width: 5,
-                        opacity: 0.75
-                    }),
+                    text: new Text({
+                        font: '14px Calibri,sans-serif',
+                        fill: new Fill({
+                            color: '#000'
+                        }),
+                        stroke: new Stroke({
+                            color: '#fff',
+                            width: 2
+                        })
+                    })
+                }),
+                new Style({
                     image: new CircleStyle({
                         radius: 5,
                         stroke: new Stroke({
@@ -133,106 +238,14 @@ angular.module('anol.measure')
                         })
                     })
                 }),
-
-                new Style({
-                    stroke: new Stroke({
-                        color: 'rgba(227, 0, 20, 0.75)',
-                        lineDash: [10, 10],
-                        width: 2,
-                        opacity: 0.75
-                    })
-                })
-            ];
-
-            function lengthAsString(start, end) {
-                var geometry = new LineString([start, end])
-                var projection = MapService.getMap().getView().getProjection();
-
-                var length;
-                // TODO load from Service
-                var geodesic = false;
-
-                if (geodesic) {
-                    var coordinates = geometry.getCoordinates();
-                    length = 0;
-                    for (var i = 0, ii = coordinates.length - 1; i < ii; ++i) {
-                        var c1 = transform(coordinates[i], projection.getCode(), 'EPSG:4326');
-                        var c2 = transform(coordinates[i + 1], projection.getCode(), 'EPSG:4326');
-                        length += getDistance(c1, c2);
-                    }
-                } else {
-                    length = Math.round(geometry.getLength() * 100) / 100;
-                }
-
-                var output;
-                if (length > 1000) {
-                    output = anol.helper.round((length / 1000), 3) + ' ' + 'km';
-                } else {
-                    output = anol.helper.round(length, 2) + ' ' + 'm';
-                }
-                output = output.replace('.', ',')
-                return output;
-            }
-
-            function layoutSegments(start, end) {
-                var newXY = [(end[0] + start[0]) / 2, (end[1] + start[1]) / 2];
-                // text
-                styles.push(new Style({
-                    geometry: new Point(newXY),
-                    text: new Text({
-                        font: '14px Calibri,sans-serif',
-                        fill: new Fill({
-                            color: '#000'
-                        }),
-                        stroke: new Stroke({
-                            color: '#fff',
-                            width: 2
-                        }),
-                        text: lengthAsString(start, end)
-                    })
-                }));
-                // points
-                styles.push(new Style({
-                    geometry: new MultiPoint([start, end]),
-                    image: new CircleStyle({
-                        radius: 5,
-                        stroke: new Stroke({
-                            color: 'rgba(255, 255, 255, 0.75)',
-                            width: 2,
-                            opacity: 0.75
-                        }),
-                        fill: new Fill({
-                            color: 'rgba(227, 0, 20, 0.75)'
-                        })
-                    })
-                }));
-            }
-
-            if (labelSegments) {
-                var geometryType = feature.getGeometry().getType();
-                if (geometryType === 'LineString') {
-                    geometry.forEachSegment(function (start, end) {
-                        layoutSegments(start, end);
-                    });
-                }
-                if (geometryType === 'Polygon') {
-                    var coordinates = geometry.getCoordinates();
-                    var coords = coordinates[0];
-                    angular.forEach(coords, function (coord, idx) {
-                        if (idx !== coords.length - 1) {
-                            var start = coord;
-                            var end = coords[idx + 1];
-                            layoutSegments(start, end);
-                        }
-                    })
-                }
-            }
-            return styles;
-        };
+                labelSegments
+            );
+        }
 
         return {
             createMeasureOverlay: createMeasureOverlay,
-            measureStyle: measureStyle,
+            dashedMeasureStyle: dashedStyle,
+            createMeasureStyle: createMeasureStyle,
             calculateLength: calculateLength,
             calculateArea: calculateLength,
             formatLineResult: formatLineResult,

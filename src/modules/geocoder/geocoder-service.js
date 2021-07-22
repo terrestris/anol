@@ -56,7 +56,7 @@ angular.module('anol.geocoder')
             }
         });
 
-        this.$get = ['$rootScope', '$q', 'MapService', 'UrlMarkerService', function ($rootScope, $q, MapService, UrlMarkerService) {
+        this.$get = ['$rootScope', 'MapService', 'UrlMarkerService', function ($rootScope, MapService, UrlMarkerService) {
             /**
              * @ngdoc service
              * @name anol.map.GeocoderService
@@ -157,12 +157,12 @@ angular.module('anol.geocoder')
                             return;
                         }
                         geocoder = this.getGeocoder(configName);
-                    } else {
+                    } else if (this.getUrlGeocodeConfigs().length > 0) {
                         geocoder = this.getGeocoder(this.getUrlGeocodeConfigs()[0].name);
                     }
 
                     if (!geocoder) {
-                        console.error('No geocode config available.')
+                        console.error('No search config for url gecode available (missing configuration with `availableInUrlGeocode` option).')
                         return;
                     }
 
