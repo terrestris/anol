@@ -53,20 +53,20 @@ angular.module('anol.geocoder')
                             $compile(template)(scope);
                         });
                     }
-                    scope.geocoderConfigs = GeocoderService.getSearchBoxConfigs();
+                    const initialConfigs = GeocoderService.getSearchBoxConfigs();
 
-                    if (scope.geocoderConfigs.length === 1) {
+                    if (initialConfigs.length === 1) {
                         scope.searchDropdown = false;
                     }
                     scope.activeGeocoderConfig = undefined;
-                    angular.forEach(scope.geocoderConfigs, function(geocoder) {
+                    for (const geocoder of initialConfigs) {
                         if (geocoder.selected) {
                             scope.activeGeocoderConfig = geocoder;
                         }
-                    });
+                    }
 
                     if (angular.isUndefined(scope.activeGeocoderConfig)) {
-                        scope.activeGeocoderConfig = scope.geocoderConfigs[0]
+                        scope.activeGeocoderConfig = initialConfigs[0]
                     }
 
                     var removeMarkerInteraction;
@@ -254,39 +254,34 @@ angular.module('anol.geocoder')
                         return GeocoderService.getGeocoder(activeGeocoderConfig.name);
                     }
 
-                    scope.$watchCollection('geocoderConfigs', function(newValue) {
+                    scope.$watchCollection(() => GeocoderService.getSearchBoxConfigs(), function(newConfigs) {
                         var found = false;
                         var baseGeocoderConfigs = [];
                         var layerGeocoderConfigs = [];
 
-                        angular.forEach(newValue, function(geocoder) {
+                        for (const geocoder of newConfigs) {
                             if (geocoder.name === scope.activeGeocoderConfig.name) {
                                 found = true;
                             }
                             if (geocoder.type === 'base') {
                                 baseGeocoderConfigs.push(geocoder);
                             }
-                            if (geocoder.type == 'layer') {
+                            if (geocoder.type === 'layer') {
                                 layerGeocoderConfigs.push(geocoder)
                             }
-                        })
+                        }
 
                         if (!found) {
-                            angular.forEach(scope.geocoderConfigs, function(geocoderConfig) {
+                            for (const geocoderConfig of scope.geocoderConfigs) {
                                 if (geocoderConfig.selected) {
                                     scope.activateGeocoder(geocoderConfig)
                                 }
-                            });
-                        };
+                            }
+                        }
 
                         scope.baseGeocoderConfigs = baseGeocoderConfigs;
                         scope.layerGeocoderConfigs = layerGeocoderConfigs;
-                        if (newValue.length === 1) {
-                            scope.searchDropdown = false;
-                        } else {
-                            scope.searchDropdown = true;
-                        }
-
+                        scope.searchDropdown = newConfigs.length > 1;
                     });
 
                     scope.$watch('searchString', function(value) {
