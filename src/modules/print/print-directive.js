@@ -23,8 +23,8 @@ angular.module('anol.print')
  * *tempalteValues* can be extended by transclude input fields into directive. *ng-model* value for these fields have to be
  * *$parent.printAttributes.[name]*
  */
-    .directive('anolPrint', ['$rootScope', '$templateRequest', '$compile', 'PrintService', 'PrintPageService', 'MapService', 'LayersService',
-        function($rootScope, $templateRequest, $compile, PrintService, PrintPageService, MapService, LayersService) {
+    .directive('anolPrint', ['$rootScope', '$templateRequest', '$compile', 'PrintService', 'PrintPageService', 'MapService', 'LayersService', 'DrawService',
+        function($rootScope, $templateRequest, $compile, PrintService, PrintPageService, MapService, LayersService, DrawService) {
             return {
                 restrict: 'A',
                 template: function(tElement, tAttrs) {
@@ -86,6 +86,8 @@ angular.module('anol.print')
                             layers = layers.concat(prepareOverlays(LayersService.overlayLayers)).filter(function(l) {
                                 return l.name !== undefined;
                             });
+
+                            layers.push(DrawService.activeLayer);
 
                             // TODO load from PrintPageService
                             scope.measureLayers = ['lineMeasureLayer', 'areaMeasureLayer'];
