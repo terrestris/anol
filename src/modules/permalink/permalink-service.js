@@ -413,9 +413,9 @@ angular.module('anol.permalink')
                                 layers = layers.concat(mapParams.visibleCatalogLayers);
                             }
 
-                            const allAvailable = angular.isUndefined(mapParams.catalogLayers);
+                            const allAvailable = angular.isUndefined(mapParams.catalogLayers) || mapParams.catalogLayers.length === 0;
 
-                            const available = allAvailable ? undefined : angular.extend(mapParams.catalogLayers);
+                            const available = allAvailable ? [] : angular.extend(mapParams.catalogLayers);
 
                             let toRemove = [];
 
