@@ -450,8 +450,9 @@ angular.module('anol.permalink')
                     async updateMapFromGeocodeParameters(mapParams) {
                         if (mapParams.geocode !== undefined) {
                             const {config, term, highlight, label} = mapParams.geocode;
+                            let parsedHighlight = angular.isUndefined(highlight) ? false : JSON.parse(highlight);
                             ReadyService.waitFor('geocoding');
-                            await GeocoderService.handleUrlGeocode(term, config, highlight, label)
+                            await GeocoderService.handleUrlGeocode(term, config, parsedHighlight, label)
                             ReadyService.notifyAboutReady('geocoding');
                             $location.search('geocode', undefined);
                             $location.replace();

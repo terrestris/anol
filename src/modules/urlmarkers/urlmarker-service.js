@@ -215,11 +215,7 @@ angular.module('anol.urlmarkers')
                     }
                     this.layer.olLayer.getSource().addFeature(new Feature(options));
                     if (fit) {
-                        const map = MapService.getMap();
-                        map.once('postrender', () => {
-                            map.getView().fit(geometry);
-                            this.updateUrl();
-                        });
+                        MapService.zoomToGeom(geometry);
                     }
                 }
 

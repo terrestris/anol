@@ -1,5 +1,6 @@
 import './module.js';
 import Overlay from 'ol/Overlay';
+import { getCenter } from 'ol/extent';
 
 angular.module('anol.urlmarkers')
 
@@ -33,7 +34,7 @@ angular.module('anol.urlmarkers')
                         angular.element(overlay.getElement()).parent().addClass('anol-popup-container');
                         MapService.getMap().addOverlay(overlay);
 
-                        overlay.setPosition(feature.getGeometry().getCoordinates());
+                        overlay.setPosition(getCenter(feature.getGeometry().getExtent()));
                         overlays.push(overlay);
                     }
                 }

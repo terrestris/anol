@@ -150,15 +150,19 @@ angular.module('anol.geocoder')
                     });
 
                     let geocoder;
-                    const config = this.configByName(configName);
-                    if (config) {
-                        if (!config.availableInUrlGeocode) {
-                            console.error('Search config is not available in url geocode (missing `availableInUrlGeocode` configuration).')
-                            return;
+                    if (angular.isUndefined(configName)) {
+                        if (this.getUrlGeocodeConfigs().length > 0) {
+                            geocoder = this.getGeocoder(this.getUrlGeocodeConfigs()[0].name);
                         }
-                        geocoder = this.getGeocoder(configName);
-                    } else if (this.getUrlGeocodeConfigs().length > 0) {
-                        geocoder = this.getGeocoder(this.getUrlGeocodeConfigs()[0].name);
+                    } else {
+                        const config = this.configByName(configName);
+                        if (config) {
+                            if (!config.availableInUrlGeocode) {
+                                console.error('Search config is not available in url geocode (missing `availableInUrlGeocode` configuration).')
+                                return;
+                            }
+                            geocoder = this.getGeocoder(configName);
+                        }
                     }
 
                     if (!geocoder) {
@@ -184,10 +188,7 @@ angular.module('anol.geocoder')
                             fit: true
                         });
                     } else {
-                        const map = MapService.getMap();
-                        map.once('postrender', () => {
-                            map.getView().fit(geometry);
-                        });
+                        MapService.zoomToGeom(geometry);
                     }
                 }
             }
