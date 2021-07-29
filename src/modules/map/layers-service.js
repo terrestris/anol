@@ -540,14 +540,29 @@ angular.module('anol.map')
             Layers.prototype.setLayerOrder = function (layers) {
                 // in this function the original arrays need to be preserved.
 
+                let skippedLayers = 0;
+
                 layers.forEach((layer, newIndex) => {
                     const oldIndex = this.overlayLayers.findIndex(l => angular.isDefined(l) && l.name === layer.name);
+                    if (oldIndex < 0) {
+                        console.warn(`Trying to change order of non existing layer ${layer.name}`);
+                        skippedLayers++;
+                        return;
+                    }
                     const overlayLayer = this.overlayLayers[oldIndex];
-                    anol.helper.array_move(this.overlayLayers, oldIndex, newIndex);
+                    anol.helper.array_move(this.overlayLayers, oldIndex, newIndex - skippedLayers);
                     if (overlayLayer instanceof anol.layer.Group && layer.layers !== undefined) {
+
+                        let skippedChildLayers = 0;
+
                         layer.layers.forEach((childLayerName, newGroupIndex) => {
                             const oldGroupIndex = overlayLayer.layers.findIndex(l => l.name === childLayerName);
-                            anol.helper.array_move(overlayLayer.layers, oldGroupIndex, newGroupIndex);
+                            if (oldGroupIndex < 0) {
+                                console.warn(`Trying to change order of non existing layer ${childLayerName}`);
+                                skippedChildLayers++;
+                                return;
+                            }
+                            anol.helper.array_move(overlayLayer.layers, oldGroupIndex, newGroupIndex - skippedChildLayers);
                         });
                     }
                 });

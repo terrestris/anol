@@ -13,7 +13,7 @@ angular.module('anol.catalog')
     this.setLoadUrl = function(url) {
         _loadUrl = url;
     };
-   
+
     this.$get = ['$q', '$http', '$rootScope', 'LayersService', function($q, $http, $rootScope, LayersService) {
         /**
          * @ngdoc service
@@ -41,7 +41,7 @@ angular.module('anol.catalog')
             this.loadUrl = loadUrl;
             this.catalogLayerNames = [];
             this.catalogGroupNames = [];
-            
+
             var pageBody = angular.element(document).find('body');
             this.addWaiting = function() {
                 pageBody.addClass('waiting');
@@ -53,7 +53,7 @@ angular.module('anol.catalog')
                 return;
             }
             this.deferred = $q.defer();
-            
+
             $http.get(loadUrl).then(
                 function(response) {
                     if(response.data.layers) {
@@ -65,7 +65,7 @@ angular.module('anol.catalog')
                         self.createGroupCatalog();
                     }
             })
-      
+
             self.createLayerCatalog = function() {
                 var self = this;
                 var sortedLayers = {};
@@ -73,8 +73,8 @@ angular.module('anol.catalog')
                     self.addCatalogLayer(_layer);
                     if(_layer.name !== undefined) {
                         self.nameLayersMap[_layer.name] = _layer;
-                    }   
-                    
+                    }
+
                     var firstLetter = _layer.title.charAt(0).toUpperCase();
                     if (self.firstLetters.indexOf(firstLetter) === -1) {
                         if (!_layer.visible) {
@@ -86,7 +86,7 @@ angular.module('anol.catalog')
                             'title': firstLetter,
                             'latinisedTitle': voca.latinise(firstLetter)
                         };
-                    } 
+                    }
                     else {
                         if (!_layer.visible) {
                             return;
@@ -104,7 +104,7 @@ angular.module('anol.catalog')
                         if (angular.isDefined(key)) {
                             reSortedLayers[key] = sortedLayers[key];
                         }
-                    }) 
+                    })
                     if (!angular.equals({}, reSortedLayers)) {
                         self.sortedLayers = reSortedLayers;
                     } else {
@@ -120,7 +120,7 @@ angular.module('anol.catalog')
                     self.addCatalogGroup(_group);
                     if(_group.name !== undefined) {
                         self.nameGroupsMap[_group.name] = _group;
-                    }   
+                    }
                     if (_group.predefined) {
                         self.addedGroupsName.push(_group.name);
                     }
@@ -135,7 +135,7 @@ angular.module('anol.catalog')
                             'title': firstLetter,
                             'latinisedTitle': voca.latinise(firstLetter)
                         };
-                    } 
+                    }
                     else {
                         if (!_group.visible) {
                             return;
@@ -152,7 +152,7 @@ angular.module('anol.catalog')
                         if (angular.isDefined(key)) {
                             reSortedGroups[key] = sortedGroups[key];
                         }
-                    }) 
+                    })
                     if (!angular.equals({}, reSortedGroups)) {
                         self.sortedGroups = reSortedGroups;
                     }else {
@@ -160,7 +160,7 @@ angular.module('anol.catalog')
                     }
                 }
                 self.deferred.resolve({
-                    'groups': self.sortedGroups, 
+                    'groups': self.sortedGroups,
                     'layers': self.sortedLayers
                 });
             }
@@ -178,7 +178,7 @@ angular.module('anol.catalog')
                         self.addedGroupsName.push(layer.name)
                     } else {
                         self.addedLayersName.push(layer.name)
-                    }                    
+                    }
                 })
             });
 
@@ -215,7 +215,7 @@ angular.module('anol.catalog')
          */
         CatalogService.prototype.groupByName = function(name) {
             return this.nameGroupsMap[name];
-        };        
+        };
         /**
          * @ngdoc method
          * @name layers
@@ -244,13 +244,13 @@ angular.module('anol.catalog')
          * @ngdoc method
          * @name setVariant
          * @methodOf anol.map.CatalogService
-         * @param {string} variant  
+         * @param {string} variant
          * @description
          * Set variant of catalog service
          */
         CatalogService.prototype.setVariant = function(variant) {
             this.variant = variant;
-        };  
+        };
         /**
          * @ngdoc method
          * @name getVariant
@@ -262,7 +262,7 @@ angular.module('anol.catalog')
         CatalogService.prototype.getVariant = function() {
             var self = this;
             return self.variant;
-        };        
+        };
         /**
          * @ngdoc method
          * @name addLayer
@@ -317,16 +317,19 @@ angular.module('anol.catalog')
                             angular.forEach(cGroup.layers, function(cLayer) {
                                 var anolLayer = undefined;
                                 cLayer.olLayer.visible = false;
-                                if (cLayer['type'] == 'wms') {
+                                if (cLayer['type'] === 'wms') {
                                     anolLayer = new anol.layer.SingleTileWMS(cLayer)
-                                } else if (cLayer['type'] == 'tiledwms') {
+                                } else if (cLayer['type'] === 'tiledwms') {
                                     anolLayer = new anol.layer.TiledWMS(cLayer)
-                                } else if (cLayer['type'] == 'wmts') {
+                                } else if (cLayer['type'] === 'wmts') {
                                     anolLayer = new anol.layer.WMTS(cLayer)
-                                } else if (cLayer['type'] == 'dynamic_geojson') {
+                                } else if (cLayer['type'] === 'dynamic_geojson') {
                                     anolLayer = new anol.layer.DynamicGeoJSON(cLayer)
-                                } else if (cLayer['type'] == 'static_geojson' ||cLayer['type'] == 'digitize') {
+                                } else if (cLayer['type'] === 'static_geojson' || cLayer['type'] === 'digitize') {
                                     anolLayer  = new anol.layer.StaticGeoJSON(cLayer)
+                                } else {
+                                    console.error(`Unknown layer type '${cLayer['type']}'`, cLayer);
+                                    return;
                                 }
                                 groupLayers.push(anolLayer)
                             });
@@ -350,7 +353,7 @@ angular.module('anol.catalog')
                                 angular.forEach(_group.layers, function(_layers) {
                                     self.addedGroupsLength++;
                                 });
-                            });      
+                            });
                             var startZIndex = LayersService.zIndex + self.addedLayers.length + anolGroup.layers.length
                             angular.forEach(anolGroup.layers, function(_layers) {
                                 _layers.olLayer.setZIndex(startZIndex);
@@ -387,14 +390,14 @@ angular.module('anol.catalog')
             $http.post(loadUrl, data).then(
                 function(response) {
                     self.removeWaiting();
-                    defer.resolve(response.data); 
+                    defer.resolve(response.data);
                 }
             )
             return defer.promise;
         };
 
         /**
-         * 
+         *
          * @ngdoc method
          * @name addToMap
          * @methodOf anol.catalog.CatalogService
@@ -426,7 +429,7 @@ angular.module('anol.catalog')
                             anolLayer = new anol.layer.WMTS(clayer)
                         } else if (clayer['type'] == 'dynamic_geojson') {
                             anolLayer = new anol.layer.DynamicGeoJSON(clayer)
-                        } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
+                        } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
                             anolLayer = new anol.layer.StaticGeoJSON(clayer)
                         }
                         LayersService.addOverlayLayer(anolLayer, 0);
@@ -490,7 +493,7 @@ angular.module('anol.catalog')
                         }
                     }
                 }
-            } 
+            }
         };
         return new CatalogService(_loadUrl);
     }];
