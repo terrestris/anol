@@ -52,7 +52,7 @@ angular.module('anol.permalink')
             }
 
             if (angular.isDefined(visibleCatalogLayers)) {
-                result.layers = (result.layers || []).concat(visibleCatalogLayers);
+                result.visibleCatalogLayers = visibleCatalogLayers;
             }
 
             if (angular.isDefined(catalogGroups)) {
@@ -407,20 +407,28 @@ angular.module('anol.permalink')
                                     return group ? [group] : [];
                                 }));
 
-                            const available = angular.isDefined(mapParams.catalogLayers) ?
-                                angular.extend(mapParams.catalogLayers) : [];
+                            let layers = mapParams.layers;
+
+                            if (angular.isDefined(mapParams.visibleCatalogLayers)) {
+                                layers = layers.concat(mapParams.visibleCatalogLayers);
+                            }
+
+                            const allAvailable = angular.isUndefined(mapParams.catalogLayers);
+
+                            const available = allAvailable ? undefined : angular.extend(mapParams.catalogLayers);
 
                             let toRemove = [];
 
                             for (const group of groups) {
                                 for (const layer of group.layers) {
-                                    const idx = available.indexOf(layer.name);
-                                    if (idx > -1) {
-                                        if (mapParams.layers) {
-                                            const visible = mapParams.layers.indexOf(layer.name) > -1;
+                                    if (allAvailable || available.indexOf(layer.name) > -1) {
+                                        if (layers) {
+                                            const visible = layers.indexOf(layer.name) > -1;
                                             layer.setVisible(visible);
                                         }
-                                        available.splice(idx, 1);
+                                        if (!allAvailable) {
+                                            available.splice(available.indexOf(layer.name), 1);
+                                        }
                                     } else {
                                         toRemove.push(layer);
                                     }
