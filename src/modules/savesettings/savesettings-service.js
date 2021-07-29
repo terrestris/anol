@@ -2,11 +2,11 @@ import './module.js';
 
 angular.module('anol.savesettings')
 
-/**
- * @ngdoc object
- * @name anol.savemanager.SaveManagerServiceProvider
- */
-    .provider('SaveSettingsService', [function() {
+    /**
+     * @ngdoc object
+     * @name anol.savemanager.SaveManagerServiceProvider
+     */
+    .provider('SaveSettingsService', [function () {
         var _saveManagerInstance;
         var _saveUrl;
         var _loadUrl;
@@ -14,33 +14,33 @@ angular.module('anol.savesettings')
         var _projectName;
 
         /**
-     * @ngdoc method
-     * @name setSaveUrl
-     * @methodOf anol.savemanager.SaveManagerServiceProvider
-     * @param {String} saveUrl url to save changes to. Might be overwritten by layer.saveUrl
-     */
-        this.setSaveUrl = function(saveUrl) {
+         * @ngdoc method
+         * @name setSaveUrl
+         * @methodOf anol.savemanager.SaveManagerServiceProvider
+         * @param {String} saveUrl url to save changes to. Might be overwritten by layer.saveUrl
+         */
+        this.setSaveUrl = function (saveUrl) {
             _saveUrl = saveUrl;
         };
-        this.setLoadUrl = function(loadUrl) {
+        this.setLoadUrl = function (loadUrl) {
             _loadUrl = loadUrl;
         };
-        this.setDeleteUrl = function(deleteUrl) {
+        this.setDeleteUrl = function (deleteUrl) {
             _deleteUrl = deleteUrl;
         };
-        this.setProjectName = function(projectName) {
+        this.setProjectName = function (projectName) {
             _projectName = projectName;
         };
         this.$get = ['$rootScope', '$window', '$q', '$http', '$timeout', '$translate', 'PermalinkService', 'PrintPageService', 'ProjectSettings', 'LayersService', 'CatalogService',
-            function($rootScope, $window, $q, $http, $timeout, $translate, PermalinkService, PrintPageService, ProjectSettings, LayersService, CatalogService) {
+            function ($rootScope, $window, $q, $http, $timeout, $translate, PermalinkService, PrintPageService, ProjectSettings, LayersService, CatalogService) {
                 /**
-         * @ngdoc service
-         * @name anol.savemanager.SaveManagerService
-         *
-         * @description
-         * Collects changes in saveable layers and send them to given saveUrl
-         */
-                var SaveSettings = function(saveUrl, loadUrl, deleteUrl, projectName) {
+                 * @ngdoc service
+                 * @name anol.savemanager.SaveManagerService
+                 *
+                 * @description
+                 * Collects changes in saveable layers and send them to given saveUrl
+                 */
+                var SaveSettings = function (saveUrl, loadUrl, deleteUrl, projectName) {
                     var self = this;
                     this.saveUrl = saveUrl;
                     this.loadUrl = loadUrl;
@@ -48,9 +48,9 @@ angular.module('anol.savesettings')
                     this.projectName = projectName;
                     // this.changedLayers = {};
                     // this.changedFeatures = {};
-                    var translate = function() {
+                    var translate = function () {
                         $translate('anol.savemanager.SERVICE_UNAVAILABLE').then(
-                            function(translation) {
+                            function (translation) {
                                 self.serviceUnavailableMessage = translation;
                             });
                     };
@@ -58,7 +58,7 @@ angular.module('anol.savesettings')
                     translate();
                 };
 
-                SaveSettings.prototype.applySaveSettings = function(data) {
+                SaveSettings.prototype.applySaveSettings = function (data) {
                     if (data.settings.new) {
                         ProjectSettings.push({
                             'id': data.settings.id,
@@ -67,9 +67,9 @@ angular.module('anol.savesettings')
                     }
                 };
 
-                SaveSettings.prototype.applyDeleteSettings = function(data) {
+                SaveSettings.prototype.applyDeleteSettings = function (data) {
                     var index = -1;
-                    angular.forEach(ProjectSettings, function(value, idx) {
+                    angular.forEach(ProjectSettings, function (value, idx) {
                         if (value.id == data.settings.id) {
                             index = idx;
                         }
@@ -80,12 +80,12 @@ angular.module('anol.savesettings')
                     }
                 };
 
-                SaveSettings.prototype.applyLoadSettings = function(settings) {
-                    PermalinkService.setPermalinkParameters(settings.map).then(function(data) {
-                        LayersService.deleteLayers(settings.layerswitcher.deleted);
-                        LayersService.setLayerOrder(settings.layerswitcher.order);
-                        LayersService.setCollapsedGroups(settings.layerswitcher.open);
-                    })
+                SaveSettings.prototype.applyLoadSettings = async function (settings) {
+                    await PermalinkService.setPermalinkParameters(settings.map);
+
+                    LayersService.deleteLayers(settings.layerswitcher.deleted);
+                    LayersService.setLayerOrder(settings.layerswitcher.order);
+                    LayersService.setCollapsedGroups(settings.layerswitcher.open);
 
                     // save print settings and check if print tab is open
                     PrintPageService.loadSettings(settings);
@@ -99,7 +99,7 @@ angular.module('anol.savesettings')
                     }
                 };
 
-                SaveSettings.prototype.load = function(id) {
+                SaveSettings.prototype.load = function (id) {
                     var self = this;
                     var deferred = $q.defer();
                     // if ajax is false we use redirect to load page settings
@@ -110,15 +110,15 @@ angular.module('anol.savesettings')
                         'project_name': self.projectName
                     };
                     var promise = $http.post(self.loadUrl, data);
-                    promise.then(function(response) {
+                    promise.then(function (response) {
                         if (ajax) {
                             self.applyLoadSettings(response.data.settings);
                         } else {
                             $window.location.href = response.data.redirect;
                         }
                         deferred.resolve(response.data);
-                    }, function(response) {
-                        if(response.status === -1) {
+                    }, function (response) {
+                        if (response.status === -1) {
                             deferred.reject({'message': self.serviceUnavailableMessage});
                         } else {
                             deferred.reject(response.data);
@@ -128,7 +128,7 @@ angular.module('anol.savesettings')
                     return deferred.promise;
                 };
 
-                SaveSettings.prototype.save = function(name) {
+                SaveSettings.prototype.save = function (name) {
                     var self = this;
                     var deferred = $q.defer();
 
@@ -160,11 +160,11 @@ angular.module('anol.savesettings')
                     };
 
                     var promise = $http.post(self.saveUrl, data);
-                    promise.then(function(response) {
+                    promise.then(function (response) {
                         self.applySaveSettings(response.data);
                         deferred.resolve(response.data);
-                    }, function(response) {
-                        if(response.status === -1) {
+                    }, function (response) {
+                        if (response.status === -1) {
                             deferred.reject({'message': self.serviceUnavailableMessage});
                         } else {
                             deferred.reject(response.data);
@@ -174,18 +174,18 @@ angular.module('anol.savesettings')
                     return deferred.promise;
                 };
 
-                SaveSettings.prototype.delete = function(id) {
+                SaveSettings.prototype.delete = function (id) {
                     var self = this;
                     var deferred = $q.defer();
                     var data = {
                         'id': id
                     };
                     var promise = $http.post(self.deleteUrl, data);
-                    promise.then(function(response) {
+                    promise.then(function (response) {
                         self.applyDeleteSettings(response.data);
                         deferred.resolve(response.data);
-                    }, function(response) {
-                        if(response.status === -1) {
+                    }, function (response) {
+                        if (response.status === -1) {
                             deferred.reject({'message': self.serviceUnavailableMessage});
                         } else {
                             deferred.reject(response.data);
