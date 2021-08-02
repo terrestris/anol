@@ -158,25 +158,25 @@ angular.module('anol.draw')
                         }
                     }
 
+                    const editingStyles = createEditingStyle();
+                    const measureStyle = MeasureService.createMeasureStyle([
+                        ...editingStyles['Point'],
+                        ...editingStyles['LineString']
+                    ], new Style({
+                        text: new Text({
+                            font: '14px Calibri,sans-serif',
+                            fill: new Fill({
+                                color: '#000'
+                            }),
+                            stroke: new Stroke({
+                                color: '#fff',
+                                width: 2
+                            })
+                        })
+                    }), editingStyles['Point'][0], true);
+
                     var createDrawInteractions = function (drawType, source, control, layer, postDrawActions) {
                         postDrawActions = postDrawActions || [];
-
-                        const editingStyles = createEditingStyle();
-                        const measureStyle = MeasureService.createMeasureStyle([
-                            ...editingStyles['Point'],
-                            ...editingStyles['LineString']
-                        ], new Style({
-                            text: new Text({
-                                font: '14px Calibri,sans-serif',
-                                fill: new Fill({
-                                    color: '#000'
-                                }),
-                                stroke: new Stroke({
-                                    color: '#fff',
-                                    width: 2
-                                })
-                            })
-                        }), editingStyles['Point'][0], true);
 
                         // create draw interaction
                         var draw = new Draw({
@@ -257,7 +257,7 @@ angular.module('anol.draw')
                                     ensureMeasureOverlayAdded();
                                     scope.measureOverlay.setPosition(geometry.getLastCoordinate());
                                 }
-                                return MeasureService.measureStyle(feature, true);
+                                return measureStyle(feature);
                             },
                             hitTolerance: 10
                         });
