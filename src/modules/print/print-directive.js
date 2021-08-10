@@ -84,7 +84,7 @@ angular.module('anol.print')
 
                             var layers = [LayersService.activeBackgroundLayer()];
                             layers = layers.concat(prepareOverlays(LayersService.overlayLayers)).filter(function(l) {
-                                return l.name !== undefined;
+                                return l !== undefined && l.name !== undefined;
                             });
 
                             layers.push(DrawService.activeLayer);
