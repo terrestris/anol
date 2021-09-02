@@ -438,6 +438,9 @@ angular.module('anol.geocoder')
                     };
 
                     scope.activateGeocoder = function(geocoderConfig) {
+                        if (scope.geocoder.isCatalog) {
+                            scope.geocoder.step = 0;
+                        }
                         scope.activeGeocoderConfig = geocoderConfig;
                         scope.geocoder = setAnolGeocoder(scope.activeGeocoderConfig);
                         scope.showGeocoderList = false;
