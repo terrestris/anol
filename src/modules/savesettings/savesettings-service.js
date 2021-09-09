@@ -83,8 +83,6 @@ angular.module('anol.savesettings')
                 SaveSettings.prototype.applyLoadSettings = async function (settings) {
                     await PermalinkService.setPermalinkParameters(settings.map);
 
-                    LayersService.deleteLayers(settings.layerswitcher.deleted);
-                    LayersService.setLayerOrder(settings.layerswitcher.order);
                     LayersService.setCollapsedGroups(settings.layerswitcher.open);
 
                     // save print settings and check if print tab is open
@@ -151,8 +149,6 @@ angular.module('anol.savesettings')
                         'name': name,
                         'map': permalinkData,
                         'layerswitcher': {
-                            'order': layers,
-                            'deleted': deletedLayers,
                             'open': groups
                         },
                         'controls': controls,
