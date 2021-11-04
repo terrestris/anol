@@ -1,6 +1,25 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
-import {getArrayParam, getObjectParam} from "./util";
+import {getArrayParam, getObjectParam, getParamString} from "./util";
+
+/**
+ * @typedef {Object} PermalinkParameters
+ * @property {number} [zoom]
+ * @property {[number, number]} [center]
+ * @property {string} [crs]
+ * @property {string[]} [layers]
+ * @property {string[]} [catalogLayers]
+ * @property {string[]} [visibleCatalogLayers]
+ * @property {string[]} [catalogGroups]
+ * @property {Object} [fit]
+ * @property {[number, number, number, number]} fit.extent
+ * @property {string} fit.crs
+ * @property {Object} [geocode]
+ * @property {string[]} groupOrder
+ * @property {string[]} sidebar
+ * @property {'open'|'closed'} sidebarStatus
+ */
+
 
 angular.module('anol.permalink')
 
@@ -12,6 +31,10 @@ angular.module('anol.permalink')
         var _urlCrs;
         var _precision = 100000;
 
+        /**
+         * @param {Object} params
+         * @return {PermalinkParameters}
+         */
         var extractMapParams = function (params) {
             var mapParams = getArrayParam('map', params);
 
@@ -29,14 +52,21 @@ angular.module('anol.permalink')
 
             const groupOrder = getArrayParam('groupOrder', params);
 
+            const sidebar = getArrayParam('sidebar', params);
+
+            const sidebarStatus = getParamString('sidebarStatus', params);
+
+            /**
+             * @type {PermalinkParameters}
+             */
             var result = {}
             if (angular.isDefined(mapParams)) {
                 if (mapParams.length === 4) {
-                    result = {
-                        'zoom': parseInt(mapParams[0]),
-                        'center': [parseFloat(mapParams[1]), parseFloat(mapParams[2])],
-                        'crs': mapParams[3]
-                    };
+                    Object.assign(result, {
+                        zoom: parseInt(mapParams[0]),
+                        center: [parseFloat(mapParams[1]), parseFloat(mapParams[2])],
+                        crs: mapParams[3]
+                    });
                 } else {
                     console.error('Url param `map` has incorrect number of arguments. ' +
                         'Expected: `map={zoom},{centerX},{centerY},{crs}`');
@@ -78,6 +108,14 @@ angular.module('anol.permalink')
 
             if (angular.isDefined(groupOrder)) {
                 result.groupOrder = groupOrder;
+            }
+
+            if (angular.isDefined(sidebar)) {
+                result.sidebar = sidebar;
+            }
+
+            if (angular.isDefined(sidebarStatus) && sidebarStatus !== false && sidebarStatus !== '') {
+                result.sidebarStatus = sidebarStatus;
             }
 
             return result;
@@ -237,7 +275,7 @@ angular.module('anol.permalink')
 
                         const mapParams = extractMapParams($location.search() || {});
 
-                        await this.updateMapFromParameters(mapParams);
+                        await this.applyPermalinkParameters(mapParams);
                         await $timeout();
 
                         addLayers(LayersService.flattedLayers());
@@ -269,6 +307,9 @@ angular.module('anol.permalink')
 
                             self.generatePermalink();
                         });
+
+                        $rootScope.$watch('sidebar.open', () => self.generatePermalink());
+                        $rootScope.$watch('sidebar.openItems', () => self.generatePermalink());
                     }
 
                     /**
@@ -337,23 +378,23 @@ angular.module('anol.permalink')
                             return;
                         }
 
-                        $location.search('map', [self.zoom, self.lon, self.lat, self.urlCrs].join(','));
+                        const parameters = self.getParameters();
 
-                        $location.search('layers', this.visibleLayers.map(l => l.name).join(','));
+                        $location.search('map', [parameters.zoom, parameters.center[0], parameters.center[1], parameters.crs].join(','));
+
+                        $location.search('layers', parameters.layers.join(','));
 
                         $location.search('visibleCatalogLayers', null);
 
-                        if (self.catalogLayers.length !== 0) {
+                        if (angular.isDefined(parameters.catalogLayers) && parameters.catalogLayers.length > 0) {
                             $location.search('catalogLayers', self.catalogLayers
-                                .map(layer => layer.name)
                                 .join(','));
                         } else {
                             $location.search('catalogLayers', null);
                         }
 
-                        if (self.catalogGroups.length !== 0) {
+                        if (angular.isDefined(self.catalogGroups) && self.catalogGroups.length > 0) {
                             $location.search('catalogGroups', self.catalogGroups
-                                .map(layer => layer.name)
                                 .join(','));
                         } else {
                             $location.search('catalogGroups', null);
@@ -361,17 +402,22 @@ angular.module('anol.permalink')
 
                         $location.search('fit', null);
 
-                        const groupOrder = LayersService.overlayLayers
-                            .map(l => l.name)
-                            .filter(l => l)
-                            .join(',');
+                        $location.search('groupOrder', parameters.groupOrder.join(','));
 
-                        $location.search('groupOrder', groupOrder);
+                        $location.search('sidebarStatus', parameters.sidebarStatus);
+
+                        if (angular.isDefined(parameters.sidebar) && parameters.sidebar.length > 0) {
+                            $location.search('sidebar', parameters.sidebar.join(','))
+                        }
 
                         $location.replace();
                     }
 
-                    updateMapFromParameters(mapParams) {
+                    /**
+                     * @param {PermalinkParameters} mapParams
+                     * @return {Promise<void[]>}
+                     */
+                    applyPermalinkParameters(mapParams) {
                         var self = this;
                         if (mapParams.center !== undefined) {
                             var center = transform(mapParams.center, mapParams.crs, self.view.getProjection().getCode());
@@ -394,12 +440,34 @@ angular.module('anol.permalink')
                         }
 
                         return Promise.all([
-                            this.updateMapFromCatalogParameters(mapParams),
-                            this.updateMapFromGeocodeParameters(mapParams)
+                            this.applyCatalogParameters(mapParams),
+                            this.updateMapFromGeocodeParameters(mapParams),
+                            this.applySidebarParameters(mapParams)
                         ]);
                     }
 
-                    async updateMapFromCatalogParameters(mapParams) {
+                    async applySidebarParameters(mapParams) {
+                        await new Promise(resolve => {
+                            if ($rootScope.appReady) {
+                                resolve();
+                            }
+                            $rootScope.$watch('appReady', function () {
+                                if ($rootScope.appReady) {
+                                    resolve();
+                                }
+                            })
+                        });
+
+                        if (angular.isDefined(mapParams.sidebar)) {
+                            $rootScope.sidebar.openItems = mapParams.sidebar;
+                        }
+
+                        if (angular.isDefined(mapParams.sidebarStatus)) {
+                            $rootScope.sidebar.open = mapParams.sidebarStatus === 'open';
+                        }
+                    }
+
+                    async applyCatalogParameters(mapParams) {
                         if (mapParams.catalogGroups !== undefined) {
                             const groups = await Promise.all(
                                 mapParams.catalogGroups.flatMap(groupName => {
@@ -467,9 +535,15 @@ angular.module('anol.permalink')
                         }
                     }
 
+                    /**
+                     * @return {PermalinkParameters}
+                     */
                     getParameters() {
-                        var sidebarStatus = $location.search().sidebarStatus;
-                        var sidebar = $location.search().sidebar;
+                        const sidebarStatus = $rootScope.sidebar.open ? 'open' : 'closed';
+                        const sidebar = $rootScope.sidebar.openItems;
+                        const groupOrder = LayersService.overlayLayers
+                            .map(l => l.name)
+                            .filter(l => l);
 
                         return {
                             zoom: this.zoom,
@@ -478,6 +552,7 @@ angular.module('anol.permalink')
                             layers: this.visibleLayers.map(l => l.name),
                             catalogLayers: this.catalogLayers.map(l => l.name),
                             catalogGroups: this.catalogGroups.map(l => l.name),
+                            groupOrder: groupOrder,
                             sidebar: sidebar,
                             sidebarStatus: sidebarStatus
                         };
@@ -490,10 +565,6 @@ angular.module('anol.permalink')
                             crs: this.urlCrs,
                             layers: this.visibleLayers.map(l => l.name)
                         };
-                    }
-
-                    async setPermalinkParameters(params) {
-                        return this.updateMapFromParameters(params);
                     }
                 }
 
