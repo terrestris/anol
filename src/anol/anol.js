@@ -11,7 +11,7 @@ import {register} from 'ol/proj/proj4.js';
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');
 register(proj4);
 
-import Helper from './helper.js';
+import helper from './helper.js';
 import Nominatim from './geocoder/nominatim.js';
 import Solr from './geocoder/solr.js';
 import Catalog from './geocoder/catalog.js';
@@ -33,7 +33,6 @@ import GMLLayer from './layer/gml.js';
 import ContextMenu from './contextmenu/base.js';
 import Control from './control.js';
 
-export var helper = new Helper() || {};
 export var geocoder = {
     Nominatim: Nominatim,
     Solr: Solr,

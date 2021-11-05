@@ -1,66 +1,90 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
-import {getArrayParam, getObjectParam, getParamString} from "./util";
+import {getArrayParam, getObjectParam, getStringParam} from "./util";
+import Group from "../../anol/layer/group";
+
+/**
+ * @typedef {Object} PermalinkFitParameters
+ * @property {number[]} extent
+ * @property {string} crs
+ */
+
+/**
+ * @typedef {Object} PermalinkGeocodeParameters
+ * @property {string} config
+ * @property {string} term
+ * @property {string} highlight
+ * @property {string} label
+ */
 
 /**
  * @typedef {Object} PermalinkParameters
- * @property {number} [zoom]
- * @property {[number, number]} [center]
- * @property {string} [crs]
- * @property {string[]} [layers]
- * @property {string[]} [catalogLayers]
+ * @property {number} zoom
+ * @property {[number, number]} center
+ * @property {string} crs
+ * @property {string[]} layers
+ * @property {string[]} catalogLayers
  * @property {string[]} [visibleCatalogLayers]
- * @property {string[]} [catalogGroups]
+ * @property {string[]} catalogGroups
  * @property {Object} [fit]
- * @property {[number, number, number, number]} fit.extent
+ * @property {number[]} fit.extent
  * @property {string} fit.crs
- * @property {Object} [geocode]
+ * @property {PermalinkGeocodeParameters} [geocode]
  * @property {string[]} groupOrder
  * @property {string[]} sidebar
  * @property {'open'|'closed'} sidebarStatus
  */
 
-
 angular.module('anol.permalink')
-
     /**
      * @ngdoc object
-     * @name anol.permalink.PermalinkServiceProvider
+     * @name PermalinkService
      */
     .provider('PermalinkService', [function () {
-        var _urlCrs;
-        var _precision = 100000;
+        /** @type {string} */
+        let _urlCrs;
+        let _precision = 100000;
 
         /**
-         * @param {Object} params
-         * @return {PermalinkParameters}
+         * @param {import('./util').UrlParams} params
+         * @return {Partial<PermalinkParameters>}
          */
-        var extractMapParams = function (params) {
-            var mapParams = getArrayParam('map', params);
+        const extractMapParams = function (params) {
+            const mapParams = getArrayParam('map', params);
 
-            var layers = getArrayParam('layers', params);
+            const layers = getArrayParam('layers', params);
 
-            var visibleCatalogLayers = getArrayParam('visibleCatalogLayers', params);
+            const visibleCatalogLayers = getArrayParam('visibleCatalogLayers', params);
 
-            var catalogLayers = getArrayParam('catalogLayers', params);
+            const catalogLayers = getArrayParam('catalogLayers', params);
 
-            var catalogGroups = getArrayParam('catalogGroups', params);
+            const catalogGroups = getArrayParam('catalogGroups', params);
 
-            var fitParams = getArrayParam('fit', params);
+            const fitParams = getArrayParam('fit', params);
 
-            var geocode = getObjectParam('geocode', params);
+            const geocode = getObjectParam('geocode', params);
 
             const groupOrder = getArrayParam('groupOrder', params);
 
             const sidebar = getArrayParam('sidebar', params);
 
-            const sidebarStatus = getParamString('sidebarStatus', params);
+            const sidebarStatus = getStringParam('sidebarStatus', params);
 
             /**
-             * @type {PermalinkParameters}
+             * @type {Partial<PermalinkParameters>}
              */
-            var result = {}
-            if (angular.isDefined(mapParams)) {
+            const result = {
+                layers,
+                catalogLayers,
+                visibleCatalogLayers,
+                catalogGroups,
+                geocode: /** @type {PermalinkGeocodeParameters} */ (geocode),
+                groupOrder,
+                sidebar
+
+            }
+
+            if (mapParams !== undefined) {
                 if (mapParams.length === 4) {
                     Object.assign(result, {
                         zoom: parseInt(mapParams[0]),
@@ -73,23 +97,7 @@ angular.module('anol.permalink')
                 }
             }
 
-            if (angular.isDefined(layers)) {
-                result.layers = layers;
-            }
-
-            if (angular.isDefined(catalogLayers)) {
-                result.catalogLayers = catalogLayers;
-            }
-
-            if (angular.isDefined(visibleCatalogLayers)) {
-                result.visibleCatalogLayers = visibleCatalogLayers;
-            }
-
-            if (angular.isDefined(catalogGroups)) {
-                result.catalogGroups = catalogGroups;
-            }
-
-            if (angular.isDefined(fitParams)) {
+            if (fitParams !== undefined) {
                 if (fitParams.length === 5) {
                     result.fit = {
                         extent: [fitParams[0], fitParams[1], fitParams[2], fitParams[3]].map(parseFloat),
@@ -102,19 +110,7 @@ angular.module('anol.permalink')
                 }
             }
 
-            if (angular.isDefined(geocode)) {
-                result.geocode = geocode;
-            }
-
-            if (angular.isDefined(groupOrder)) {
-                result.groupOrder = groupOrder;
-            }
-
-            if (angular.isDefined(sidebar)) {
-                result.sidebar = sidebar;
-            }
-
-            if (angular.isDefined(sidebarStatus) && sidebarStatus !== false && sidebarStatus !== '') {
+            if (angular.isDefined(sidebarStatus) && (sidebarStatus === 'open' || sidebarStatus === 'closed')) {
                 result.sidebarStatus = sidebarStatus;
             }
 
@@ -146,8 +142,26 @@ angular.module('anol.permalink')
         };
 
         this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService',
+            /**
+             * @param {import('../../anol/rootScope').AnolRootScope} $rootScope
+             * @param {import('angular').IQService} $q
+             * @param {import('angular').ILocationService} $location
+             * @param {import('angular').ITimeoutService} $timeout
+             * @param {any} MapService
+             * @param {any} LayersService
+             * @param {any} CatalogService
+             * @param {any} ReadyService
+             * @param {any} GeocoderService
+             * @return {Permalink}
+             */
             function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService) {
 
+                /**
+                 * @template T
+                 * @param {T[]} newArray
+                 * @param {T[]} oldArray
+                 * @return {{removed: T[], added: T[]}}
+                 */
                 function arrayChanges(newArray, oldArray) {
                     newArray = angular.isDefined(newArray) ? newArray : [];
                     oldArray = angular.isDefined(oldArray) ? oldArray : [];
@@ -157,20 +171,37 @@ angular.module('anol.permalink')
                     };
                 }
 
+                /**
+                 * @param {import('../../anol/layer.js').default} layer
+                 * @return {boolean}
+                 */
                 function isCatalogLayer(layer) {
                     return layer.catalog || layer.catalogLayer;
                 }
 
+                /**
+                 * @param {import('../../anol/layer.js').default[]} layers
+                 * @return {import('../../anol/layer.js').default[]}
+                 */
                 function permalinkLayers(layers) {
                     return layers
                         .filter(l => angular.isDefined(l.name) && !isCatalogLayer(l) && l.permalink !== false);
                 }
 
+                /**
+                 * @param {import('../../anol/layer.js').default[]} layers
+                 * @return {import('../../anol/layer.js').default[]}
+                 */
                 function catalogLayers(layers) {
                     return layers
                         .filter(l => isCatalogLayer(l));
                 }
 
+                /**
+                 * @template T
+                 * @param {T[]} array
+                 * @param {T} elem
+                 */
                 function remove(array, elem) {
                     const idx = array.indexOf(elem);
                     if (idx > -1) {
@@ -193,6 +224,10 @@ angular.module('anol.permalink')
                  * Updates browser-url with current zoom and location when map moved
                  */
                 class Permalink {
+                    /**
+                     * @param {string} urlCrs
+                     * @param {number} precision
+                     */
                     constructor(urlCrs, precision) {
                         var self = this;
                         self.precision = precision;
@@ -201,8 +236,11 @@ angular.module('anol.permalink')
                         self.lat = undefined;
                         self.map = MapService.getMap();
                         self.view = self.map.getView();
+                        /** @type {import('../../anol/layer.js').default[]} visibleLayers */
                         self.visibleLayers = [];
+                        /** @type {import('../../anol/layer.js').default[]} catalogLayers */
                         self.catalogLayers = [];
+                        /** @type {import('../../anol/layer/group.js').default[]} catalogGroups */
                         self.catalogGroups = [];
 
                         self.urlCrs = urlCrs;
@@ -224,9 +262,12 @@ angular.module('anol.permalink')
                     async asyncInitialize() {
                         const self = this;
 
-                        // This will be called on layers from LayersService.flattedLayers().
-                        // This contains all background and overlay layers including
-                        // catalog layers but no groups.
+                        /**
+                         * This will be called on layers from LayersService.flattedLayers().
+                         * This contains all background and overlay layers including
+                         * catalog layers but no groups.
+                         * @param {import('../../anol/layer.js').default[]} layers
+                         */
                         function addLayers(layers) {
                             for (const layer of permalinkLayers(layers)) {
                                 layer.onVisibleChange(self.handleVisibleChange, self);
@@ -244,6 +285,9 @@ angular.module('anol.permalink')
                             }
                         }
 
+                        /**
+                         * @param {import('../../anol/layer.js').default[]} layers
+                         */
                         function removeLayers(layers) {
                             for (const layer of permalinkLayers(layers)) {
                                 layer.offVisibleChange(self.handleVisibleChange);
@@ -257,8 +301,12 @@ angular.module('anol.permalink')
                             }
                         }
 
-                        // This will be called on layers from CatalogService.addedCatalogGroups().
-                        // This contains all catalog layer groups.
+
+                        /**
+                         * This will be called on layers from CatalogService.addedCatalogGroups().
+                         * This contains all catalog layer groups.
+                         * @param {import('../../anol/layer/group.js').default[]} groups
+                         */
                         function addCatalogGroups(groups) {
                             for (const group of groups) {
                                 group.onVisibleChange(self.handleVisibleChange, self);
@@ -266,6 +314,9 @@ angular.module('anol.permalink')
                             }
                         }
 
+                        /**
+                         * @param {import('../../anol/layer/group.js').default[]} groups
+                         */
                         function removeCatalogGroups(groups) {
                             for (const group of groups) {
                                 group.offVisibleChange(self.handleVisibleChange);
@@ -282,31 +333,45 @@ angular.module('anol.permalink')
                         addCatalogGroups(CatalogService.addedCatalogGroups());
                         this.generatePermalink();
 
-                        $rootScope.$watchCollection(function () {
-                            return LayersService.flattedLayers();
-                        }, function (newVal, oldVal) {
-                            const {added, removed} = arrayChanges(newVal, oldVal);
+                        $rootScope.$watchCollection(
+                            function () {
+                                return LayersService.flattedLayers();
+                            },
+                            /**
+                             * @param {import('../../anol/layer.js').default[]} newVal
+                             * @param {import('../../anol/layer.js').default[]} oldVal
+                             */
+                            function (newVal, oldVal) {
+                                const {added, removed} = arrayChanges(newVal, oldVal);
 
-                            if (added.length > 0 || removed.length > 0) {
-                                addLayers(added);
-                                removeLayers(removed);
+                                if (added.length > 0 || removed.length > 0) {
+                                    addLayers(added);
+                                    removeLayers(removed);
+                                }
+
+                                self.generatePermalink();
                             }
+                        );
 
-                            self.generatePermalink();
-                        });
+                        $rootScope.$watchCollection(
+                            function () {
+                                return CatalogService.addedCatalogGroups();
+                            },
+                            /**
+                             * @param {import('../../anol/layer/group.js').default[]} newVal
+                             * @param {import('../../anol/layer/group.js').default[]} oldVal
+                             */
+                            function (newVal, oldVal) {
+                                const {added, removed} = arrayChanges(newVal, oldVal);
 
-                        $rootScope.$watchCollection(function () {
-                            return CatalogService.addedCatalogGroups();
-                        }, function (newVal, oldVal) {
-                            const {added, removed} = arrayChanges(newVal, oldVal);
+                                if (added.length > 0 || removed.length > 0) {
+                                    addCatalogGroups(added);
+                                    removeCatalogGroups(removed);
+                                }
 
-                            if (added.length > 0 || removed.length > 0) {
-                                addCatalogGroups(added);
-                                removeCatalogGroups(removed);
+                                self.generatePermalink();
                             }
-
-                            self.generatePermalink();
-                        });
+                        );
 
                         $rootScope.$watch('sidebar.open', () => self.generatePermalink());
                         $rootScope.$watch('sidebar.openItems', () => self.generatePermalink());
@@ -314,6 +379,8 @@ angular.module('anol.permalink')
 
                     /**
                      * @private
+                     * @param {any} evt
+                     * @this {import('../../anol/layer.js').default}
                      */
                     handleVisibleChange(evt) {
                         const self = evt.data.context;
@@ -332,7 +399,7 @@ angular.module('anol.permalink')
                             }
                         }
 
-                        const isLayerGroup = layer instanceof anol.layer.Group || (layer.hasGroup() && layer.anolGroup.layers.length == 1);
+                        const isLayerGroup = layer instanceof Group || layer.anolGroup?.layers.length === 1;
 
                         if (layer.catalogLayer === true && !isLayerGroup) {
                             if (angular.isDefined(layerName) && layer.getVisible()) {
@@ -348,7 +415,6 @@ angular.module('anol.permalink')
                      * @private
                      * @name moveendHandler
                      * @methodOf anol.permalink.PermalinkService
-                     * @param {Object} evt ol3 event object
                      * @description
                      * Get lat, lon and zoom after map stoped moving
                      */
@@ -368,17 +434,15 @@ angular.module('anol.permalink')
                      * @private
                      * @name generatePermalink
                      * @methodOf anol.permalink.PermalinkService
-                     * @param {Object} evt ol3 event object
                      * @description
                      * Builds the permalink url addon
                      */
                     generatePermalink() {
-                        var self = this;
-                        if (angular.isUndefined(self.zoom) || angular.isUndefined(self.lon) || angular.isUndefined(self.lat)) {
+                        const parameters = this.getParameters();
+
+                        if (angular.isUndefined(parameters.zoom) || angular.isUndefined(parameters.center)) {
                             return;
                         }
-
-                        const parameters = self.getParameters();
 
                         $location.search('map', [parameters.zoom, parameters.center[0], parameters.center[1], parameters.crs].join(','));
 
@@ -387,14 +451,14 @@ angular.module('anol.permalink')
                         $location.search('visibleCatalogLayers', null);
 
                         if (angular.isDefined(parameters.catalogLayers) && parameters.catalogLayers.length > 0) {
-                            $location.search('catalogLayers', self.catalogLayers
+                            $location.search('catalogLayers', parameters.catalogLayers
                                 .join(','));
                         } else {
                             $location.search('catalogLayers', null);
                         }
 
-                        if (angular.isDefined(self.catalogGroups) && self.catalogGroups.length > 0) {
-                            $location.search('catalogGroups', self.catalogGroups
+                        if (angular.isDefined(parameters.catalogGroups) && parameters.catalogGroups.length > 0) {
+                            $location.search('catalogGroups', parameters.catalogGroups
                                 .join(','));
                         } else {
                             $location.search('catalogGroups', null);
@@ -414,18 +478,18 @@ angular.module('anol.permalink')
                     }
 
                     /**
-                     * @param {PermalinkParameters} mapParams
+                     * @param {Partial<PermalinkParameters>} mapParams
                      * @return {Promise<void[]>}
                      */
                     applyPermalinkParameters(mapParams) {
                         var self = this;
-                        if (mapParams.center !== undefined) {
+                        if (mapParams.center !== undefined && mapParams.crs !== undefined) {
                             var center = transform(mapParams.center, mapParams.crs, self.view.getProjection().getCode());
                             self.view.setCenter(center);
                             self.view.setZoom(mapParams.zoom);
                         }
 
-                        if (angular.isDefined(mapParams.layers)) {
+                        if (mapParams.layers !== undefined) {
                             for (const layer of permalinkLayers(LayersService.flattedLayers())) {
                                 const visible = mapParams.layers.includes(layer.name);
                                 layer.setVisible(visible);
@@ -433,7 +497,10 @@ angular.module('anol.permalink')
                         }
 
                         if (mapParams.fit !== undefined) {
-                            var extent = transformExtent(mapParams.fit.extent, mapParams.fit.crs, self.view.getProjection().getCode());
+                            var extent = transformExtent(
+                                /** @type {import('ol/extent').Extent} */ (mapParams.fit.extent),
+                                mapParams.fit.crs,
+                                self.view.getProjection().getCode());
                             this.map.once('postrender', function () {
                                 self.view.fit(extent);
                             });
@@ -441,19 +508,23 @@ angular.module('anol.permalink')
 
                         return Promise.all([
                             this.applyCatalogParameters(mapParams),
-                            this.updateMapFromGeocodeParameters(mapParams),
+                            this.applyGeocodeParameters(mapParams),
                             this.applySidebarParameters(mapParams)
                         ]);
                     }
 
+                    /**
+                     * @param {Partial<PermalinkParameters>} mapParams
+                     * @return {Promise<void>}
+                     */
                     async applySidebarParameters(mapParams) {
                         await new Promise(resolve => {
                             if ($rootScope.appReady) {
-                                resolve();
+                                resolve(true);
                             }
                             $rootScope.$watch('appReady', function () {
                                 if ($rootScope.appReady) {
-                                    resolve();
+                                    resolve(true);
                                 }
                             })
                         });
@@ -467,6 +538,10 @@ angular.module('anol.permalink')
                         }
                     }
 
+                    /**
+                     * @param {Partial<PermalinkParameters>} mapParams
+                     * @return {Promise<void>}
+                     */
                     async applyCatalogParameters(mapParams) {
                         if (mapParams.catalogGroups !== undefined) {
                             const groups = await Promise.all(
@@ -475,13 +550,9 @@ angular.module('anol.permalink')
                                     return group ? [group] : [];
                                 }));
 
-                            let layers = mapParams.layers;
+                            let layers = (mapParams.layers ?? []).concat(mapParams.visibleCatalogLayers ?? []);
 
-                            if (angular.isDefined(mapParams.visibleCatalogLayers)) {
-                                layers = layers.concat(mapParams.visibleCatalogLayers);
-                            }
-
-                            const allAvailable = angular.isUndefined(mapParams.catalogLayers) || mapParams.catalogLayers.length === 0;
+                            const allAvailable = angular.isUndefined(mapParams.catalogLayers) || mapParams.catalogLayers?.length === 0;
 
                             const available = allAvailable ? [] : angular.extend(mapParams.catalogLayers);
 
@@ -523,14 +594,18 @@ angular.module('anol.permalink')
                         }
                     }
 
-                    async updateMapFromGeocodeParameters(mapParams) {
+                    /**
+                     * @param {Partial<PermalinkParameters>} mapParams
+                     * @return {Promise<void>}
+                     */
+                    async applyGeocodeParameters(mapParams) {
                         if (mapParams.geocode !== undefined) {
                             const {config, term, highlight, label} = mapParams.geocode;
                             let parsedHighlight = angular.isUndefined(highlight) ? false : JSON.parse(highlight);
                             ReadyService.waitFor('geocoding');
                             await GeocoderService.handleUrlGeocode(term, config, parsedHighlight, label)
                             ReadyService.notifyAboutReady('geocoding');
-                            $location.search('geocode', undefined);
+                            $location.search('geocode', null);
                             $location.replace();
                         }
                     }
@@ -541,13 +616,13 @@ angular.module('anol.permalink')
                     getParameters() {
                         const sidebarStatus = $rootScope.sidebar.open ? 'open' : 'closed';
                         const sidebar = $rootScope.sidebar.openItems;
-                        const groupOrder = LayersService.overlayLayers
+                        const groupOrder = /** @type {import('../../anol/layer.js').default[]} */ (LayersService.overlayLayers)
                             .map(l => l.name)
                             .filter(l => l);
 
                         return {
                             zoom: this.zoom,
-                            center: [this.lon, this.lat],
+                            center: [this.lon ?? 0, this.lat ?? 0],
                             crs: this.urlCrs,
                             layers: this.visibleLayers.map(l => l.name),
                             catalogLayers: this.catalogLayers.map(l => l.name),

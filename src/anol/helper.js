@@ -2,15 +2,14 @@
  * @module Helper
  */
 
-class Helper {
-    constructor() {}
+const helper = {
 
     /**
      * Returns v or d if v undefined
      */
     getValue(v, d) {
         return angular.isUndefined(v) ? d : v;
-    }
+    },
     /**
      * Returns a without elements of b
      */
@@ -19,7 +18,7 @@ class Helper {
             return b.indexOf(e) < 0;
         });
         return r;
-    }
+    },
     /**
      * Returns true when all elements of b in a otherwise false
      */
@@ -33,7 +32,7 @@ class Helper {
             }
         }
         return true;
-    }
+    },
     /**
      * Returns distinct list of a and b
      */
@@ -45,7 +44,7 @@ class Helper {
             }
         }
         return r;
-    }
+    },
     /**
      * Inserts content of array by into array a starting at position at.
      * When at is undefined, append b to a
@@ -57,7 +56,7 @@ class Helper {
             a = a.concat(b);
         }
         return a;
-    }
+    },
     /**
      * Returns string splitted into parts but prevents list with empty string
      */
@@ -67,7 +66,7 @@ class Helper {
             return [];
         }
         return r;
-    }
+    },
     mergeObjects(a, b) {
         var keys = Object.keys(b || {});
         for(var i = 0; i < keys.length; i++) {
@@ -87,7 +86,7 @@ class Helper {
             a[key] = b[key];
         }
         return a;
-    }
+    },
 
     array_move(arr, old_index, new_index) {
         if (old_index === new_index) {
@@ -102,7 +101,7 @@ class Helper {
         }
         arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
         return arr; // for testing
-    }
+    },
 
     uniq(a) {
         var r = [];
@@ -112,7 +111,7 @@ class Helper {
              }
         });
         return r;
-    }
+    },
 
     round(value, decimals) {
         return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
@@ -120,4 +119,4 @@ class Helper {
 
 }
 
-export default Helper;
+export default helper;
