@@ -606,7 +606,6 @@ angular.module('anol.permalink')
                             await GeocoderService.handleUrlGeocode(term, config, parsedHighlight, label)
                             ReadyService.notifyAboutReady('geocoding');
                             $location.search('geocode', null);
-                            $location.replace();
                         }
                     }
 
