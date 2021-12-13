@@ -86,6 +86,11 @@ angular.module('anol.savesettings')
                         settings.map.groupOrder = settings.layerswitcher.order.map(o => o.name);
                     }
 
+                    // rewrite deprecated parameters
+                    if (angular.isDefined(settings.map.sidebar) && angular.isString(settings.map.sidebar)) {
+                      settings.map.sidebar = [settings.map.sidebar];
+                    }
+
                     await PermalinkService.applyPermalinkParameters(settings.map);
 
                     LayersService.setCollapsedGroups(settings.layerswitcher.open);
