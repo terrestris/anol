@@ -2,7 +2,7 @@ import './module.js';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import {fromExtent} from 'ol/geom/Polygon';
-import {getObjectParam, stringifyObject} from "../permalink/util";
+import {getMultiObjectParam, stringifyObject} from "../permalink/util";
 
 angular.module('anol.urlmarkers')
     /**
@@ -113,7 +113,7 @@ angular.module('anol.urlmarkers')
                         return false;
                     }
 
-                    const markers = getObjectParam('marker', urlParams, true);
+                    const markers = getMultiObjectParam('marker', urlParams);
 
                     for (const marker of markers) {
                         let geometry;
