@@ -50,7 +50,6 @@ class BaseWMS extends AnolBaseLayer {
             !this.isBackground &&
             angular.equals(ownParams, otherParams) &&
             angular.equals(this.anolGroup, other.anolGroup) &&
-            !this.catalog &&
             angular.isUndefined(this.options.opacity) && angular.isUndefined(other.options.opacity);
     }
 
