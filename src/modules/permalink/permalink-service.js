@@ -378,6 +378,16 @@ angular.module('anol.permalink')
                     }
 
                     /**
+                     * Handler for the visibility change event.
+                     *
+                     * This method will be called when the visibility of a layer or a group changes.
+                     * The visibility change of a group also triggers the visibility change of all
+                     * included layers explicitly. So groups should be ignored in this method.
+                     * However, changing the visibility of a group that only contains a single layer
+                     * does not trigger the change event on the single layer (groups with single
+                     * layers will be displayed as single layers instead of groups). So in this case
+                     * we have to set the visibility of the layer on the change event of the group.
+                     *
                      * @private
                      * @param {any} evt
                      * @this {import('../../anol/layer.js').default}
@@ -399,15 +409,30 @@ angular.module('anol.permalink')
                             }
                         }
 
-                        const isLayerGroup = layer instanceof Group || layer.anolGroup?.layers.length === 1;
+                        const isSingleLayerGroup = layer.anolGroup?.layers.length === 1;
+                        const isLayerGroup = isSingleLayerGroup || layer instanceof Group;
 
-                        if (layer.catalogLayer === true && !isLayerGroup) {
-                            if (angular.isDefined(layerName) && layer.getVisible()) {
-                                self.visibleLayers.push(layer);
-                            } else {
-                                remove(self.visibleLayers, layer);
-                            }
+                        if (layer.catalogLayer === true) {
+
+                          // Ignore layergroups except those with only one layer.
+                          if (!isLayerGroup) {
+                              if (angular.isDefined(layerName) && layer.getVisible()) {
+                                  self.visibleLayers.push(layer);
+                              } else {
+                                  remove(self.visibleLayers, layer);
+                              }
+                          } else if (isSingleLayerGroup) {
+                              const singleLayer = layer.anolGroup?.layers[0];
+                              const singleLayerName = singleLayer.name;
+                              if (angular.isDefined(singleLayerName) && singleLayer.getVisible()) {
+                                  self.visibleLayers.push(singleLayer);
+                              } else {
+                                  remove(self.visibleLayers, singleLayer);
+                              }
+                          }
+
                         }
+
                         self.generatePermalink();
                     }
 
@@ -478,6 +503,7 @@ angular.module('anol.permalink')
                     }
 
                     /**
+                     * Apply params from url to application.
                      * @param {Partial<PermalinkParameters>} mapParams
                      * @return {Promise<void[]>}
                      */
@@ -539,16 +565,17 @@ angular.module('anol.permalink')
                     }
 
                     /**
+                     * Apply catalog params from url to application
                      * @param {Partial<PermalinkParameters>} mapParams
                      * @return {Promise<void>}
                      */
                     async applyCatalogParameters(mapParams) {
                         if (mapParams.catalogGroups !== undefined) {
-                            const groups = await Promise.all(
-                                mapParams.catalogGroups.flatMap(groupName => {
-                                    const group = CatalogService.addGroupToMap(groupName, false);
-                                    return group ? [group] : [];
-                                }));
+                            const groups = (await Promise.all(
+                              mapParams.catalogGroups
+                                .map(groupName => CatalogService.addGroupToMap(groupName, false))
+                            ))
+                            .filter(g => g);
 
                             let layers = (mapParams.layers ?? []).concat(mapParams.visibleCatalogLayers ?? []);
 
