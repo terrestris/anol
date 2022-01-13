@@ -571,10 +571,11 @@ angular.module('anol.permalink')
                      */
                     async applyCatalogParameters(mapParams) {
                         if (mapParams.catalogGroups !== undefined) {
-                            let groups = await Promise.all(
-                              mapParams.catalogGroups.map(groupName => CatalogService.addGroupToMap(groupName, false))
-                            );
-                            groups = groups.filter(g => !!g);
+                            const groups = (await Promise.all(
+                              mapParams.catalogGroups
+                                .map(groupName => CatalogService.addGroupToMap(groupName, false))
+                            ))
+                            .filter(g => g);
 
                             let layers = (mapParams.layers ?? []).concat(mapParams.visibleCatalogLayers ?? []);
 
