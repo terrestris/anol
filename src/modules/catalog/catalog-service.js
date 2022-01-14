@@ -410,8 +410,11 @@ angular.module('anol.catalog')
             if(self.addedLayersName.indexOf(layerName) !== -1 ) {
                 return;
             }
-            var exist = LayersService.layerByName(layerName);
-            if (exist) {
+            var alreadyAddedLayer = LayersService.layerByName(layerName);
+            if (alreadyAddedLayer) {
+                // Even if the layer was already added,
+                // we want to update the visibility of that layer.
+                alreadyAddedLayer.setVisible(visible);
                 return;
             }
 
