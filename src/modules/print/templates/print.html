@@ -19,7 +19,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-xs-6">
       <div class="form-group" ng-class="{'has-error': anolPrint.pageWidth.$dirty && anolPrint.pageWidth.$error.printPage}">
         <label class="control-label"
                for="pageWidth">
@@ -40,7 +40,7 @@
         </span>
       </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-xs-6">
       <div class="form-group" ng-class="{'has-error': anolPrint.pageHeight.$dirty && anolPrint.pageHeight.$error.printPage}">
         <label class="control-label"
                for="pageHeight">
@@ -63,7 +63,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-6">
+    <div class="col-xs-6">
       <div class="form-group" ng-class="{'has-error': anolPrint.scale.$error.number || anolPrint.scale.$error.min || anolPrint.scale.$error.required}">
         <label for="scale">
           {{ 'anol.print.SCALE' | translate }}
@@ -82,7 +82,7 @@
         <span class="help-block" ng-show="anolPrint.scale.$error.number || anolPrint.scale.$error.min || anolPrint.scale.$error.required">{{ 'anol.print.INVALID_SCALE' | translate }}</span>
       </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-xs-6">
       <div class="form-group">
         <label for="outputFormat">
           {{ 'anol.print.OUTPUT_FORMAT' | translate }}
