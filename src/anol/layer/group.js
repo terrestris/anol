@@ -7,6 +7,7 @@
  * @param {string} options.title Title for group
  * @param {Object} options.legend Stores informations for legend
  * @param {Array<anol.layer.Layer>} options.layers AnOl layers to group
+ * @param {Array<string>} options.defaultVisibleLayers Layers that are visible if the group is visible.
  *
  * @description
  * Groups {@link anol.layer.Layer anol.layer.Layer}.
@@ -29,6 +30,7 @@ class Group {
         this.singleSelectGroup = options.singleSelectGroup || false;
         this.groupLayer = true;
         this.combinable = undefined;
+        this.defaultVisibleLayers = options.defaultVisibleLayers || [];
 
         if (angular.isUndefined(this.layers)) {
             this.layers = [];
@@ -57,6 +59,21 @@ class Group {
                     layer.setVisible(visible);
                     changed = true;
                     return false;
+                }
+            });
+        } else if (self.defaultVisibleLayers.length > 0) {
+            $.each(self.layers, function(idx, layer) {
+                if (!visible && layer.getVisible()) {
+                    layer.setVisible(false);
+                    changed = true;
+                } else if (visible) {
+                    if (!layer.getVisible() && self.defaultVisibleLayers.includes(layer.name)) {
+                      layer.setVisible(true);
+                      changed = true;
+                    } else if (layer.getVisible() && !self.defaultVisibleLayers.includes(layer.name)) {
+                      layer.setVisible(false);
+                      changed = true;
+                    }
                 }
             });
         } else {

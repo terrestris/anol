@@ -347,6 +347,7 @@ angular.module('anol.catalog')
                                 name: cGroup['name'],
                                 title: cGroup['title'],
                                 legend: cGroup['legend'],
+                                defaultVisibleLayers: cGroup['defaultVisibleLayers']
                             });
                             LayersService.addOverlayLayer(anolGroup, 0);
                             angular.forEach(self.addedGroups, function(_group) {
