@@ -375,7 +375,6 @@ angular.module('anol.permalink')
 
                         $rootScope.$watch('sidebar.open', () => self.generatePermalink());
                         $rootScope.$watch('sidebar.openItems', () => self.generatePermalink());
-                        $rootScope.$digest();
                     }
 
                     /**
@@ -619,6 +618,7 @@ angular.module('anol.permalink')
 
                         if (mapParams.groupOrder !== undefined) {
                             LayersService.setLayerOrder(mapParams.groupOrder.map(n => ({ name: n })));
+                            $rootScope.$digest();
                         }
                     }
 
