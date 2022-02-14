@@ -375,6 +375,7 @@ angular.module('anol.permalink')
 
                         $rootScope.$watch('sidebar.open', () => self.generatePermalink());
                         $rootScope.$watch('sidebar.openItems', () => self.generatePermalink());
+                        $rootScope.$digest();
                     }
 
                     /**
