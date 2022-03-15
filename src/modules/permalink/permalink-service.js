@@ -25,6 +25,7 @@ import Group from "../../anol/layer/group";
  * @property {string[]} layers
  * @property {string[]} catalogLayers
  * @property {string[]} [visibleCatalogLayers]
+ * @property {string[]} [visibleCatalogGroups]
  * @property {string[]} catalogGroups
  * @property {Object} [fit]
  * @property {number[]} fit.extent
@@ -51,23 +52,15 @@ angular.module('anol.permalink')
          */
         const extractMapParams = function (params) {
             const mapParams = getArrayParam('map', params);
-
             const layers = getArrayParam('layers', params);
-
             const visibleCatalogLayers = getArrayParam('visibleCatalogLayers', params);
-
+            const visibleCatalogGroups = getArrayParam('visibleCatalogGroups', params);
             const catalogLayers = getArrayParam('catalogLayers', params);
-
             const catalogGroups = getArrayParam('catalogGroups', params);
-
             const fitParams = getArrayParam('fit', params);
-
             const geocode = getObjectParam('geocode', params);
-
             const groupOrder = getArrayParam('groupOrder', params);
-
             const sidebar = getArrayParam('sidebar', params);
-
             const sidebarStatus = getStringParam('sidebarStatus', params);
 
             /**
@@ -77,11 +70,11 @@ angular.module('anol.permalink')
                 layers,
                 catalogLayers,
                 visibleCatalogLayers,
+                visibleCatalogGroups,
                 catalogGroups,
                 geocode: /** @type {PermalinkGeocodeParameters} */ (geocode),
                 groupOrder,
                 sidebar
-
             }
 
             if (mapParams !== undefined) {
@@ -474,6 +467,7 @@ angular.module('anol.permalink')
                         $location.search('layers', parameters.layers.join(','));
 
                         $location.search('visibleCatalogLayers', null);
+                        $location.search('visibleCatalogGroups', null);
 
                         if (angular.isDefined(parameters.catalogLayers) && parameters.catalogLayers.length > 0) {
                             $location.search('catalogLayers', parameters.catalogLayers
@@ -579,6 +573,8 @@ angular.module('anol.permalink')
 
                             let layers = (mapParams.layers ?? []).concat(mapParams.visibleCatalogLayers ?? []);
 
+                            const visibleCatalogGroups = mapParams.visibleCatalogGroups ?? [];
+
                             const allAvailable = angular.isUndefined(mapParams.catalogLayers) || mapParams.catalogLayers?.length === 0;
 
                             const available = allAvailable ? [] : angular.extend(mapParams.catalogLayers);
@@ -598,6 +594,10 @@ angular.module('anol.permalink')
                                     } else {
                                         toRemove.push(layer);
                                     }
+                                }
+
+                                if (visibleCatalogGroups.includes(group.name)) {
+                                    group.setVisible(true);
                                 }
                             }
 
