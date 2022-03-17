@@ -323,6 +323,35 @@ angular.module('anol.map')
                 });
                 return systemlayer
             };
+
+            /**
+             * @ngdoc method
+             * @name removeSystemLayer
+             * @methodOf anol.map.LayersService
+             * @param {anol.Layer} layer The system layer to remove.
+             * @description
+             * Removes a system layer.
+             */
+            Layers.prototype.removeSystemLayer = function (layer) {
+              var self = this;
+              var systemLayerIdx = self.systemLayers.indexOf(layer);
+              if (systemLayerIdx < 0) {
+                return;
+              }
+              self.systemLayers.splice(systemLayerIdx, 1);
+
+              self.map.removeLayer(layer.olLayer);
+
+              var olLayerIdx = self.olLayers.indexOf(layer.olLayer);
+              if (olLayerIdx > -1) {
+                self.olLayers.splice(olLayerIdx, 1);
+              }
+
+              var addedLayersIdx = self.addedLayers.indexOf(layer);
+              if (addedLayersIdx > -1) {
+                  self.addedLayers.splice(addedLayersIdx, 1);
+              }
+            };
             /**
              * private function
              * Creates olLayer
