@@ -7,6 +7,7 @@
  * @param {string} options.displayInLayerswitcher Show in layerswitcher
  * @param {boolean} options.permalink Add layer to permalink url. Default true. When displayInLayerswitcher is false, permalink is always false.
  * @param {boolean} options.isBackground Define layer as background layer
+ * @param {boolean} options.isSystem Define layer as system layer
  * @param {Object} options.featureinfo Stores informations for feature info
  * @param {string} options.featureinfo.target Target of *GetFeatureInfo* request for {@link api/anol.featureinfo anol.featureinfo}. Supported values are:
  * - *_popup* - Results displayed in a popup
@@ -68,6 +69,7 @@ class AnolBaseLayer {
         this.name = options.name;
         this.title = options.title;
         this.isBackground = options.isBackground || false;
+        this.isSystem = options.isSystem || false;
         this.featureinfo = options.featureinfo || false;
         this.legend = options.legend || false;
         this.abstract = options.abstract || undefined;
