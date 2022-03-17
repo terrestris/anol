@@ -101,6 +101,14 @@ angular.module('anol.featurepopup')
                                 scope.layers.push(layer);
                             });
                         });
+                        scope.$watchCollection('excludeLayers', function(excludeLayers) {
+                            angular.forEach(excludeLayers, function(layer) {
+                                  var layerIdx = scope.layers.indexOf(layer);
+                                  if(angular.isDefined(scope.layers) &&  layerIdx > -1) {
+                                      scope.layers.splice(layerIdx, 1);
+                                  }
+                            });
+                        });
                     }
 
                     const overlayElement = element.find('.anol-popup:first')

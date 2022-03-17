@@ -72,6 +72,8 @@ angular.module('anol.map')
                 angular.forEach(layers, function (layer) {
                     if (layer.isBackground) {
                         self.addBackgroundLayer(layer);
+                    } else if (layer.isSystem) {
+                        self.addSystemLayer(layer);
                     } else {
                         self.addOverlayLayer(layer);
                     }
