@@ -18,7 +18,13 @@ import TileWMS from 'ol/source/TileWMS';
 class TiledWMS extends BaseWMS {
 
     constructor(_options) {
-        var defaults = {};
+	var defaults = {
+		olLayer: {
+		    source: {
+			transition: 0
+		    }
+		}
+	};
         var options = jQuery.extend(true, {}, defaults, _options );
         super(options);
         this.CLASS_NAME = 'anol.layer.TiledWMS';
