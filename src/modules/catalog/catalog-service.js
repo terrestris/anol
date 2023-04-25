@@ -437,7 +437,7 @@ angular.module('anol.catalog')
                             anolLayer = new anol.layer.StaticGeoJSON(clayer)
                         }
                         LayersService.addOverlayLayer(anolLayer, 0);
-                        if(anolLayer instanceof anol.layer.DynamicGeoJSON && added === true) {
+                        if(anolLayer instanceof anol.layer.DynamicGeoJSON) {
                             anolLayer.refresh();
                         }
                         self.addedLayersName.push(layerName);
