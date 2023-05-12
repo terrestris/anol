@@ -214,6 +214,7 @@ angular.module('anol.map')
                             if (olLayerIdx > -1) {
                                 self.map.removeLayer(_layer.olLayer);
                                 self.olLayers.splice(olLayerIdx, 1);
+                                delete self.nameLayersMap[_layer.name];
                             }
                         }
                         angular.forEach(self.removeLayerHandlers, function (handler) {
@@ -230,6 +231,8 @@ angular.module('anol.map')
                     if (addedLayersIdx > -1) {
                         self.addedLayers.splice(addedLayersIdx, 1);
                     }
+
+                    delete self.nameLayersMap[layer.name];
 
                     // remove single layer
                     var overlayLayerIdx = self.overlayLayers.indexOf(layer);
