@@ -30,7 +30,6 @@ angular.module('anol.catalog')
             this.addedLayersName = [];
             this.addedGroups = [];
             this.addedGroupsName = [];
-            this.nameLayersMap = {};
             this.nameGroupsMap = {};
             this.sortedLayers = {};
             this.sortedGroups = {};
@@ -71,9 +70,6 @@ angular.module('anol.catalog')
                 var sortedLayers = {};
                 angular.forEach(self.catalogLayerNames, function(_layer) {
                     self.addCatalogLayer(_layer);
-                    if(_layer.name !== undefined) {
-                        self.nameLayersMap[_layer.name] = _layer;
-                    }
 
                     var firstLetter = _layer.title.charAt(0).toUpperCase();
                     if (self.firstLetters.indexOf(firstLetter) === -1) {
@@ -194,17 +190,6 @@ angular.module('anol.catalog')
             return this.deferred.promise;
         };
 
-        /**
-         * @ngdoc method
-         * @name layerByName
-         * @methodOf anol.map.CatalogService
-         * @param {string} name
-         * @returns {anol.layer.Layer} layer
-         * @description Gets a layer by it's name
-         */
-        CatalogService.prototype.layerByName = function(name) {
-            return this.nameLayersMap[name];
-        };
         /**
          * @ngdoc method
          * @name groupByName
@@ -331,7 +316,8 @@ angular.module('anol.catalog')
                                     console.error(`Unknown layer type '${cLayer['type']}'`, cLayer);
                                     return;
                                 }
-                                groupLayers.push(anolLayer)
+                                groupLayers.push(anolLayer);
+                                self.addedLayers.push(anolLayer);
                             });
                             cGroup.layers = groupLayers;
                             var anolGroup = new anol.layer.Group({
@@ -460,11 +446,19 @@ angular.module('anol.catalog')
          * Removes a catalog layer from map
          */
         CatalogService.prototype.removeFromMap = function(layer) {
+            var self = this;
             if(layer instanceof anol.layer.Group) {
-                var groupIdx = this.addedGroups.indexOf(layer);
-                if(this.catalogGroups.indexOf(layer) > -1 && groupIdx > -1) {
+                var groupIdx = self.addedGroups.indexOf(layer);
+                if(self.catalogGroups.indexOf(layer) > -1 && groupIdx > -1) {
                     LayersService.removeOverlayLayer(layer);
-                    this.addedGroups.splice(groupIdx, 1);
+                    self.addedGroups.splice(groupIdx, 1);
+
+                    angular.forEach(layer.layers, function(cLayer) {
+                        var layerIdx = self.addedLayers.indexOf(cLayer);
+                        if(self.catalogLayers.indexOf(cLayer) > -1 && layerIdx > -1) {
+                            self.addedLayers.splice(layerIdx, 1);
+                        }
+                    })
 
                     // var groupNameIdx = this.addedGroupsName.indexOf(layer.name);
                     // this.addedGroupsName.splice(groupNameIdx, 1)
