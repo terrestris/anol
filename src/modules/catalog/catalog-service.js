@@ -24,7 +24,6 @@ angular.module('anol.catalog')
          */
         var CatalogService = function(loadUrl) {
             var self = this;
-            this.catalogLayers = [];
             this.catalogGroups = [];
             this.addedLayers = [];
             this.addedLayersName = [];
@@ -259,7 +258,6 @@ angular.module('anol.catalog')
         CatalogService.prototype.addCatalogLayer = function(layer) {
             // all catalog layers must display in layerswitcher
             layer.displayInLayerswitcher = true;
-            this.catalogLayers.push(layer);
         };
         /**
          * @ngdoc method
@@ -341,7 +339,7 @@ angular.module('anol.catalog')
                                     self.addedGroupsLength++;
                                 });
                             });
-                            var startZIndex = LayersService.zIndex + self.addedLayers.length + anolGroup.layers.length
+                            var startZIndex = LayersService.zIndex + self.addedLayers.length;
                             angular.forEach(anolGroup.layers, function(_layers) {
                                 _layers.olLayer.setZIndex(startZIndex);
                                 startZIndex--;
@@ -427,7 +425,6 @@ angular.module('anol.catalog')
                             anolLayer.refresh();
                         }
                         self.addedLayersName.push(layerName);
-                        self.catalogLayers.push(anolLayer);
                         self.addedLayers.push(anolLayer);
                         anolLayer.olLayer.setZIndex(LayersService.zIndex + self.addedLayers.length + self.addedGroupsLength)
                         anolLayer.setVisible(visible);
@@ -455,7 +452,7 @@ angular.module('anol.catalog')
 
                     angular.forEach(layer.layers, function(cLayer) {
                         var layerIdx = self.addedLayers.indexOf(cLayer);
-                        if(self.catalogLayers.indexOf(cLayer) > -1 && layerIdx > -1) {
+                        if(layerIdx > -1) {
                             self.addedLayers.splice(layerIdx, 1);
                         }
                     })
@@ -465,7 +462,8 @@ angular.module('anol.catalog')
                 }
             } else {
                 var layerIdx = this.addedLayers.indexOf(layer);
-                if(this.catalogLayers.indexOf(layer) > -1 && layerIdx > -1) {
+                if(layerIdx > -1) {
+                    layer.setVisible(false);
                     LayersService.removeOverlayLayer(layer);
                     this.addedLayers.splice(layerIdx, 1);
 
@@ -473,22 +471,21 @@ angular.module('anol.catalog')
                     // this.addedLayersName.splice(layerNameIdx, 1)
                 }
 
-                if (layerIdx == -1) {
-                    if (layer.anolGroup) {
-                        // remove group if it is the last layer
-                        var group = layer.anolGroup;
-                        if (group.layers.length === 1) {
-                            var groupIdx = this.addedGroups.indexOf(group);
-                            if(this.catalogGroups.indexOf(group) > -1 && groupIdx > -1) {
-                                LayersService.removeOverlayLayer(group);
-                                this.addedGroups.splice(groupIdx, 1);
+                if (layer.anolGroup) {
+                    // remove group if it is the last layer
+                    var group = layer.anolGroup;
+                    if (group.layers.length === 0) {
+                        var groupIdx = this.addedGroups.indexOf(group);
+                        if(this.catalogGroups.indexOf(group) > -1 && groupIdx > -1) {
+                            LayersService.removeOverlayLayer(group);
+                            this.addedGroups.splice(groupIdx, 1);
 
-                                // var groupNameIdx = this.addedGroupsName.indexOf(layer.name);
-                                // this.addedGroupsName.splice(groupNameIdx, 1);
-                            }
-                        } else {
-                            LayersService.removeOverlayLayer(layer);
+                            // var groupNameIdx = this.addedGroupsName.indexOf(layer.name);
+                            // this.addedGroupsName.splice(groupNameIdx, 1);
                         }
+                    } else {
+                        // important for digitize layers
+                        LayersService.removeOverlayLayer(layer);
                     }
                 }
             }
