@@ -420,7 +420,7 @@ angular.module('anol.catalog')
                         } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
                             anolLayer = new anol.layer.StaticGeoJSON(clayer)
                         }
-                        LayersService.addOverlayLayer(anolLayer, 0);
+                        var added = LayersService.addOverlayLayer(anolLayer, 0);
                         if(anolLayer instanceof anol.layer.DynamicGeoJSON && added === true) {
                             anolLayer.refresh();
                         }
