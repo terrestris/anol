@@ -158,6 +158,10 @@ export class Internal {
   }
 
   handleEvent(evt) {
+    // we just want the contextmenu to appear, if the click was directly in the map
+    // if the user right clicks in search field etc. no contextmenu shall come up
+    if (evt.srcElement.nodeName != 'CANVAS') return;
+    
     const this_ = this;
 
     this.coordinateClicked = this.map.getEventCoordinate(evt);
