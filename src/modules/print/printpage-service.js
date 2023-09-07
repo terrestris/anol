@@ -7,10 +7,12 @@ import Collection from 'ol/Collection';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
 import PointerInteraction from 'ol/interaction/Pointer';
+import Modify from 'ol/interaction/Modify';
 import { inherits } from 'ol';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
+import {always, never, doubleClick} from 'ol/events/condition';
 import { getSize } from 'ol/extent';
 
 angular.module('anol.print')
@@ -104,7 +106,7 @@ angular.module('anol.print')
             _maxPageSize = size;
         };
 
-        this.$get = ['$rootScope', '$translate', 'MapService', 'LayersService', 'InteractionsService', function($rootScope, $translate, MapService, LayersService, InteractionsService) {
+        this.$get = ['$rootScope', '$translate', 'MapService', 'LayersService', 'InteractionsService', 'NotificationService', function($rootScope, $translate, MapService, LayersService, InteractionsService, NotificationService) {
         /**
          * @ngdoc service
          * @name anol.print.PrintPageService
@@ -116,20 +118,15 @@ angular.module('anol.print')
          * @description
          * Service for showing/hiding print area in map. It provides also the bbox of print area.
          */
-            // var _modify;
+            var _modify;
             var _drag;
             var _printArea;
             var _cursorPointer;
             var _dragFeatures = {
-                top: undefined,
                 lefttop: undefined,
-                left: undefined,
                 leftbottom: undefined,
-                bottom: undefined,
                 rightbottom: undefined,
-                right: undefined,
-                righttop: undefined,
-                center: undefined
+                righttop: undefined
             };
             var _modifyFeatures = new Collection();
 
@@ -265,7 +262,7 @@ angular.module('anol.print')
                 this.coordinate_[0] = evt.coordinate[0];
                 this.coordinate_[1] = evt.coordinate[1];
                 if(angular.isDefined(this.dragCallback)) {
-                    this.dragCallback();
+                    this.dragCallback(evt);
                 }
             };
             DragPrintPageInteraction.prototype.handleUpEvent = function() {
@@ -406,44 +403,20 @@ angular.module('anol.print')
                 var self = this;
                 _modifyFeatures.clear();
 
-                _dragFeatures.left = new Feature(new Point([left, center[1]]));
-                _dragFeatures.left.set('position', 'left');
-                _dragFeatures.left.on('change', self.dragFeatureNormalChangeHandler, self);
-                _modifyFeatures.push(_dragFeatures.left);
-
-                _dragFeatures.right = new Feature(new Point([right, center[1]]));
-                _dragFeatures.right.set('position', 'right');
-                _dragFeatures.right.on('change', self.dragFeatureNormalChangeHandler, self);
-                _modifyFeatures.push(_dragFeatures.right);
-
-                _dragFeatures.top = new Feature(new Point([center[0], top]));
-                _dragFeatures.top.set('position', 'top');
-                _dragFeatures.top.on('change', self.dragFeatureNormalChangeHandler, self);
-                _modifyFeatures.push(_dragFeatures.top);
-
-                _dragFeatures.bottom = new Feature(new Point([center[0], bottom]));
-                _dragFeatures.bottom.set('position', 'bottom');
-                _dragFeatures.bottom.on('change', self.dragFeatureNormalChangeHandler, self);
-                _modifyFeatures.push(_dragFeatures.bottom);
-
                 _dragFeatures.leftbottom = new Feature(new Point([left, bottom]));
                 _dragFeatures.leftbottom.set('position', 'leftbottom');
-                _dragFeatures.leftbottom.on('change', self.dragFeatureDiagonalChangeHandler, self);
                 _modifyFeatures.push(_dragFeatures.leftbottom);
 
                 _dragFeatures.lefttop = new Feature(new Point([left, top]));
                 _dragFeatures.lefttop.set('position', 'lefttop');
-                _dragFeatures.lefttop.on('change', self.dragFeatureDiagonalChangeHandler, self);
                 _modifyFeatures.push(_dragFeatures.lefttop);
 
                 _dragFeatures.rightbottom = new Feature(new Point([right, bottom]));
                 _dragFeatures.rightbottom.set('position', 'rightbottom');
-                _dragFeatures.rightbottom.on('change', self.dragFeatureDiagonalChangeHandler, self);
                 _modifyFeatures.push(_dragFeatures.rightbottom);
 
                 _dragFeatures.righttop = new Feature(new Point([right, top]));
                 _dragFeatures.righttop.set('position', 'righttop');
-                _dragFeatures.righttop.on('change', self.dragFeatureDiagonalChangeHandler, self);
                 _modifyFeatures.push(_dragFeatures.righttop);
 
                 _printSource.addFeatures(_modifyFeatures.getArray());
@@ -451,36 +424,36 @@ angular.module('anol.print')
 
             PrintPage.prototype.createInteractions = function() {
                 var self = this;
-                // if(_modify !== undefined) {
-                //     InteractionsService.removeInteraction(_modify);
-                // }
+                 if(_modify !== undefined) {
+                     InteractionsService.removeInteraction(_modify);
+                 }
                 if(angular.isDefined(_drag)) {
                     InteractionsService.removeInteraction(_drag);
                 }
                 if(angular.isDefined(_cursorPointer)) {
                     InteractionsService.removeInteraction(_cursorPointer);
                 }
-                // var modifyFeatures = new ol.Collection();
-                // modifyFeatures.extend(_modifyFeatures);
-                // modifyFeatures.push(_printArea);
-                // var modifyOptions = {
-                //     features: modifyFeatures,
-                //     deleteCondition: function() {
-                //         return false;
-                //     }
-                // };
+                 var modifyFeatures = new Collection();
+                 modifyFeatures.extend(_modifyFeatures);
+                 modifyFeatures.push(_printArea);
+                 var modifyOptions = {
+                     features: modifyFeatures,
+                     insertVertexCondition: never,
+                     deleteCondition: never
+                 };
 
-                // if(_style !== undefined) {
-                //     modifyOptions.style = _style;
-                // }
-                // _modify = new ol.interaction.Modify(modifyOptions);
-                // _modify.on('modifyend', function() {
-                //     self.updateDragFeatures();
-                // });
-
+                 if(_style !== undefined) {
+                     modifyOptions.style = _style;
+                 }
+                 if(self.allowPageResize) {
+                    _modify = new Modify(modifyOptions);
+                    _modify.on('modifyend', function(e) {
+                        self.updateDragFeatures(e);
+                    });
+                }
                 _drag = new DragPrintPageInteraction({
-                    dragCallback: function() {
-                        self.updateDragFeatures();
+                    dragCallback: function(e) {
+                        self.updateDragFeatures(e);
                     },
                     pageFeature: _printArea,
                     pageLayer: _printLayer
@@ -489,8 +462,9 @@ angular.module('anol.print')
                     features: _modifyFeatures.getArray().concat(_printArea),
                     layer: _printLayer
                 });
-
-                // InteractionsService.addInteraction(_modify);
+                if(self.allowPageResize) {
+                    InteractionsService.addInteraction(_modify);
+                }
                 InteractionsService.addInteraction(_drag);
                 InteractionsService.addInteraction(_cursorPointer);
             };
@@ -504,75 +478,209 @@ angular.module('anol.print')
          * @description
          * Update draggable points after one points (currentFeature) was dragged
          */
-            PrintPage.prototype.updateDragFeatures = function(currentFeature) {
+            PrintPage.prototype.updateDragFeatures = function(e) {
                 var self = this;
                 // no need for update drag features if page cannot be resized in map
                 if(!self.allowPageResize) {
                     return;
                 }
-                var edgePoints = _printArea.getGeometry().getCoordinates()[0];
-                var left = edgePoints[0][0];
-                var right = edgePoints[1][0];
-                var top = edgePoints[0][1];
-                var bottom = edgePoints[2][1];
-                var center = _printArea.getGeometry().getInteriorPoint().getCoordinates();
 
-                var updateFeature = function(dragFeature, currentFeature, coords, handler) {
-                // TODO remove modify when we can
-                    dragFeature.un('change', handler, self);
-                    if(dragFeature !== currentFeature) {
-                        _modifyFeatures.remove(dragFeature);
-                        dragFeature.getGeometry().setCoordinates(coords);
-                        _modifyFeatures.push(dragFeature);
+                var type;
+                if(e && e.type){
+                    type = e.type;
+                }
+
+                // new coords after dragging/modifiyng
+                var edgePoints = _printArea.getGeometry().getCoordinates()[0];
+                if(type == 'pointerdrag'){
+                    _dragFeatures.lefttop.getGeometry().setCoordinates(edgePoints[0]);
+                    _dragFeatures.righttop.getGeometry().setCoordinates(edgePoints[1]);
+                    _dragFeatures.rightbottom.getGeometry().setCoordinates(edgePoints[2]);
+                    _dragFeatures.leftbottom.getGeometry().setCoordinates(edgePoints[3]);
+
+                } else if(type == 'modifyend'){
+                    // calculate which point was dragged
+                    
+                    //  .updatePrintArea = function(left, top, right, bottom) {
+                    var leftTopDragCoords = _dragFeatures.lefttop.getGeometry().getCoordinates();
+                    var leftBottomDragCoords = _dragFeatures.leftbottom.getGeometry().getCoordinates();
+                    var rightTopDragCoords = _dragFeatures.righttop.getGeometry().getCoordinates();
+                    var rightBottomDragCoords = _dragFeatures.rightbottom.getGeometry().getCoordinates();
+
+                    if(leftTopDragCoords.toString() != edgePoints[0].toString()) {
+                        var correctedEdgePoint= new Array();
+                        correctedEdgePoint[0] = this.checkPrintBoxWidth(rightBottomDragCoords, edgePoints[0], leftTopDragCoords);
+                        correctedEdgePoint[1] = this.checkPrintBoxHeight(rightBottomDragCoords, edgePoints[0], leftTopDragCoords);
+
+                        _modifyFeatures.remove(_dragFeatures.lefttop);
+                        _modifyFeatures.remove(_dragFeatures.righttop);
+                        _modifyFeatures.remove(_dragFeatures.leftbottom);
+                        _dragFeatures.lefttop.getGeometry().setCoordinates(correctedEdgePoint);
+                        _dragFeatures.righttop.getGeometry().setCoordinates([edgePoints[1][0],correctedEdgePoint[1]]);
+                        _dragFeatures.leftbottom.getGeometry().setCoordinates([correctedEdgePoint[0],edgePoints[3][1]]);
+                        _modifyFeatures.push(_dragFeatures.lefttop);
+                        _modifyFeatures.push(_dragFeatures.righttop);
+                        _modifyFeatures.push(_dragFeatures.leftbottom);
+                        this.updatePrintArea(correctedEdgePoint[0], correctedEdgePoint[1], rightBottomDragCoords[0], rightBottomDragCoords[1]);
+
+                    } else if(rightTopDragCoords.toString() != edgePoints[1].toString()) {
+                        var correctedEdgePoint= new Array();
+                        correctedEdgePoint[0] = this.checkPrintBoxWidth(leftBottomDragCoords, edgePoints[1], rightTopDragCoords);
+                        correctedEdgePoint[1] = this.checkPrintBoxHeight(leftBottomDragCoords, edgePoints[1], rightTopDragCoords);
+
+                        _modifyFeatures.remove(_dragFeatures.righttop);
+                        _modifyFeatures.remove(_dragFeatures.lefttop);
+                        _modifyFeatures.remove(_dragFeatures.rightbottom);
+                        _dragFeatures.righttop.getGeometry().setCoordinates(correctedEdgePoint);
+                        _dragFeatures.lefttop.getGeometry().setCoordinates([edgePoints[0][0],correctedEdgePoint[1]]);
+                        _dragFeatures.rightbottom.getGeometry().setCoordinates([correctedEdgePoint[0],edgePoints[2][1]]);
+                        _modifyFeatures.push(_dragFeatures.righttop);
+                        _modifyFeatures.push(_dragFeatures.lefttop);
+                        _modifyFeatures.push(_dragFeatures.rightbottom);
+                        this.updatePrintArea(leftBottomDragCoords[0], correctedEdgePoint[1], correctedEdgePoint[0], leftBottomDragCoords[1]);
+
+                    } else if(rightBottomDragCoords.toString() != edgePoints[2].toString()) {
+                        var correctedEdgePoint= new Array();
+                        correctedEdgePoint[0] = this.checkPrintBoxWidth(leftTopDragCoords, edgePoints[2], rightBottomDragCoords);
+                        correctedEdgePoint[1] = this.checkPrintBoxHeight(leftTopDragCoords, edgePoints[2], rightBottomDragCoords);
+
+                        _modifyFeatures.remove(_dragFeatures.rightbottom);
+                        _modifyFeatures.remove(_dragFeatures.righttop);
+                        _modifyFeatures.remove(_dragFeatures.leftbottom);
+                        _dragFeatures.rightbottom.getGeometry().setCoordinates(correctedEdgePoint);
+                        _dragFeatures.righttop.getGeometry().setCoordinates([correctedEdgePoint[0],edgePoints[1][1]]);
+                        _dragFeatures.leftbottom.getGeometry().setCoordinates([edgePoints[3][0],correctedEdgePoint[1]]);
+                        _modifyFeatures.push(_dragFeatures.rightbottom);
+                        _modifyFeatures.push(_dragFeatures.righttop);
+                        _modifyFeatures.push(_dragFeatures.leftbottom);
+                        this.updatePrintArea(leftTopDragCoords[0], leftTopDragCoords[1], correctedEdgePoint[0], correctedEdgePoint[1]);
+
+                    } else if(leftBottomDragCoords.toString() != edgePoints[3].toString()) {
+                        var correctedEdgePoint= new Array();
+                        correctedEdgePoint[0] = this.checkPrintBoxWidth(rightTopDragCoords, edgePoints[3], leftBottomDragCoords);
+                        correctedEdgePoint[1] = this.checkPrintBoxHeight(rightTopDragCoords, edgePoints[3], leftBottomDragCoords);
+
+                        _modifyFeatures.remove(_dragFeatures.leftbottom);
+                        _modifyFeatures.remove(_dragFeatures.rightbottom);
+                        _modifyFeatures.remove(_dragFeatures.lefttop);
+                        _dragFeatures.leftbottom.getGeometry().setCoordinates(correctedEdgePoint);
+                        _dragFeatures.rightbottom.getGeometry().setCoordinates([edgePoints[2][0],correctedEdgePoint[1]]);
+                        _dragFeatures.lefttop.getGeometry().setCoordinates([correctedEdgePoint[0],edgePoints[0][1]]);
+                        _modifyFeatures.push(_dragFeatures.leftbottom);
+                        _modifyFeatures.push(_dragFeatures.rightbottom);
+                        _modifyFeatures.remove(_dragFeatures.lefttop);
+                        this.updatePrintArea(correctedEdgePoint[0], rightTopDragCoords[1], rightTopDragCoords[0], correctedEdgePoint[1]);
                     }
 
-                    dragFeature.on('change', handler, self);
-                };
 
-                updateFeature(_dragFeatures.left, currentFeature, [left, center[1]], self.dragFeatureNormalChangeHandler);
-                updateFeature(_dragFeatures.bottom, currentFeature, [center[0], bottom], self.dragFeatureNormalChangeHandler);
-                updateFeature(_dragFeatures.right, currentFeature, [right, center[1]], self.dragFeatureNormalChangeHandler);
-                updateFeature(_dragFeatures.top, currentFeature, [center[0], top], self.dragFeatureNormalChangeHandler);
-
-                updateFeature(_dragFeatures.leftbottom, currentFeature, [left, bottom], self.dragFeatureDiagonalChangeHandler);
-                updateFeature(_dragFeatures.rightbottom, currentFeature, [right, bottom], self.dragFeatureDiagonalChangeHandler);
-                updateFeature(_dragFeatures.righttop, currentFeature, [right, top], self.dragFeatureDiagonalChangeHandler);
-                updateFeature(_dragFeatures.lefttop, currentFeature, [left, top], self.dragFeatureDiagonalChangeHandler);
+                    this.updatePrintSize();
+                }
             };
 
-            /**
+         /**
          * @private
-         * @name dragFeatureNormalChangeHandler
+         * @name checkPrintBoxWidth
          * @methodOf anol.print.PrintPageService
          *
-         * @param {Object} evt ol3 event
+         * @param {Array} refPointOppositeSite reference point before modifying print rectangle
+         * @param {Array} newPoint new point after modifying print rectangle
+         * @param {Array} oldPoint old point before modifying print rectangle
          *
          * @description
-         * Perfroms actions for horizontal or vertical dragging
+         * Calculates the new print rectangle width and restrict it to min and max width
          */
-            PrintPage.prototype.dragFeatureNormalChangeHandler = function(evt) {
-                var currentFeature = evt.target;
-                this.updatePrintAreaNormal();
-                this.updateDragFeatures(currentFeature);
-                this.updatePrintSize();
-            };
+         PrintPage.prototype.checkPrintBoxWidth = function(refPointOppositeSite, newPoint, oldPoint) {
+            
+            var newWidth = refPointOppositeSite[0] - newPoint[0];
+            var oldWidth = refPointOppositeSite[0] - oldPoint[0];
+            var changedPositions = newWidth > 0 && oldWidth < 0 || newWidth < 0 && oldWidth > 0;
+            var newWidthAbs = Math.abs(refPointOppositeSite[0] - newPoint[0]);
 
-            /**
+            var widthInPixels = Math.round(newWidthAbs * 1000 / this.currentScale);
+            if(newWidth > 0){
+                if(changedPositions == true){
+                    var newX = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.WIDTH_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[0] + newX;
+                } else if(widthInPixels < this.minPageSize){
+                    var newX = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.WIDTH_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[0] - newX;
+                } else if(widthInPixels > this.maxPageSize){
+                    var newX = this.maxPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.WIDTH_TOO_BIG + Math.round(this.maxPageSize) + " mm");
+                    return refPointOppositeSite[0] - newX;
+                }
+            } else if(newWidth < 0){
+                if(changedPositions == true){
+                    var newX = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.WIDTH_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[0] - newX;
+                } else if(widthInPixels < this.minPageSize){
+                    var newX = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.WIDTH_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[0] + newX;
+                } else if(widthInPixels > this.maxPageSize){
+                    var newX = this.maxPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.WIDTH_TOO_BIG + Math.round(this.maxPageSize) + " mm");
+                    return refPointOppositeSite[0] + newX;
+                }
+            }
+            return newPoint[0];
+        };
+
+        /**
          * @private
-         * @name dragFeatureDiagonalChangeHandler
+         * @name checkPrintBoxHeight
          * @methodOf anol.print.PrintPageService
          *
-         * @param {Object} evt ol3 event
+         * @param {Array} refPointOppositeSite reference point before modifying print rectangle
+         * @param {Array} newPoint new point after modifying print rectangle
+         * @param {Array} oldPoint old point before modifying print rectangle
          *
          * @description
-         * Perfroms actions for diagonal dragging
+         * Calculates the new print rectangle height and restrict it to min and max height
          */
-            PrintPage.prototype.dragFeatureDiagonalChangeHandler = function(evt) {
-                var currentFeature = evt.target;
-                this.updatePrintAreaDiagonal(currentFeature);
-                this.updateDragFeatures(currentFeature);
-                this.updatePrintSize();
-            };
+        PrintPage.prototype.checkPrintBoxHeight = function(refPointOppositeSite, newPoint, oldPoint) {
+            
+            var newHeight = refPointOppositeSite[1] - newPoint[1];
+            var oldHeight = refPointOppositeSite[1] - oldPoint[1];
+            var changedPositions = newHeight > 0 && oldHeight < 0 || newHeight < 0 && oldHeight > 0;
+            var newHeightAbs = Math.abs(refPointOppositeSite[1] - newPoint[1]);
+
+            var heightInPixels = Math.round(newHeightAbs * 1000 / this.currentScale);
+            if(newHeight > 0){
+                if(changedPositions == true){
+                    var newY = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.HEIGHT_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[1] + newY;
+                } else if(heightInPixels < this.minPageSize){
+                    var newY = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.HEIGHT_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[1] - newY;
+                } else if(heightInPixels > this.maxPageSize){
+                    var newY = this.maxPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.HEIGHT_TOO_BIG + Math.round(this.maxPageSize) + " mm");
+                    return refPointOppositeSite[1] - newY;
+                }
+            } else if(newHeight < 0){
+                if(changedPositions == true){
+                    var newY = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.HEIGHT_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[1] - newY;
+                } else if(heightInPixels < this.minPageSize){
+                    var newY = this.minPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.HEIGHT_TOO_SMALL + Math.round(this.minPageSize) + " mm");
+                    return refPointOppositeSite[1] + newY;
+                } else if(heightInPixels > this.maxPageSize){
+                    var newY = this.maxPageSize / 1000 * this.currentScale;
+                    NotificationService.addError(deDETranslation.anol.print.HEIGHT_TOO_BIG + Math.round(this.maxPageSize) + " mm");
+                    return refPointOppositeSite[1] + newY;
+                }
+            }
+            return newPoint[1];
+        };   
+
             /**
          * @private
          * @name updatePrintAreaDiagonal
@@ -583,16 +691,20 @@ angular.module('anol.print')
          * @description
          * Calculates print area bbox after diagonal dragging
          */
-            PrintPage.prototype.updatePrintAreaDiagonal = function(currentFeature) {
+            PrintPage.prototype.updatePrintAreaDiagonal = function(currentCoords) {
                 var lefttop, righttop, leftbottom, rightbottom;
-                if(_dragFeatures.lefttop === currentFeature || _dragFeatures.rightbottom === currentFeature) {
-                    lefttop = _dragFeatures.lefttop.getGeometry().getCoordinates();
-                    rightbottom = _dragFeatures.rightbottom.getGeometry().getCoordinates();
-                    this.updatePrintArea(lefttop[0], lefttop[1], rightbottom[0], rightbottom[1]);
-                } else {
-                    righttop = _dragFeatures.righttop.getGeometry().getCoordinates();
-                    leftbottom = _dragFeatures.leftbottom.getGeometry().getCoordinates();
-                    this.updatePrintArea(leftbottom[0], righttop[1], righttop[0], leftbottom[1]);
+                var leftTopDragCoords = _dragFeatures.lefttop.getGeometry().getCoordinates();
+                var leftBottomDragCoords = _dragFeatures.leftbottom.getGeometry().getCoordinates();
+                var rightTopDragCoords = _dragFeatures.righttop.getGeometry().getCoordinates();
+                var rightBottomDragCoords = _dragFeatures.rightbottom.getGeometry().getCoordinates();
+                if(leftTopDragCoords.toString() == currentCoords.toString()) {
+                    this.updatePrintArea(leftTopDragCoords[0], leftTopDragCoords[1], rightBottomDragCoords[0], rightBottomDragCoords[1]);
+                } else if(leftBottomDragCoords.toString() == currentCoords.toString()) {
+                    this.updatePrintArea(leftBottomDragCoords[0], rightTopDragCoords[1], rightTopDragCoords[0], leftBottomDragCoords[1]);
+                } else if(rightTopDragCoords.toString() == currentCoords.toString()) {
+                    this.updatePrintArea(leftBottomDragCoords[0], rightTopDragCoords[1], rightTopDragCoords[0], leftBottomDragCoords[1]);
+                } else if(rightBottomDragCoords.toString() == currentCoords.toString()) {
+                    this.updatePrintArea(leftTopDragCoords[0], leftTopDragCoords[1], rightBottomDragCoords[0], rightBottomDragCoords[1]);
                 }
             };
             /**
@@ -670,12 +782,16 @@ angular.module('anol.print')
             PrintPage.prototype.updatePrintSize = function() {
                 var self = this;
                 $rootScope.$apply(function() {
-                    self.mapWidth = _dragFeatures.right.getGeometry().getCoordinates()[0] - _dragFeatures.left.getGeometry().getCoordinates()[0];
-                    self.mapHeight = _dragFeatures.top.getGeometry().getCoordinates()[1] - _dragFeatures.bottom.getGeometry().getCoordinates()[1];
+                    self.mapWidth = _dragFeatures.rightbottom.getGeometry().getCoordinates()[0] - _dragFeatures.leftbottom.getGeometry().getCoordinates()[0];
+                    self.mapHeight = _dragFeatures.righttop.getGeometry().getCoordinates()[1] - _dragFeatures.rightbottom.getGeometry().getCoordinates()[1];
+                    var w = Math.round(self.mapWidth * 1000 / self.currentScale);
+                    var h = Math.round(self.mapHeight * 1000 / self.currentScale);
                     self.currentPageSize = [
-                        self.mapWidth * 1000 / self.currentScale,
-                        self.mapHeight * 1000 / self.currentScale
+                        w,
+                        h
                     ];
+                    $rootScope.$broadcast('updatePrintPageSize', [w,h]);
+                    $rootScope.$broadcast('updatePrintPageLayout', undefined);
                 });
             };
             /**
