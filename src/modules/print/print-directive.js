@@ -197,6 +197,16 @@ angular.module('anol.print')
                             scope.printAttributes.pageSize = undefined;
                         };
 
+                        $rootScope.$on('updatePrintPageSize', function(br, data){
+                            scope.pageWidth = data[0];
+                            scope.pageHeight = data[1];
+                            scope.printAttributes.pageSize = data;
+                        });
+
+                        $rootScope.$on('updatePrintPageLayout', function(br, data){
+                            scope.printAttributes.layout = data;
+                        });
+
 
                         $rootScope.$on('updatePrintPageSettings', function(br, data){
                             var printData = data.print;
