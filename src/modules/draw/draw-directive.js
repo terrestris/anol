@@ -381,6 +381,8 @@ angular.module('anol.draw')
 
                     // Button binds
                     scope.drawPoint = function () {
+                        scope.modifyEnabled = false;
+                        scope.modifyActive = false;
                         if (drawPointControl.disabled === true) {
                             return;
                         }
@@ -394,6 +396,8 @@ angular.module('anol.draw')
                     };
 
                     scope.drawLine = function () {
+                        scope.modifyEnabled = false;
+                        scope.modifyActive = false;
                         if (drawLineControl.disabled === true) {
                             return;
                         }
@@ -407,6 +411,8 @@ angular.module('anol.draw')
                     };
 
                     scope.drawPolygon = function () {
+                        scope.modifyEnabled = false;
+                        scope.modifyActive = false;
                         if (drawPolygonControl.disabled === true) {
                             return;
                         }
@@ -454,6 +460,7 @@ angular.module('anol.draw')
                         if (angular.isUndefined(scope.activeLayer)) {
                             return;
                         }
+                        scope.activeDrawType = 'Text';
                         // deactivate other controls
                         angular.forEach(controls, function (control) {
                             control.deactivate();
@@ -485,6 +492,7 @@ angular.module('anol.draw')
 
                         // call the callback function
                         var postDrawAction = function (evt) {
+                            scope.activeDrawType = undefined;
                             postDrawCallback(scope.activeLayer, evt.feature);
                         };
                         // remove custom draw after draw finish
