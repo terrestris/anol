@@ -67,7 +67,7 @@ export class Html {
       } else {
         url = item.callback;
       }
-      html = '<a href="'+ url +'" title="'+item.title +'" target=_blank">' + item.text + '</a>';
+      html = '<a href="'+ url +'" title="'+item.title +'" target="_blank">' + item.text + '</a>';
     } else {
       html = '<span>' + item.text + '</span>';
     }
