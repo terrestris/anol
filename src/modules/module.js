@@ -120,7 +120,8 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'HEIGHT_TOO_BIG': 'Height too big. Max height: '
                 },
                 'savemanager': {
-                    'SERVICE_UNAVAILABLE': 'Service unavailable'
+                    'SERVICE_UNAVAILABLE': 'Service unavailable',
+                    'SAVING_FAILED': 'Could not save changes.'
                 },
                 'zoom': {
                     'TOOLTIP_ZOOM_IN': 'Zoom in',
