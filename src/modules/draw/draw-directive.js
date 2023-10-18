@@ -682,7 +682,7 @@ angular.module('anol.draw')
                             text += ' ' + scope.badgeTexts.max + ': ' + config.max;
                         }
                         return text;
-                    }
+                    };
                 }
             };
         }]);
