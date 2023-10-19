@@ -102,6 +102,10 @@ class StaticGeoJSON extends FeatureLayer {
         });
         this.olLayer.setSource(newSource);
     }
+
+    refresh() {
+        this.olLayer.getSource().refresh();
+    }
 }
 
 export default StaticGeoJSON;
