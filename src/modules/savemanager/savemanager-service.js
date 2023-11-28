@@ -1,4 +1,5 @@
 import './module.js';
+import {DigitizeState} from "./digitize-state";
 import GeoJSON from 'ol/format/GeoJSON';
 import {unByKey} from 'ol/Observable';
 import {omit as _omit} from 'lodash';
@@ -44,8 +45,10 @@ angular.module('anol.savemanager')
                         addHandler(feature);
                     }
                     if (angular.isDefined(changeHandler)) {
-                        this.changeListenerKeys.push(feature.on('change:_dirty', () => {
-                            changeHandler(feature);
+                        this.changeListenerKeys.push(feature.on('change:_digitizeState', () => {
+                            if (feature.get('_digitizeState') === DigitizeState.CHANGED) {
+                                changeHandler(feature);
+                            }
                         }));
                     }
                 });
@@ -58,8 +61,10 @@ angular.module('anol.savemanager')
 
                 if (angular.isDefined(changeHandler)) {
                     for (const feature of this.source.getFeatures()) {
-                        this.changeListenerKeys.push(feature.on('change:_dirty', () => {
-                            changeHandler(feature);
+                        this.changeListenerKeys.push(feature.on('change:_digitizeState', () => {
+                            if (feature.get('_digitizeState') === DigitizeState.CHANGED) {
+                                changeHandler(feature);
+                            }
                         }));
                     }
                 }
@@ -347,7 +352,7 @@ angular.module('anol.savemanager')
                         const featureObject = format.writeFeatureObject(feature);
                         return {
                             ...featureObject,
-                            properties: _omit(featureObject.properties, '_dirty')
+                            properties: _omit(featureObject.properties, '_digitizeState')
                         };
                     };
                     if (self.isDefinedAndPopulated(self.addedFeatures, layer)) {

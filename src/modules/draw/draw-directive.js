@@ -1,5 +1,6 @@
 import './module.js';
 import '../util.js';
+import {DigitizeState} from "../savemanager/digitize-state";
 
 import {TOUCH as hasTouch} from 'ol/has';
 import Draw from 'ol/interaction/Draw';
@@ -61,7 +62,7 @@ angular.module('anol.draw')
                     drawTitle: '<?',
                     modifyLabel: '<?',
                     removeLabel: '<?',
-                    setDirtyFlag: '<?'
+                    setState: '<?'
                 },
                 template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -95,8 +96,8 @@ angular.module('anol.draw')
                         scope.polygonTooltipPlacement : 'right';
                     scope.shortText = angular.isDefined(scope.shortText) ?
                         scope.shortText : false;
-                    scope.setDirtyFlag = angular.isDefined(scope.setDirtyFlag) ?
-                        scope.setDirtyFlag : false;
+                    scope.setState = angular.isDefined(scope.setState) ?
+                        scope.setState : false;
 
                     scope.activeLayer = undefined;
                     scope.selectedFeature = undefined;
@@ -140,11 +141,11 @@ angular.module('anol.draw')
                     }
 
                     var executePostDrawCallback = function (evt) {
+                        if (scope.setState) {
+                            evt.feature.set('_digitizeState', DigitizeState.NEW);
+                        }
                         if (angular.isFunction(scope.postDrawAction)) {
                             scope.postDrawAction({layer: scope.activeLayer, feature: evt.feature});
-                        }
-                        if (scope.setDirtyFlag) {
-                            evt.feature.set('_dirty', true);
                         }
                     };
 
@@ -265,6 +266,7 @@ angular.module('anol.draw')
                                 }
                                 return measureStyle(feature);
                             },
+                            filter: feature => feature.get('_digitizeState') !== DigitizeState.REMOVED,
                             hitTolerance: 10
                         });
                         $olOn(selectInteraction, 'select', function (evt) {
@@ -274,7 +276,11 @@ angular.module('anol.draw')
                             } else {
                                 const feat = evt.selected[0];
                                 if (scope.removeActive) {
-                                    layer.getSource().removeFeature(feat);
+                                    if (scope.setState) {
+                                        feat.set('_digitizeState', DigitizeState.REMOVED);
+                                    } else {
+                                        layer.getSource().removeFeature(feat);
+                                    }
                                     if (angular.isFunction(scope.postDeleteAction)) {
                                         scope.postDeleteAction({feature: feat, layer: layer});
                                     }
@@ -297,8 +303,12 @@ angular.module('anol.draw')
                             }
                         });
                         $olOn(modifyInteraction, 'modifystart', e => {
-                            if (scope.setDirtyFlag) {
-                                e.features.forEach(f => f.set('_dirty', true));
+                            if (scope.setState) {
+                                for (const feature of e.features.getArray()) {
+                                    if (feature.get('_digitizeState') !== DigitizeState.NEW) {
+                                        feature.set('_digitizeState', DigitizeState.CHANGED);
+                                    }
+                                }
                             }
                         })
                         var snapInteraction = new Snap({
