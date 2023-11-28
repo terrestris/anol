@@ -276,7 +276,8 @@ angular.module('anol.draw')
                             } else {
                                 const feat = evt.selected[0];
                                 if (scope.removeActive) {
-                                    if (scope.setState) {
+                                    // only mark existing features as removed
+                                    if (scope.setState && feat.getId() !== undefined) {
                                         feat.set('_digitizeState', DigitizeState.REMOVED);
                                     } else {
                                         layer.getSource().removeFeature(feat);
