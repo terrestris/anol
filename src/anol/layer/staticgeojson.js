@@ -35,7 +35,7 @@ class StaticGeoJSON extends FeatureLayer {
 
     setOlLayer(olLayer) {
         super.setOlLayer(olLayer);
-        
+
         var self = this;
         olLayer.getSource().once('change', function() {
             self.loaded = true;
@@ -77,7 +77,7 @@ class StaticGeoJSON extends FeatureLayer {
         var sourceFeatures = self.olLayer.getSource().getFeatures();
         for(var i = 0; i < sourceFeatures.length; i++) {
             self.olLayer.getSource().removeFeature(sourceFeatures[i]);
-        }  
+        }
         var format = new GeoJSON({
             dataProjection: dataProjection,
         });
@@ -104,7 +104,7 @@ class StaticGeoJSON extends FeatureLayer {
     }
 
     refresh() {
-        this.olLayer.getSource().refresh();
+        this._refresh();
     }
 }
 
