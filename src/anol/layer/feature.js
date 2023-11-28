@@ -182,7 +182,7 @@ class FeatureLayer extends AnolBaseLayer {
                 anolLayers.splice(idx, 1);
                 this.olLayer.getSource().set('anolLayers', anolLayers);
             }
-            this.olSource.clear(true);
+            this.olLayer.getSource().clear(true);
         }
         super.removeOlLayer(this);
     }
@@ -554,6 +554,15 @@ class FeatureLayer extends AnolBaseLayer {
     }
     isClustered() {
         return this.clusterOptions !== false;
+    }
+    _refresh() {
+        this.loaded = false;
+        const source = this.olLayer.getSource();
+        source.clear();
+        source.refresh();
+        source.once('change', () => {
+           this.loaded = true;
+        });
     }
     _degreeToRad(degree) {
         if(degree === 0) {

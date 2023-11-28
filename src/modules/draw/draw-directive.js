@@ -60,7 +60,8 @@ angular.module('anol.draw')
                     shortText: '<?',
                     drawTitle: '<?',
                     modifyLabel: '<?',
-                    removeLabel: '<?'
+                    removeLabel: '<?',
+                    setDirtyFlag: '<?'
                 },
                 template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -94,6 +95,8 @@ angular.module('anol.draw')
                         scope.polygonTooltipPlacement : 'right';
                     scope.shortText = angular.isDefined(scope.shortText) ?
                         scope.shortText : false;
+                    scope.setDirtyFlag = angular.isDefined(scope.setDirtyFlag) ?
+                        scope.setDirtyFlag : false;
 
                     scope.activeLayer = undefined;
                     scope.selectedFeature = undefined;
@@ -139,6 +142,9 @@ angular.module('anol.draw')
                     var executePostDrawCallback = function (evt) {
                         if (angular.isFunction(scope.postDrawAction)) {
                             scope.postDrawAction({layer: scope.activeLayer, feature: evt.feature});
+                        }
+                        if (scope.setDirtyFlag) {
+                            evt.feature.set('_dirty', true);
                         }
                     };
 
@@ -290,6 +296,11 @@ angular.module('anol.draw')
                                 return singleClick(mapBrowserEvent);
                             }
                         });
+                        $olOn(modifyInteraction, 'modifystart', e => {
+                            if (scope.setDirtyFlag) {
+                                e.features.forEach(f => f.set('_dirty', true));
+                            }
+                        })
                         var snapInteraction = new Snap({
                             source: layer.getSource()
                         });
@@ -325,9 +336,9 @@ angular.module('anol.draw')
                         var _modifyControl = new anol.control.Control(controlOptions);
 
                         // modifyControl adds all interactions needed at activate time
-                        // otherwise, a feature added programmaticaly is not selectable
+                        // otherwise, a feature added programmatically is not selectable
                         // until modify control is enabled twice by user
-                        // reproducable with featureexchange module when uploading a geojson
+                        // reproducible with featureexchange module when uploading a geojson
                         // and try to select uploaded feature for modify
                         _modifyControl.onDeactivate(function (targetControl) {
                             angular.forEach(targetControl.interactions, function (interaction) {

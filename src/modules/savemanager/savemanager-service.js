@@ -1,5 +1,7 @@
 import './module.js';
 import GeoJSON from 'ol/format/GeoJSON';
+import {unByKey} from 'ol/Observable';
+import {omit as _omit} from 'lodash';
 
 angular.module('anol.savemanager')
 
@@ -10,64 +12,74 @@ angular.module('anol.savemanager')
     .provider('SaveManagerService', ['LayersServiceProvider', function(LayersServiceProvider) {
     // handles layer source change events and store listener keys for removing
     // listeners nicely
-        var LayerListener = function(layer, saveManager) {
-            this.layer = layer;
-            this.saveManager = saveManager;
-            this.source = layer.olLayer.getSource();
+        class LayerListener {
+            constructor(layer) {
+                this.source = layer.olLayer.getSource();
 
-            this.addListenerKey = undefined;
-            this.changeListenerKey = undefined;
-            this.removeListenerKey = undefined;
-        };
-        LayerListener.prototype.register = function(addHandler, changeHandler, removeHandler) {
-            var self = this;
+                this.addListenerKey = undefined;
+                this.removeListenerKey = undefined;
+                this.changeListenerKeys = [];
+            }
 
-            var _register = function(type, handler, key) {
-                if(angular.isUndefined(handler)) {
-                    return;
+            /**
+             * @param {(f: Feature) => void} addHandler
+             * @param {(f: Feature) => void} removeHandler
+             * @param {(f: Feature) => void} changeHandler
+             */
+            register (addHandler, removeHandler, changeHandler) {
+                if (this.addListenerKey) {
+                    unByKey(this.addListenerKey);
                 }
-                if(angular.isDefined(key)) {
-                    self.source.unByKey(key);
+                if (this.removeListenerKey) {
+                    unByKey(this.removeListenerKey);
                 }
-                return self.source.on(
-                    type,
-                    function(evt) {
-                        handler.apply(self.saveManager, [evt, self.layer]);
+                for (const changeListenerKey of this.changeListenerKeys) {
+                    unByKey(changeListenerKey);
+                }
+                this.changeListenerKeys = [];
+
+                this.addListenerKey = this.source.on('addfeature', e => {
+                    const feature = e.feature;
+                    if (angular.isDefined(addHandler)) {
+                        addHandler(feature);
                     }
-                );
-            };
+                    if (angular.isDefined(changeHandler)) {
+                        this.changeListenerKeys.push(feature.on('change:_dirty', () => {
+                            changeHandler(feature);
+                        }));
+                    }
+                });
 
-            self.addListenerKey = _register(
-                'addfeature',
-                addHandler,
-                self.addListenerKey
-            );
-            self.changeListenerKey = _register(
-                'changefeature',
-                changeHandler,
-                self.changeListenerKey
-            );
-            self.removeListenerKey = _register(
-                'removefeature',
-                removeHandler,
-                self.removeListenerKey
-            );
-        };
-        LayerListener.prototype.unregister = function() {
-            var self = this;
-            if(angular.isDefined(self.addListenerKey)) {
-                self.source.unByKey(self.addListenerKey);
-                self.addListenerKey = undefined;
+                this.removeListenerKey = this.source.on('removefeature', e => {
+                    if (angular.isDefined(removeHandler)) {
+                        removeHandler(e.feature);
+                    }
+                });
+
+                if (angular.isDefined(changeHandler)) {
+                    for (const feature of this.source.getFeatures()) {
+                        this.changeListenerKeys.push(feature.on('change:_dirty', () => {
+                            changeHandler(feature);
+                        }));
+                    }
+                }
             }
-            if(angular.isDefined(self.changeListenerKey)) {
-                self.source.unByKey(self.changeListenerKey);
-                self.changeListenerKey = undefined;
+
+            unregister () {
+                if (angular.isDefined(this.addListenerKey)) {
+                    unByKey(this.addListenerKey);
+                    this.addListenerKey = undefined;
+                }
+                if (angular.isDefined(this.removeListenerKey)) {
+                    unByKey(this.removeListenerKey);
+                    this.removeListenerKey = undefined;
+                }
+                for (const changeListenerKey of this.changeListenerKeys) {
+                    unByKey(changeListenerKey);
+                    this.changeListenerKeys = [];
+                }
             }
-            if(angular.isDefined(self.removeListenerKey)) {
-                self.source.unByKey(self.removeListenerKey);
-                self.removeListenerKey = undefined;
-            }
-        };
+        }
 
         var _saveManagerInstance;
         var _saveNewFeaturesUrl;
@@ -142,15 +154,15 @@ angular.module('anol.savemanager')
              */
             SaveManager.prototype.addLayer = function(layer) {
                 var self = this;
-                var layerListener = new LayerListener(layer, self);
+                var layerListener = new LayerListener(layer);
                 $rootScope.$watch(function() {
                     return layer.loaded;
                 }, function(loaded) {
                     if(loaded === true) {
                         layerListener.register(
-                            self.featureAddedHandler,
-                            self.featureChangedHandler,
-                            self.featureRemovedHandler
+                            feature => self.featureAddedHandler(feature, layer),
+                            feature => self.featureRemovedHandler(feature, layer),
+                            feature => self.featureChangedHandler(feature, layer)
                         );
                     } else {
                         layerListener.unregister();
@@ -162,9 +174,9 @@ angular.module('anol.savemanager')
              *
              * handler for ol3 feature added event
              */
-            SaveManager.prototype.featureAddedHandler = function(evt, layer) {
+            SaveManager.prototype.featureAddedHandler = function(feature, layer) {
                 var self = this;
-                self.addNewFeature(evt.feature, layer);
+                self.addNewFeature(feature, layer);
                 self.updatedLayerChanged(layer);
             };
             /**
@@ -172,9 +184,9 @@ angular.module('anol.savemanager')
              *
              * handler for ol3 feature changed event
              */
-            SaveManager.prototype.featureChangedHandler = function(evt, layer) {
+            SaveManager.prototype.featureChangedHandler = function(feature, layer) {
                 var self = this;
-                self.addChangedFeature(evt.feature, layer);
+                self.addChangedFeature(feature, layer);
                 self.updatedLayerChanged(layer);
             };
             /**
@@ -182,9 +194,9 @@ angular.module('anol.savemanager')
              *
              * handler for ol3 feature removed event
              */
-            SaveManager.prototype.featureRemovedHandler = function(evt, layer) {
+            SaveManager.prototype.featureRemovedHandler = function(feature, layer) {
                 var self = this;
-                self.addRemovedFeature(evt.feature, layer);
+                self.addRemovedFeature(feature, layer);
                 self.updatedLayerChanged(layer);
             };
             /**
@@ -234,6 +246,7 @@ angular.module('anol.savemanager')
                   this.addedFeatures[layer.name] = [];
               }
               this.addedFeatures[layer.name].push(feature);
+              this.updatedLayerChanged(layer);
             };
 
             SaveManager.prototype.addChangedFeature = function(feature, layer) {
@@ -248,6 +261,7 @@ angular.module('anol.savemanager')
                   return;
               }
               this.changedFeatures[layer.name].push(feature);
+              this.updatedLayerChanged(layer);
             };
 
             SaveManager.prototype.addRemovedFeature = function(feature, layer) {
@@ -269,6 +283,7 @@ angular.module('anol.savemanager')
                   return;
               }
               this.removedFeatures[layer.name].push(feature);
+              this.updatedLayerChanged(layer);
             };
 
             /**
@@ -328,12 +343,20 @@ angular.module('anol.savemanager')
 
                 if(layerChanged) {
                     var promises = [];
+                    const writeFeature = feature => {
+                        const featureObject = format.writeFeatureObject(feature);
+                        return {
+                            ...featureObject,
+                            properties: _omit(featureObject.properties, '_dirty')
+                        };
+                    };
                     if (self.isDefinedAndPopulated(self.addedFeatures, layer)) {
                         var data = {
                             name: layer.name,
-                            featureCollection: format.writeFeaturesObject(
-                                self.addedFeatures[layer.name]
-                            )
+                            featureCollection: {
+                                type: 'FeatureCollection',
+                                features: self.addedFeatures[layer.name].map(writeFeature)
+                            }
                         };
                         var promise = $http.post(self.saveNewFeaturesUrl, data);
                         promises.push(promise);
@@ -341,9 +364,10 @@ angular.module('anol.savemanager')
                     if (self.isDefinedAndPopulated(self.changedFeatures, layer)) {
                         var data = {
                             name: layer.name,
-                            featureCollection: format.writeFeaturesObject(
-                                self.changedFeatures[layer.name]
-                            )
+                            featureCollection: {
+                                type: 'FeatureCollection',
+                                features: self.changedFeatures[layer.name].map(writeFeature)
+                            }
                         };
                         var promise = $http.put(self.saveChangedFeaturesUrl, data);
                         promises.push(promise);
@@ -365,14 +389,16 @@ angular.module('anol.savemanager')
                         promises.push(promise);
                     }
                     $q.all(promises).then(function(responses) {
-                        self.changesDone();
+                        layer.refresh();
+                        self.changesDone(layer.name);
                         var responses_data = [];
                         angular.forEach(responses, function(response) {
                           responses_data.push(response.data);
                         });
                         deferred.resolve(responses_data);
                     }, function (response) {
-                        self.changesDone();
+                        layer.refresh();
+                        self.changesDone(layer.name);
                         deferred.reject({'message': `${self.savingFailedMessage} (${response.status})`});
                     });
                 } else {
@@ -397,6 +423,10 @@ angular.module('anol.savemanager')
                 });
                 return $q.all(promises);
             };
+
+            SaveManager.prototype.hasChanges = function (layerName) {
+                return layerName in this.changedLayers;
+            }
 
             _saveManagerInstance = new SaveManager(_saveNewFeaturesUrl, _saveChangedFeaturesUrl, _saveRemovedFeaturesUrl, _saveableLayers);
             return _saveManagerInstance;
