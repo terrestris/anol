@@ -12,6 +12,9 @@
  */
 
 import AnolBaseLayer from '../layer.js';
+import {DigitizeState} from "../../modules/savemanager/digitize-state";
+
+import alpha from 'color-alpha';
 
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
@@ -23,6 +26,7 @@ import Text from 'ol/style/Text';
 import Cluster from 'ol/source/Cluster';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
+import Point from 'ol/geom/Point';
 
 import {isEmpty} from 'ol/extent.js';
 
@@ -43,6 +47,7 @@ class FeatureLayer extends AnolBaseLayer {
         this.minResolution = (options.style || {}).minResolution;
         this.maxResolution = (options.style || {}).maxResolution;
         this.hasPropertyLabel = angular.isDefined((options.style || {}).propertyLabel);
+        this.stateStyle = options.stateStyle || false;
 
         this.externalGraphicPrefix = options.externalGraphicPrefix;
         this.hasPropertyLabel = false;
@@ -159,13 +164,63 @@ class FeatureLayer extends AnolBaseLayer {
             this.defaultStyle = defaultStyle;
         }
 
-        olLayer.setStyle(function(feature, resolution) {
-            var style = self.createStyle(feature, resolution);
-            if(angular.isArray(style)) {
-                return style;
+        olLayer.setStyle((feature, resolution) => {
+            let stateStyle = [];
+            if (this.stateStyle) {
+                const state = feature.get('_digitizeState');
+                if (state === DigitizeState.NEW) {
+                    stateStyle = [this.createStateStyle(feature, 'green', '+')];
+                }
+                if (state === DigitizeState.CHANGED) {
+                    stateStyle = [this.createStateStyle(feature, 'blue', '*')];
+                }
+                if (state === DigitizeState.REMOVED) {
+                    stateStyle = [this.createStateStyle(feature, 'red', '-')];
+                }
             }
-            return [style];
+            var style = this.createStyle(feature, resolution);
+            if(angular.isArray(style)) {
+                return [...style, ...stateStyle];
+            }
+            return [style, ...stateStyle];
         });
+    }
+
+    createStateStyle (feature, color, symbol) {
+        var geometry;
+
+        switch (feature.getGeometry().getType()) {
+            case 'Point':
+                geometry = feature.getGeometry();
+                break;
+            case 'LineString':
+                geometry = new Point(feature.getGeometry().getCoordinateAt(0.5));
+                break;
+            case 'Polygon':
+                geometry = feature.getGeometry().getInteriorPoint(0.5);
+                break;
+        }
+
+        return new Style({
+            geometry: geometry,
+            image: new CircleStyle({
+                radius: 12,
+                stroke: new Stroke({
+                    color,
+                    width: 2
+                }),
+                fill: new Fill({
+                    color: alpha(color, 0.2)
+                })
+            }),
+            text: new Text({
+                text: symbol,
+                font: '20px sans-serif',
+                fill: new Fill({
+                    color
+                })
+            })
+        })
     }
 
     removeOlLayer() {
