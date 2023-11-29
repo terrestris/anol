@@ -12,6 +12,9 @@
  */
 
 import AnolBaseLayer from '../layer.js';
+import {DigitizeState} from "../../modules/savemanager/digitize-state";
+
+import alpha from 'color-alpha';
 
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
@@ -43,6 +46,7 @@ class FeatureLayer extends AnolBaseLayer {
         this.minResolution = (options.style || {}).minResolution;
         this.maxResolution = (options.style || {}).maxResolution;
         this.hasPropertyLabel = angular.isDefined((options.style || {}).propertyLabel);
+        this.stateStyle = options.stateStyle || false;
 
         this.externalGraphicPrefix = options.externalGraphicPrefix;
         this.hasPropertyLabel = false;
@@ -142,7 +146,6 @@ class FeatureLayer extends AnolBaseLayer {
         if (angular.isUndefined(olLayer)) {
             olLayer = this.olLayer;
         }
-        var self = this;
         var defaultStyle = olLayer.getStyle();
         if(angular.isFunction(defaultStyle)) {
             defaultStyle = defaultStyle()[0];
@@ -159,13 +162,47 @@ class FeatureLayer extends AnolBaseLayer {
             this.defaultStyle = defaultStyle;
         }
 
-        olLayer.setStyle(function(feature, resolution) {
-            var style = self.createStyle(feature, resolution);
-            if(angular.isArray(style)) {
-                return style;
+        olLayer.setStyle((feature, resolution) => {
+            let stateStyle = [];
+            if (this.stateStyle) {
+                const state = feature.get('_digitizeState');
+                if (state === DigitizeState.NEW) {
+                    stateStyle = this.createStateStyles(feature, 'green');
+                }
+                if (state === DigitizeState.CHANGED) {
+                    stateStyle = this.createStateStyles(feature, 'blue');
+                }
+                if (state === DigitizeState.REMOVED) {
+                    stateStyle = this.createStateStyles(feature, 'red');
+                }
             }
-            return [style];
+            var style = this.createStyle(feature, resolution);
+            if(angular.isArray(style)) {
+                return [...stateStyle, ...style];
+            }
+            return [...stateStyle, style];
         });
+    }
+
+    createStateStyles (feature, color) {
+        if (feature.getGeometry().getType() === 'Point') {
+            // TODO
+        }
+
+        return [
+            new Style({
+                stroke: new Stroke({
+                    color: alpha(color, 0.05),
+                    width: 16
+                })
+            }),
+            new Style({
+                stroke: new Stroke({
+                    color: alpha(color, 0.1),
+                    width: 8
+                })
+            })
+        ];
     }
 
     removeOlLayer() {
@@ -424,8 +461,7 @@ class FeatureLayer extends AnolBaseLayer {
     // see https://github.com/openlayers/openlayers/blob/release-2.13.1/lib/OpenLayers/Renderer/SVG.js#L391
     createDashStyle(strokeWidth, strokeDashstyle) {
         var w = strokeWidth;
-        var str = strokeDashstyle;
-        switch (str) {
+        switch (strokeDashstyle) {
         case 'dot':
             return [1, 4 * w];
         case 'dash':
