@@ -298,12 +298,13 @@ angular.module('anol.featurepopup')
 
                     var changeCursorCondition = function(pixel) {
                         const olLayers = scope.layers.map(function (l) { return l.olLayer; });
-                        return scope.map.hasFeatureAtPixel(pixel, {
+                        const features = scope.map.getFeaturesAtPixel(pixel, {
                             layerFilter: function (layer) {
                                 return layer.getVisible() && olLayers.indexOf(layer) > -1;
                             },
                             hitTolerance: 10
                         });
+                        return features?.filter(feature => scope.featureFilter({feature})).length > 0;
                     };
 
                     var bindCursorChange = function() {
