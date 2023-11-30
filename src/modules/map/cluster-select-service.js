@@ -178,20 +178,11 @@ angular.module('anol.map')
                 self.selectClusterInteraction = new SelectCluster(interactionOptions);
 
                 var changeCursorCondition = function(pixel) {
-                    return MapService.getMap().hasFeatureAtPixel(pixel, function(layer) {
-                        var found = false;
-                        if(self.selectClusterInteraction.overlayLayer_ === layer) {
-                            MapService.getMap().forEachFeatureAtPixel(pixel, function(feature) {
-                                if(found) {
-                                    return;
-                                }
-                                if(feature.get('selectclusterfeature')) {
-                                    found = true;
-                                }
-                            });
-                        }
-                        return found;
+                    const features = MapService.getMap().getFeaturesAtPixel(pixel, {
+                        layerFilter: layer => layer === self.selectClusterInteraction.overlayLayer_
                     });
+
+                    return features?.filter(f => f.get('selectclusterfeature')).length > 0;
                 };
 
                 MapService.addCursorPointerCondition(changeCursorCondition);
@@ -201,14 +192,14 @@ angular.module('anol.map')
                         var revealedFeature = a.selected[0];
                         var zoom = MapService.getMap().getView().getZoom();
                         if(revealedFeature.get('features').length > 1 && zoom < interactionOptions.maxZoomLevel) {
-                        // zoom in when not all revealed features displayed and max zoom is not reached 
+                        // zoom in when not all revealed features displayed and max zoom is not reached
                             var _featureExtent = createEmptyExtent();
                             angular.forEach(revealedFeature.get('features'), function(child) {
                                 var _childExtent = child.getGeometry().getExtent();
                                 extendExtent(_featureExtent, _childExtent);
                             });
                             var view = MapService.getMap().getView();
-                            view.fit(_featureExtent, MapService.getMap().getSize()); 
+                            view.fit(_featureExtent, MapService.getMap().getSize());
                             return;
                         }
                         if(revealedFeature.get('selectclusterfeature') === true) {
