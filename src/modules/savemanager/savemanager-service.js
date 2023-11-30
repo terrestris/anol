@@ -18,41 +18,25 @@ angular.module('anol.savemanager')
                 this.source = layer.olLayer.getSource();
 
                 this.addListenerKey = undefined;
-                this.removeListenerKey = undefined;
                 this.changeListenerKeys = [];
             }
 
             /**
-             * @param {(f: Feature) => void} addHandler
-             * @param {(f: Feature) => void} removeHandler
-             * @param {(f: Feature) => void} changeHandler
+             * @param {() => void} handler
              */
-            register (addHandler, removeHandler, changeHandler) {
+            register (handler) {
                 if (this.addListenerKey) {
                     unByKey(this.addListenerKey);
-                }
-                if (this.removeListenerKey) {
-                    unByKey(this.removeListenerKey);
                 }
                 for (const changeListenerKey of this.changeListenerKeys) {
                     unByKey(changeListenerKey);
                 }
                 this.changeListenerKeys = [];
 
-                const createDigitizeStateHandler = (feature) => {
+                const createDigitizeStateHandler = feature => {
                     return () => {
-                        switch(feature.get('_digitizeState')) {
-                            case DigitizeState.NEW:
-                                addHandler(feature);
-                                break;
-                            case DigitizeState.CHANGED:
-                                changeHandler(feature);
-                                break;
-                            case DigitizeState.REMOVED:
-                                removeHandler(feature);
-                                break;
-                            default:
-                                break;
+                        if (feature.get('_digitizeState') !== undefined) {
+                            handler();
                         }
                     };
                 }
@@ -75,10 +59,6 @@ angular.module('anol.savemanager')
                 if (angular.isDefined(this.addListenerKey)) {
                     unByKey(this.addListenerKey);
                     this.addListenerKey = undefined;
-                }
-                if (angular.isDefined(this.removeListenerKey)) {
-                    unByKey(this.removeListenerKey);
-                    this.removeListenerKey = undefined;
                 }
                 for (const changeListenerKey of this.changeListenerKeys) {
                     unByKey(changeListenerKey);
@@ -131,7 +111,7 @@ angular.module('anol.savemanager')
             }
         });
 
-        this.$get = ['$rootScope', '$q', '$http', '$timeout', '$interval', '$translate', function($rootScope, $q, $http, $timeout, $interval, $translate) {
+        this.$get = ['$rootScope', '$q', '$http', '$interval', '$translate', function($rootScope, $q, $http, $interval, $translate) {
             /**
              * @ngdoc service
              * @name anol.savemanager.SaveManagerService
@@ -177,54 +157,12 @@ angular.module('anol.savemanager')
                 }, function(loaded) {
                     if(loaded === true) {
                         layerListener.register(
-                            feature => self.featureAddedHandler(feature, layer),
-                            feature => self.featureRemovedHandler(feature, layer),
-                            feature => self.featureChangedHandler(feature, layer)
+                            () => self.updateLayerChanged(layer)
                         );
                     } else {
                         layerListener.unregister();
                     }
                 });
-            };
-            /**
-             * private function
-             *
-             * handler for ol3 feature added event
-             */
-            SaveManager.prototype.featureAddedHandler = function(feature, layer) {
-                this.updateLayerChanged(layer);
-            };
-            /**
-             * private function
-             *
-             * handler for ol3 feature changed event
-             */
-            SaveManager.prototype.featureChangedHandler = function(feature, layer) {
-                this.updateLayerChanged(layer);
-            };
-            /**
-             * private function
-             *
-             * handler for ol3 feature removed event
-             */
-            SaveManager.prototype.featureRemovedHandler = function(feature, layer) {
-                this.updateLayerChanged(layer);
-            };
-            /**
-             * private function
-             *
-             * adds a layer to list of layers with changes
-             */
-            SaveManager.prototype.addChangedLayer = function(layer) {
-                var self = this;
-                if(!(layer.name in self.changedLayers)) {
-                // TODO find out why $apply already in progress
-                    $timeout(function() {
-                        $rootScope.$apply(function() {
-                            self.changedLayers[layer.name] = layer;
-                        });
-                    });
-                }
             };
 
             /**
@@ -274,33 +212,6 @@ angular.module('anol.savemanager')
             }
 
             /**
-             * Get features that were added to layer.
-             * @param {anol.layer.Feature} layerName The layer to get the features from.
-             * @returns The list of features.
-             */
-            SaveManager.prototype.getAddedFeatures = function(layerName) {
-              return this.getFeatures(layerName, DigitizeState.NEW);
-            };
-
-            /**
-             * Get features that were changed on layer.
-             * @param {anol.layer.Feature} layerName The layer to get the features from.
-             * @returns The list of features.
-             */
-            SaveManager.prototype.getChangedFeatures = function(layerName) {
-              return this.getFeatures(layerName, DigitizeState.CHANGED);
-            };
-
-            /**
-             * Get features that were removed from layer.
-             * @param {anol.layer.Feature} layerName The layer to get the features from.
-             * @returns The list of features.
-             */
-            SaveManager.prototype.getRemovedFeatures = function(layerName) {
-              return this.getFeatures(layerName, DigitizeState.REMOVED);
-            };
-
-            /**
              * @ngdoc method
              * @name commit
              * @methodOd anol.savemanager.SaveManagerService
@@ -324,7 +235,7 @@ angular.module('anol.savemanager')
                             properties: _omit(featureObject.properties, '_digitizeState')
                         };
                     };
-                    const addedFeatures = this.getAddedFeatures(layer.name);
+                    const addedFeatures = this.getFeatures(layer.name, DigitizeState.NEW);
                     if (addedFeatures.length > 0) {
                         var data = {
                             name: layer.name,
@@ -336,7 +247,7 @@ angular.module('anol.savemanager')
                         var promise = $http.post(this.saveNewFeaturesUrl, data);
                         promises.push(promise);
                     }
-                    const changedFeatures = this.getChangedFeatures(layer.name);
+                    const changedFeatures = this.getFeatures(layer.name, DigitizeState.CHANGED);
                     if (changedFeatures.length > 0) {
                         var data = {
                             name: layer.name,
@@ -348,7 +259,7 @@ angular.module('anol.savemanager')
                         var promise = $http.put(this.saveChangedFeaturesUrl, data);
                         promises.push(promise);
                     }
-                    const removedFeatures = this.getRemovedFeatures(layer.name);
+                    const removedFeatures = this.getFeatures(layer.name, DigitizeState.REMOVED);
                     if (removedFeatures.length > 0) {
                         var data = {
                             name: layer.name,
@@ -565,9 +476,9 @@ angular.module('anol.savemanager')
                 }
                 var layerName = layer.name;
                 // keep references of edited features before refreshing layer
-                var addedFeatures = this.getAddedFeatures(layerName);
-                var changedFeatures = this.getChangedFeatures(layerName);
-                var removedFeatures = this.getRemovedFeatures(layerName);
+                var addedFeatures = this.getFeatures(layerName, DigitizeState.NEW);
+                var changedFeatures = this.getFeatures(layerName, DigitizeState.CHANGED);
+                var removedFeatures = this.getFeatures(layerName, DigitizeState.REMOVED);
                 var unregister = $rootScope.$watch(function() {
                     return layer.loaded;
                 }, function(loaded) {
