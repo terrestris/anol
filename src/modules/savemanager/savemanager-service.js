@@ -262,7 +262,7 @@ angular.module('anol.savemanager')
             /**
              * Get features with given state.
              * @param {string} layerName The layer to get the features from.
-             * @param {DigitizeState} state The digitizeState to filter by.
+             * @param {DigitizeState[keyof DigitizeState]} state The digitizeState to filter by.
              * @returns The list of features.
              */
             SaveManager.prototype.getFeatures = function(layerName, state) {
@@ -487,13 +487,9 @@ angular.module('anol.savemanager')
                 }
 
                 // changed if pollingitem has entry that is not in current features
-                return pollingResult.some(pollingItem => {
-                    var feat = features.find(f => f.getId() === pollingItem.id);
-                    if (!feat) {
-                        return true;
-                    }
-                    return false;
-                });
+                return pollingResult.some(pollingItem =>
+                    features.find(f => f.getId() === pollingItem.id) === undefined
+                );
             };
 
             /**
