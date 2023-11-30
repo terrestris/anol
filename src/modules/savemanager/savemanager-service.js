@@ -377,7 +377,7 @@ angular.module('anol.savemanager')
                 }
                 var layerName = layer.name;
                 var pollingResult = this.lastPollingResults[layerName];
-                if (!pollingResult || !pollingResult.length) {
+                if (!pollingResult || pollingResult.length === 0) {
                     return false;
                 }
 
@@ -420,24 +420,20 @@ angular.module('anol.savemanager')
                     return false;
                 }
                 const pollingResult = this.lastPollingResults[layer.name];
-                if (!pollingResult || !pollingResult.length) {
+                if (!pollingResult || pollingResult.length === 0) {
                     return false;
                 }
 
                 const feature = layer.getFeatures().find(f => f.getId() === featureId);
-                if (!feature) {
+                const pollingItem = pollingResult.find(pollingItem => pollingItem.id === featureId);
+                
+                if (!feature || !pollingItem) {
                     return false;
                 }
 
-                return pollingResult.some(pollingItem => {
-                    if (pollingItem.id !== featureId) {
-                        return false;
-                    }
-
-                    var pollingModified = new Date(pollingItem.modified);
-                    var featureModified = new Date(feature.get('modified'));
-                    return pollingModified > featureModified;
-                });
+                var pollingModified = new Date(pollingItem.modified);
+                var featureModified = new Date(feature.get('modified'));
+                return pollingModified > featureModified;
             };
 
             /**
