@@ -268,7 +268,12 @@ angular.module('anol.savemanager')
                                 features: removedFeatures.map(writeFeature)
                             }
                         }
-                        var promise = $http.post(this.saveRemovedFeaturesUrl, data);
+                        var promise = $http.delete(this.saveRemovedFeaturesUrl, {
+                            data,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
                         promises.push(promise);
                     }
                     $q.all(promises).then(function(responses) {

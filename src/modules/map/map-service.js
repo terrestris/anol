@@ -3,7 +3,6 @@ import './module.js';
 import {Map} from 'ol';
 import {TOUCH as hasTouch} from 'ol/has';
 
-
 import './layers-service.js';
 import './controls-service.js';
 import './interactions-service.js';
