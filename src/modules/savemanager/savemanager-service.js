@@ -326,7 +326,7 @@ angular.module('anol.savemanager')
              * @param {Function} error_cb Callback when polling failed.
              * @returns
              */
-            SaveManager.prototype.startPolling = function(layerName, success_cb, error_cb) {
+            SaveManager.prototype.startPolling = function(layerName) {
                 if (this.activePollingIntervals[layerName]) {
                     console.log(`Cannot start polling. Polling for layer ${layerName} already started.`);
                     return;
@@ -336,9 +336,17 @@ angular.module('anol.savemanager')
                     var url = self.pollingUrl + '?layer=' + layerName;
                     $http.get(url).then(function(resp) {
                         self.lastPollingResults[layerName] = resp.data;
-                        success_cb(resp.data, resp.status);
+                        $rootScope.$broadcast('SaveManagerService:polling', {
+                            success: true,
+                            layerName: layerName,
+                            data: resp.data
+                        });
                     }, function(resp) {
-                        error_cb(resp.data, resp.status)
+                        $rootScope.$broadcast('SaveManagerService:polling', {
+                            success: false,
+                            layerName: layerName,
+                            data: resp.data
+                        });
                     });
                 }, this.pollingInterval);
             };
@@ -369,7 +377,7 @@ angular.module('anol.savemanager')
                 }
                 var layerName = layer.name;
                 var pollingResult = this.lastPollingResults[layerName];
-                if (!pollingResult) {
+                if (!pollingResult || !pollingResult.length) {
                     return false;
                 }
 
@@ -377,17 +385,15 @@ angular.module('anol.savemanager')
                 // changed if matching polling feature has newer timestamp
                 // changed if feat has id and no matching polling feature
                 var hasChanges = features
-                    .filter(f => [DigitizeState.CHANGED, DigitizeState.REMOVED].includes(f.get('_digitizeState')))
+                    // ignore created features
+                    .filter(f => f.get('_digitizeState') !== DigitizeState.NEW)
                     .some(feat => {
                         var pollingItem = pollingResult.find(item => item.id === feat.getId());
                         if (pollingItem) {
                             var pollingModified = new Date(pollingItem.modified);
                             var featureModified = new Date(feat.get('modified'));
                             // feature was modified on remote
-                            if (pollingModified > featureModified) {
-                                return true;
-                            }
-                            return false;
+                            return pollingModified > featureModified;
                         }
                         // feature was deleted on remote
                         return true;
@@ -401,6 +407,37 @@ angular.module('anol.savemanager')
                 return pollingResult.some(pollingItem =>
                     features.find(f => f.getId() === pollingItem.id) === undefined
                 );
+            };
+
+            /**
+             * Check if feature was updated on remote.
+             * @param {number} featureId The id of the feature.
+             * @param {anol.layer.Feature} layer The layer the feature belongs to.
+             * @returns True, if the feature was updated on remote. False otherwise.
+             */
+            SaveManager.prototype.hasFeaturePollingChanges = function (featureId, layer) {
+                if (!layer) {
+                    return false;
+                }
+                const pollingResult = this.lastPollingResults[layer.name];
+                if (!pollingResult || !pollingResult.length) {
+                    return false;
+                }
+
+                const feature = layer.getFeatures().find(f => f.getId() === featureId);
+                if (!feature) {
+                    return false;
+                }
+
+                return pollingResult.some(pollingItem => {
+                    if (pollingItem.id !== featureId) {
+                        return false;
+                    }
+
+                    var pollingModified = new Date(pollingItem.modified);
+                    var featureModified = new Date(feature.get('modified'));
+                    return pollingModified > featureModified;
+                });
             };
 
             /**
