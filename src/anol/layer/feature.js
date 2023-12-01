@@ -12,6 +12,7 @@
  */
 
 import AnolBaseLayer from '../layer.js';
+import {DigitizeState} from '../../modules/savemanager/digitize-state';
 
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
@@ -160,6 +161,9 @@ class FeatureLayer extends AnolBaseLayer {
         }
 
         olLayer.setStyle(function(feature, resolution) {
+            if (feature.get('_digitizeState') === DigitizeState.REMOVED) {
+                return null;
+            }
             var style = self.createStyle(feature, resolution);
             if(angular.isArray(style)) {
                 return style;
