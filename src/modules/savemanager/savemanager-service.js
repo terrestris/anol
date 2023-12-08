@@ -340,6 +340,15 @@ angular.module('anol.savemanager')
                 this.activePollingIntervals[layerName] = $interval(function() {
                     var url = self.pollingUrl + '?layer=' + layerName;
                     $http.get(url).then(function(resp) {
+                        // Backend returns error pages for failed requests
+                        // so we have to check for the content-type additionally.
+                        if (resp.headers('Content-Type') !== 'application/json') {
+                            $rootScope.$broadcast('SaveManagerService:polling', {
+                                success: false,
+                                layerName: layerName
+                            });
+                            return;
+                        }
                         self.lastPollingResults[layerName] = resp.data;
                         $rootScope.$broadcast('SaveManagerService:polling', {
                             success: true,
