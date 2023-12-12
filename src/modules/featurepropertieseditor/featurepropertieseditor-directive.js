@@ -52,13 +52,16 @@ angular.module('anol.featurepropertieseditor')
                         propertyWatchers[key] = scope.$watch(function () {
                             return scope.properties[key];
                         }, function (n) {
+                            let changed = false;
                             if (angular.isUndefined(n)) {
                                 scope.feature.unset(key);
+                                changed = true;
                             } else if (n !== scope.feature.get(key)) {
                                 scope.feature.set(key, n);
-                                if (scope.feature.get('_digitizeState') !== DigitizeState.NEW) {
-                                    scope.feature.set('_digitizeState', DigitizeState.CHANGED);
-                                }
+                                changed = true;
+                            }
+                            if (changed && scope.feature.get('_digitizeState') !== DigitizeState.NEW) {
+                                scope.feature.set('_digitizeState', DigitizeState.CHANGED);
                             }
                         });
                     };

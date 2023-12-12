@@ -32,6 +32,11 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                 'attribution': {
                     'TOOLTIP': 'Attributions'
                 },
+                'datepicker': {
+                    'CLEAR_TEXT': 'Clear',
+                    'CLOSE_TEXT': 'Close',
+                    'CURRENT_TEXT': 'Today'
+                },
                 'draw': {
                     'TOOLTIP_POINT': 'Draw point',
                     'TOOLTIP_LINE': 'Draw line',
@@ -137,6 +142,11 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
         });
         $translateProvider.translations('de_DE', {
             'anol': {
+                'datepicker': {
+                    'CLEAR_TEXT': 'Leeren',
+                    'CLOSE_TEXT': 'Schließen',
+                    'CURRENT_TEXT': 'Heute'
+                },
                 'draw': {
                     'TOOLTIP_DRAW_POINT': 'Punkt zeichnen',
                     'TOOLTIP_DRAW_LINE': 'Linie zeichnen',
