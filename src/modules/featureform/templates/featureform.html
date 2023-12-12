@@ -13,6 +13,17 @@
                type="text"
                ng-model="formValues[field.name]"
         />
+        <anol-date-picker ng-switch-when="date"
+            class="input-group"
+            id="{{::$id}}-input-{{field.name}}"
+            date="formValues[field.name]"
+        ></anol-date-picker>
+        <input ng-switch-when="boolean"
+               id="{{::$id}}-input-{{field.name}}"
+               class="form-control anol-featureform-checkbox"
+               type="checkbox"
+               ng-model="formValues[field.name]"
+        />
         <input ng-switch-when="int"
                id="{{::$id}}-input-{{field.name}}"
                class="form-control"

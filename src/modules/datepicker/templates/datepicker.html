@@ -1,0 +1,18 @@
+<input
+    class="form-control"
+    type="text"
+    sf-field-model="replaceAll"
+    uib-datepicker-popup="{{datepickerFormat}}"
+    ng-model="dt"
+    datepicker-options="datepickerOptions"
+    is-open="datepickerOpen"
+    datepicker-append-to-body="true"
+    clear-text="{{ 'anol.datepicker.CLEAR_TEXT' | translate }}"
+    close-text="{{ 'anol.datepicker.CLOSE_TEXT' | translate }}"
+    current-text="{{ 'anol.datepicker.CURRENT_TEXT' | translate }}"
+/>
+<span class="input-group-btn">
+    <button type="button" class="btn btn-default" ng-click="openDatepicker()">
+        <i class="glyphicon glyphicon-calendar"></i>
+    </button>
+</span>
