@@ -9,6 +9,11 @@ angular.module('anol.draw')
     .provider('DrawService', ['LayersServiceProvider', function(LayersServiceProvider) {
         var _drawServiceInstance;
         var _editableLayers = [];
+        var _activeLayer = undefined;
+
+        this.setActiveLayer = function (layer) {
+          _activeLayer = layer;
+        };
 
         LayersServiceProvider.registerAddLayerHandler(function(layer) {
             if(layer.editable !== true) {
@@ -28,10 +33,10 @@ angular.module('anol.draw')
          * @description
          * Handles current draw layer
          */
-            var DrawService = function(editableLayers) {
+            var DrawService = function(editableLayers, activeLayer) {
                 var self = this;
                 this.layers = [];
-                this.activeLayer = undefined;
+                this.activeLayer = activeLayer;
                 angular.forEach(editableLayers, function(layer) {
                     self.addLayer(layer);
                 });
@@ -80,6 +85,6 @@ angular.module('anol.draw')
                 }).length;
             };
 
-            return new DrawService(_editableLayers);
+            return new DrawService(_editableLayers, _activeLayer);
         }];
     }]);

@@ -1,4 +1,5 @@
 import './module.js';
+import {DigitizeState} from "../savemanager/digitize-state";
 
 angular.module('anol.featurepropertieseditor')
 /**
@@ -14,7 +15,7 @@ angular.module('anol.featurepropertieseditor')
  * @description
  * Shows a form for editing feature properties
  */
-    .directive('anolFeaturePropertiesEditor', ['$templateRequest', '$compile', 
+    .directive('anolFeaturePropertiesEditor', ['$templateRequest', '$compile',
         function($templateRequest, $compile) {
             return {
                 restrict: 'A',
@@ -27,7 +28,7 @@ angular.module('anol.featurepropertieseditor')
                         return '<div></div>';
                     }
                     return require('./templates/featurepropertieseditor.html');
-                },           
+                },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
@@ -35,35 +36,34 @@ angular.module('anol.featurepropertieseditor')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    } 
+                    }
                     scope.properties = {};
                     var propertyWatchers = {};
 
                     // TODO move into anol.layer.Feature
                     var ignoreProperty = function(key) {
-                        if(key === 'geometry') {
-                            return true;
-                        }
-                        if(key === 'style') {
-                            return true;
-                        }
-                        return false;
+                        return key === 'geometry' || key === 'style' || key === '_digitizeState';
                     };
 
                     var registerPropertyWatcher = function(key) {
                         if(ignoreProperty(key) || angular.isDefined(propertyWatchers[key])) {
                             return;
                         }
-                        var watcher = scope.$watch(function() {
+                        propertyWatchers[key] = scope.$watch(function () {
                             return scope.properties[key];
-                        }, function(n) {
-                            if(angular.isUndefined(n)) {
+                        }, function (n) {
+                            let changed = false;
+                            if (angular.isUndefined(n)) {
                                 scope.feature.unset(key);
-                            } else if(n !== scope.feature.get(key)) {
+                                changed = true;
+                            } else if (n !== scope.feature.get(key)) {
                                 scope.feature.set(key, n);
+                                changed = true;
+                            }
+                            if (changed && scope.feature.get('_digitizeState') !== DigitizeState.NEW) {
+                                scope.feature.set('_digitizeState', DigitizeState.CHANGED);
                             }
                         });
-                        propertyWatchers[key] = watcher;
                     };
 
                     var clearPropertyWatchers = function() {
@@ -94,12 +94,18 @@ angular.module('anol.featurepropertieseditor')
                         if(scope.newKey) {
                             scope.properties[scope.newKey] = '';
                             scope.feature.set(scope.newKey, '');
+                            if (scope.feature.get('_digitizeState') !== DigitizeState.NEW) {
+                                scope.feature.set('_digitizeState', DigitizeState.CHANGED);
+                            }
                             scope.newKey = '';
                         }
                     };
                     scope.removeProperty = function(key) {
                         delete scope.properties[key];
                         scope.feature.unset(key);
+                        if (scope.feature.get('_digitizeState') !== DigitizeState.NEW) {
+                            scope.feature.set('_digitizeState', DigitizeState.CHANGED);
+                        }
                     };
 
                     scope.$watch('feature', function(feature) {

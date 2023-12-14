@@ -83,7 +83,7 @@ class BBOXGeoJSON  extends StaticGeoJSON {
         var self = this;
         if (angular.isDefined(extentProjection)) {
             extent = transformExtent(extent, projection.getCode(), extentProjection);
-        } 
+        }
         var params = [
             'srs=' + extentProjection,
             'bbox=' + extent.join(','),
@@ -118,7 +118,7 @@ class BBOXGeoJSON  extends StaticGeoJSON {
         var sourceFeatures = self.olLayer.getSource().getFeatures();
         for(var i = 0; i < sourceFeatures.length; i++) {
             self.olLayer.getSource().removeFeature(sourceFeatures[i]);
-        }  
+        }
 
         var format = new GeoJSON({
             dataProjection: dataProjection,
@@ -132,8 +132,7 @@ class BBOXGeoJSON  extends StaticGeoJSON {
         self.olLayer.getSource().addFeatures(features);
     }
     refresh() {
-        this.olLayer.getSource().clear();
-        this.olLayer.getSource().refresh();
+        this._refresh();
     }
 }
 

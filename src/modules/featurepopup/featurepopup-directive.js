@@ -43,6 +43,7 @@ angular.module('anol.featurepopup')
                     'closeOnZoom': '=?',
                     'containerId': '@?',
                     'altMobileFullscreen': '<?',
+                    'featureFilter': '&?',
                     '_autoPanMargin': '=autoPanMargin',
                     '_popupFlagSize': '=popupFlagSize',
                     '_mobileFullscreen': '=mobileFullscreen',
@@ -85,6 +86,8 @@ angular.module('anol.featurepopup')
                     scope.mobileFullscreen = angular.isDefined(scope._mobileFullscreen) ? scope._mobileFullscreen : false;
                     scope.autoPanOnSizeChange = angular.isDefined(scope._autoPanOnSizeChange) ? scope._autoPanOnSizeChange : false;
                     scope.allowDrag = angular.isDefined(scope._allowDrag) ? scope._allowDrag : false;
+                    scope.featureFilter = /** @type {({ feature: Feature}) => boolean} */
+                        (angular.isDefined(scope.featureFilter) ? scope.featureFilter : () => true);
                     if(angular.isUndefined(scope.layers)) {
                         scope.layers = [];
                         scope.$watchCollection(function() {
@@ -211,7 +214,9 @@ angular.module('anol.featurepopup')
                                     return;
                                 }
 
-                                var _features = layer.olLayer.getSource().getFeaturesInExtent(extent);
+                                var _features = layer.olLayer.getSource()
+                                    .getFeaturesInExtent(extent)
+                                    .filter(feature => scope.featureFilter({ feature }));
 
                                 if(_features.length > 0) {
                                     features = features.concat(_features);
@@ -253,6 +258,10 @@ angular.module('anol.featurepopup')
                                     }
                                 }
 
+                                if (!scope.featureFilter({ feature })) {
+                                    return;
+                                }
+
                                 var anolLayer = layer.get('anolLayer');
 
                                 if(multiselect !== true) {
@@ -289,12 +298,13 @@ angular.module('anol.featurepopup')
 
                     var changeCursorCondition = function(pixel) {
                         const olLayers = scope.layers.map(function (l) { return l.olLayer; });
-                        return scope.map.hasFeatureAtPixel(pixel, {
+                        const features = scope.map.getFeaturesAtPixel(pixel, {
                             layerFilter: function (layer) {
                                 return layer.getVisible() && olLayers.indexOf(layer) > -1;
                             },
                             hitTolerance: 10
                         });
+                        return features?.filter(feature => scope.featureFilter({feature})).length > 0;
                     };
 
                     var bindCursorChange = function() {

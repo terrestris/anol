@@ -290,8 +290,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
 
     }
     refresh() {
-        this.olSource.clear();
-        this.olSource.refresh();
+        this._refresh();
     }
 }
 

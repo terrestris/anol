@@ -1,11 +1,11 @@
 import './module.js';
 
-import {LayersService} from './layers-service.js';
-import {ControlsService} from './controls-service.js';
-import {InteractionsService} from './interactions-service.js';
-
 import {Map} from 'ol';
 import {TOUCH as hasTouch} from 'ol/has';
+
+import './layers-service.js';
+import './controls-service.js';
+import './interactions-service.js';
 
 angular.module('anol.map')
 
@@ -125,10 +125,9 @@ angular.module('anol.map')
                         });
                     }
                     if (this.cursorPointerConditions.length > 0) {
-                        var self = this;
-                        this.map.on('pointermove', function (evt) {
-                            self._changeCursorToPointer(evt);
-                        }).bind(self);
+                        this.map.on('pointermove', evt => {
+                            this._changeCursorToPointer(evt);
+                        });
                     }
                 }
                 return this.map;
@@ -139,15 +138,7 @@ angular.module('anol.map')
              * ol map pointermove event callback
              */
             MapService.prototype._changeCursorToPointer = function (evt) {
-                var self = this;
-                var pixel = evt.map.getEventPixel(evt.originalEvent);
-                var hit = false;
-                angular.forEach(self.cursorPointerConditions, function (conditionFunc) {
-                    if (hit === true) {
-                        return;
-                    }
-                    hit = conditionFunc(pixel);
-                });
+                const hit = this.cursorPointerConditions.some(conditionFunc => conditionFunc(evt.pixel));
                 evt.map.getTarget().style.cursor = hit ? 'pointer' : '';
             };
             /**
@@ -168,10 +159,9 @@ angular.module('anol.map')
                 }
                 this.cursorPointerConditions.push(conditionFunc);
                 if (this.cursorPointerConditions.length === 1) {
-                    var self = this;
-                    self.map.on('pointermove', function (evt) {
-                        self._changeCursorToPointer(evt);
-                    }.bind(self));
+                    this.map.on('pointermove', evt => {
+                        this._changeCursorToPointer(evt);
+                    });
                 }
             };
             /**

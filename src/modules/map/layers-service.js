@@ -45,7 +45,7 @@ angular.module('anol.map')
              * @name anol.map.LayersService
              *
              * @description
-             * Stores ol3 layerss and add them to map, if map present
+             * Stores ol3 layers and add them to map, if map present
              */
             var Layers = function (layers, addLayerHandlers, removeLayerHandlers, clusterDistance) {
                 var self = this;

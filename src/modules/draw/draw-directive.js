@@ -1,5 +1,6 @@
 import './module.js';
 import '../util.js';
+import {DigitizeState} from "../savemanager/digitize-state";
 
 import {TOUCH as hasTouch} from 'ol/has';
 import Draw from 'ol/interaction/Draw';
@@ -60,7 +61,8 @@ angular.module('anol.draw')
                     shortText: '<?',
                     drawTitle: '<?',
                     modifyLabel: '<?',
-                    removeLabel: '<?'
+                    removeLabel: '<?',
+                    setState: '<?'
                 },
                 template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
@@ -94,6 +96,8 @@ angular.module('anol.draw')
                         scope.polygonTooltipPlacement : 'right';
                     scope.shortText = angular.isDefined(scope.shortText) ?
                         scope.shortText : false;
+                    scope.setState = angular.isDefined(scope.setState) ?
+                        scope.setState : false;
 
                     scope.activeLayer = undefined;
                     scope.selectedFeature = undefined;
@@ -137,6 +141,9 @@ angular.module('anol.draw')
                     }
 
                     var executePostDrawCallback = function (evt) {
+                        if (scope.setState) {
+                            evt.feature.set('_digitizeState', DigitizeState.NEW);
+                        }
                         if (angular.isFunction(scope.postDrawAction)) {
                             scope.postDrawAction({layer: scope.activeLayer, feature: evt.feature});
                         }
@@ -259,6 +266,7 @@ angular.module('anol.draw')
                                 }
                                 return measureStyle(feature);
                             },
+                            filter: feature => feature.get('_digitizeState') !== DigitizeState.REMOVED,
                             hitTolerance: 10
                         });
                         $olOn(selectInteraction, 'select', function (evt) {
@@ -268,7 +276,12 @@ angular.module('anol.draw')
                             } else {
                                 const feat = evt.selected[0];
                                 if (scope.removeActive) {
-                                    layer.getSource().removeFeature(feat);
+                                    // only mark existing features as removed
+                                    if (scope.setState && feat.getId() !== undefined) {
+                                        feat.set('_digitizeState', DigitizeState.REMOVED);
+                                    } else {
+                                        layer.getSource().removeFeature(feat);
+                                    }
                                     if (angular.isFunction(scope.postDeleteAction)) {
                                         scope.postDeleteAction({feature: feat, layer: layer});
                                     }
@@ -290,6 +303,15 @@ angular.module('anol.draw')
                                 return singleClick(mapBrowserEvent);
                             }
                         });
+                        $olOn(modifyInteraction, 'modifystart', e => {
+                            if (scope.setState) {
+                                for (const feature of e.features.getArray()) {
+                                    if (feature.get('_digitizeState') !== DigitizeState.NEW) {
+                                        feature.set('_digitizeState', DigitizeState.CHANGED);
+                                    }
+                                }
+                            }
+                        })
                         var snapInteraction = new Snap({
                             source: layer.getSource()
                         });
@@ -325,9 +347,9 @@ angular.module('anol.draw')
                         var _modifyControl = new anol.control.Control(controlOptions);
 
                         // modifyControl adds all interactions needed at activate time
-                        // otherwise, a feature added programmaticaly is not selectable
+                        // otherwise, a feature added programmatically is not selectable
                         // until modify control is enabled twice by user
-                        // reproducable with featureexchange module when uploading a geojson
+                        // reproducible with featureexchange module when uploading a geojson
                         // and try to select uploaded feature for modify
                         _modifyControl.onDeactivate(function (targetControl) {
                             angular.forEach(targetControl.interactions, function (interaction) {
@@ -682,7 +704,7 @@ angular.module('anol.draw')
                             text += ' ' + scope.badgeTexts.max + ': ' + config.max;
                         }
                         return text;
-                    }
+                    };
                 }
             };
         }]);

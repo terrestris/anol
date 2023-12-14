@@ -32,6 +32,11 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                 'attribution': {
                     'TOOLTIP': 'Attributions'
                 },
+                'datepicker': {
+                    'CLEAR_TEXT': 'Clear',
+                    'CLOSE_TEXT': 'Close',
+                    'CURRENT_TEXT': 'Today'
+                },
                 'draw': {
                     'TOOLTIP_POINT': 'Draw point',
                     'TOOLTIP_LINE': 'Draw line',
@@ -120,7 +125,8 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'HEIGHT_TOO_BIG': 'Height too big. Max height: '
                 },
                 'savemanager': {
-                    'SERVICE_UNAVAILABLE': 'Service unavailable'
+                    'SERVICE_UNAVAILABLE': 'Service unavailable',
+                    'SAVING_FAILED': 'Could not save changes.'
                 },
                 'zoom': {
                     'TOOLTIP_ZOOM_IN': 'Zoom in',
@@ -136,6 +142,11 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
         });
         $translateProvider.translations('de_DE', {
             'anol': {
+                'datepicker': {
+                    'CLEAR_TEXT': 'Leeren',
+                    'CLOSE_TEXT': 'Schließen',
+                    'CURRENT_TEXT': 'Heute'
+                },
                 'draw': {
                     'TOOLTIP_DRAW_POINT': 'Punkt zeichnen',
                     'TOOLTIP_DRAW_LINE': 'Linie zeichnen',
