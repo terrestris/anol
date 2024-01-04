@@ -161,7 +161,7 @@ class FeatureLayer extends AnolBaseLayer {
         }
 
         olLayer.setStyle(function(feature, resolution) {
-            if (angular.isDefined(feature) && feature.get('_digitizeState') === DigitizeState.REMOVED) {
+            if (feature && feature.get('_digitizeState') === DigitizeState.REMOVED) {
                 return null;
             }
             var style = self.createStyle(feature, resolution);
