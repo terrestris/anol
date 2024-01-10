@@ -533,6 +533,10 @@ angular.module('anol.savemanager')
                         // we only want to watch until loaded is true once
                         unregister();
                         self.refreshLayerByPollingResult(layer, addedFeatures, changedFeatures, removedFeatures);
+                        $rootScope.$broadcast('SaveManagerService:refreshLayer', {
+                            success: true,
+                            layerName: layerName
+                        });
                     }
                 });
                 layer.refresh();
