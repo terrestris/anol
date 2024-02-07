@@ -38,6 +38,14 @@ angular.module('anol.datepicker')
 
                     var dt = scope.date;
                     scope.dt = dt ? new Date(dt) : undefined;
+
+                    scope.$watch('dt', function(newValue) {
+                        scope.date = newValue ? newValue.toISOString() : undefined;
+                    });
+                    scope.$watch('date', function(newValue) {
+                        scope.dt = newValue ? new Date(newValue) : undefined;
+                    });
+
                     scope.openDatepicker = () => {
                         scope.datepickerOpen = true;
                     };
@@ -52,10 +60,6 @@ angular.module('anol.datepicker')
                     scope.openDatepicker = function () {
                         scope.datepickerOpen = true;
                     };
-
-                    scope.$watch('dt', function(newValue) {
-                        scope.date = newValue ? newValue.toISOString() : undefined;
-                    });
                 }
             };
         }]);
