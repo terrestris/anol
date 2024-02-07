@@ -112,13 +112,13 @@ angular.module('anol.map')
                     }
                     self._addLayer(layer, true);
                 });
-                angular.forEach(self.overlayLayers, function (layer, idx) {
+                angular.forEach(self.overlayLayers, function (layer) {
                     if (angular.isUndefined(layer)) {
                         return true;
                     }
 
                     if (layer instanceof anol.layer.Group) {
-                        angular.forEach(layer.layers.slice().reverse(), function (grouppedLayer, idx) {
+                        angular.forEach(layer.layers.slice().reverse(), function (grouppedLayer) {
                             if (self.olLayers.indexOf(grouppedLayer.olLayer) < 0) {
                                 self._addLayer(grouppedLayer, false);
                             }
@@ -322,7 +322,7 @@ angular.module('anol.map')
                 var self = this;
                 var systemlayer = undefined;
                 angular.forEach(self.systemLayers, function (layer, idx) {
-                    if (layer.name == layername) {
+                    if (layer.name === layername) {
                         systemlayer = layer;
                     }
                 });
@@ -669,7 +669,7 @@ angular.module('anol.map')
 
                     if (layer instanceof anol.layer.Group) {
                         layer.layers.slice().reverse().forEach(function (grouppedLayer, idx) {
-                            if (grouppedLayer.combined) {
+                            if (grouppedLayer.combined && grouppedLayer.reOrderLayerParams) {
                                 grouppedLayer.reOrderLayerParams(layer.layers);
                             }
                             if (lastOlLayerUid !== grouppedLayer.olLayer.ol_uid) {

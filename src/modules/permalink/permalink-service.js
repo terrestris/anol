@@ -510,7 +510,8 @@ angular.module('anol.permalink')
                         }
 
                         if (mapParams.layers !== undefined) {
-                            for (const layer of permalinkLayers(LayersService.flattedLayers())) {
+                            const existing = permalinkLayers(LayersService.flattedLayers());
+                            for (const layer of existing) {
                                 const visible = mapParams.layers.includes(layer.name);
                                 layer.setVisible(visible);
                             }
@@ -566,10 +567,10 @@ angular.module('anol.permalink')
                     async applyCatalogParameters(mapParams) {
                         if (mapParams.catalogGroups !== undefined) {
                             const groups = (await Promise.all(
-                              mapParams.catalogGroups
-                                .map(groupName => CatalogService.addGroupToMap(groupName, false))
+                                mapParams.catalogGroups
+                                    .map(groupName => CatalogService.addGroupToMap(groupName, false))
                             ))
-                            .filter(g => g);
+                                .filter(g => g);
 
                             let layers = (mapParams.layers ?? []).concat(mapParams.visibleCatalogLayers ?? []);
 
@@ -582,17 +583,19 @@ angular.module('anol.permalink')
                             let toRemove = [];
 
                             for (const group of groups) {
-                                for (const layer of group.layers) {
-                                    if (allAvailable || available.indexOf(layer.name) > -1) {
-                                        if (layers) {
-                                            const visible = layers.indexOf(layer.name) > -1;
-                                            layer.setVisible(visible);
+                                if (group.layers) {
+                                    for (const layer of group.layers) {
+                                        if (allAvailable || available.indexOf(layer.name) > -1) {
+                                            if (layers) {
+                                                const visible = layers.indexOf(layer.name) > -1;
+                                                layer.setVisible(visible);
+                                            }
+                                            if (!allAvailable) {
+                                                available.splice(available.indexOf(layer.name), 1);
+                                            }
+                                        } else {
+                                            toRemove.push(layer);
                                         }
-                                        if (!allAvailable) {
-                                            available.splice(available.indexOf(layer.name), 1);
-                                        }
-                                    } else {
-                                        toRemove.push(layer);
                                     }
                                 }
 
