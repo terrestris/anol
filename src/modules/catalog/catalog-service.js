@@ -278,85 +278,79 @@ angular.module('anol.catalog')
          * @methodOf anol.catalog.CatalogService
          * @param {Object} group anolGroup
          * @description
+         * @returns {Promise<anol.layer.Group[]>}
          * Adds a catalog group to map
          */
-        CatalogService.prototype.addGroupToMap = function(groupName, visible, group) {
+        CatalogService.prototype.addGroupToMap = async function(groupName, visible, group) {
             var self = this;
             if(self.addedGroupsName.indexOf(groupName) !== -1) {
-                return;
+                return [];
             }
             var exist = LayersService.groupByName(groupName);
             if (exist) {
-                return;
+                return [];
             }
             self.addWaiting();
 
-            return $q(function(resolve) {
+            const response = await new Promise((resolve, reject) => {
                 var loadUrl = self.loadUrl + '/group/' + groupName;
-                $http.get(loadUrl).then(
-                    function(response) {
-                        angular.forEach(response.data.groups, function(cGroup) {
-                            var groupLayers = [];
-                            angular.forEach(cGroup.layers, function(cLayer) {
-                                var anolLayer = undefined;
-                                cLayer.olLayer.visible = false;
-                                if (cLayer['type'] === 'wms') {
-                                    anolLayer = new anol.layer.SingleTileWMS(cLayer)
-                                } else if (cLayer['type'] === 'tiledwms') {
-                                    anolLayer = new anol.layer.TiledWMS(cLayer)
-                                } else if (cLayer['type'] === 'wmts') {
-                                    anolLayer = new anol.layer.WMTS(cLayer)
-                                } else if (cLayer['type'] === 'dynamic_geojson') {
-                                    anolLayer = new anol.layer.DynamicGeoJSON(cLayer)
-                                } else if (cLayer['type'] === 'static_geojson' || cLayer['type'] === 'digitize') {
-                                    anolLayer  = new anol.layer.StaticGeoJSON(cLayer)
-                                } else {
-                                    console.error(`Unknown layer type '${cLayer['type']}'`, cLayer);
-                                    return;
-                                }
-                                groupLayers.push(anolLayer);
-                                self.addedLayers.push(anolLayer);
-                            });
-                            cGroup.layers = groupLayers;
-                            var anolGroup = new anol.layer.Group({
-                                layers: groupLayers,
-                                catalog: cGroup['catalog'],
-                                catalogLayer: cGroup['catalogLayer'],
-                                showGroup: cGroup['showGroup'],
-                                metadataUrl: cGroup['metadataUrl'],
-                                abstract: cGroup['abstract'],
-                                collapsed: true,
-                                singleSelect: cGroup['singleSelect'],
-                                singleSelectGroup: cGroup['singleSelectGroup'],
-                                name: cGroup['name'],
-                                title: cGroup['title'],
-                                legend: cGroup['legend'],
-                                defaultVisibleLayers: cGroup['defaultVisibleLayers']
-                            });
-                            LayersService.addOverlayLayer(anolGroup, 0);
-                            angular.forEach(self.addedGroups, function(_group) {
-                                angular.forEach(_group.layers, function(_layers) {
-                                    self.addedGroupsLength++;
-                                });
-                            });
-                            var startZIndex = LayersService.zIndex + self.addedLayers.length;
-                            angular.forEach(anolGroup.layers, function(_layers) {
-                                _layers.olLayer.setZIndex(startZIndex);
-                                startZIndex--;
-                            });
-                            self.addedGroupsName.push(groupName);
-                            self.catalogGroups.push(anolGroup);
-                            self.addedGroups.push(anolGroup);
-                            anolGroup.setVisible(visible);
-                            resolve(anolGroup);
-                        });
-                        self.removeWaiting();
-                    }
-                );
+                $http.get(loadUrl).then(resolve, reject);
             });
+
+            const anolGroups = response.data.groups.map(cGroup => {
+                const groupLayers = cGroup.layers
+                    .map(cLayer => {
+                        cLayer.olLayer.visible = false;
+                        if (cLayer['type'] === 'wms') {
+                            return new anol.layer.SingleTileWMS(cLayer)
+                        } else if (cLayer['type'] === 'tiledwms') {
+                            return new anol.layer.TiledWMS(cLayer)
+                        } else if (cLayer['type'] === 'wmts') {
+                            return new anol.layer.WMTS(cLayer)
+                        } else if (cLayer['type'] === 'dynamic_geojson') {
+                            return new anol.layer.DynamicGeoJSON(cLayer)
+                        } else if (cLayer['type'] === 'static_geojson' || cLayer['type'] === 'digitize') {
+                            return new anol.layer.StaticGeoJSON(cLayer)
+                        } else {
+                            console.error(`Unknown layer type '${cLayer['type']}'`, cLayer);
+                        }
+                    })
+                    .filter(l => l);
+                self.addedLayers.push(...groupLayers);
+
+                cGroup.layers = groupLayers;
+                const anolGroup = new anol.layer.Group({
+                    layers: groupLayers,
+                    catalog: cGroup['catalog'],
+                    catalogLayer: cGroup['catalogLayer'],
+                    showGroup: cGroup['showGroup'],
+                    metadataUrl: cGroup['metadataUrl'],
+                    abstract: cGroup['abstract'],
+                    collapsed: true,
+                    singleSelect: cGroup['singleSelect'],
+                    singleSelectGroup: cGroup['singleSelectGroup'],
+                    name: cGroup['name'],
+                    title: cGroup['title'],
+                    legend: cGroup['legend'],
+                    defaultVisibleLayers: cGroup['defaultVisibleLayers']
+                });
+                LayersService.addOverlayLayer(anolGroup, 0);
+                self.addedGroupsLength = self.addedGroups.reduce((sum, next) => sum + next.layers.length, 0);
+                let startZIndex = LayersService.zIndex + self.addedLayers.length;
+                for (const layers of anolGroup.layers) {
+                    layers.olLayer.setZIndex(startZIndex);
+                    startZIndex--;
+                }
+                self.addedGroupsName.push(groupName);
+                self.catalogGroups.push(anolGroup);
+                self.addedGroups.push(anolGroup);
+                anolGroup.setVisible(visible);
+            })
+            self.removeWaiting();
+            return anolGroups;
         };
 
-                /**
+        /**
          * @ngdoc method
          * @name loadNamesfromServer
          * @methodOf anol.catalog.CatalogService
