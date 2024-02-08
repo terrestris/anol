@@ -281,7 +281,7 @@ angular.module('anol.catalog')
          * @returns {Promise<anol.layer.Group[]>}
          * Adds a catalog group to map
          */
-        CatalogService.prototype.addGroupToMap = async function(groupName, visible, group) {
+        CatalogService.prototype.addGroupToMap = async function(groupName, visible) {
             var self = this;
             if(self.addedGroupsName.indexOf(groupName) !== -1) {
                 return [];
@@ -345,7 +345,8 @@ angular.module('anol.catalog')
                 self.catalogGroups.push(anolGroup);
                 self.addedGroups.push(anolGroup);
                 anolGroup.setVisible(visible);
-            })
+                return anolGroup;
+            });
             self.removeWaiting();
             return anolGroups;
         };

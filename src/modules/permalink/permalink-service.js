@@ -570,7 +570,7 @@ angular.module('anol.permalink')
                                 mapParams.catalogGroups
                                     .map(groupName => CatalogService.addGroupToMap(groupName, false))
                             ))
-                                .filter(g => g);
+                                .flat();
 
                             let layers = (mapParams.layers ?? []).concat(mapParams.visibleCatalogLayers ?? []);
 
@@ -583,19 +583,17 @@ angular.module('anol.permalink')
                             let toRemove = [];
 
                             for (const group of groups) {
-                                if (group.layers) {
-                                    for (const layer of group.layers) {
-                                        if (allAvailable || available.indexOf(layer.name) > -1) {
-                                            if (layers) {
-                                                const visible = layers.indexOf(layer.name) > -1;
-                                                layer.setVisible(visible);
-                                            }
-                                            if (!allAvailable) {
-                                                available.splice(available.indexOf(layer.name), 1);
-                                            }
-                                        } else {
-                                            toRemove.push(layer);
+                                for (const layer of group.layers) {
+                                    if (allAvailable || available.indexOf(layer.name) > -1) {
+                                        if (layers) {
+                                            const visible = layers.indexOf(layer.name) > -1;
+                                            layer.setVisible(visible);
                                         }
+                                        if (!allAvailable) {
+                                            available.splice(available.indexOf(layer.name), 1);
+                                        }
+                                    } else {
+                                        toRemove.push(layer);
                                     }
                                 }
 
