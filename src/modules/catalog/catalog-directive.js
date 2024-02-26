@@ -28,7 +28,7 @@ angular.module('anol.catalog')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    } 
+                    }
                     var pageBody = angular.element(document).find('body');
                     scope.removeWaiting = function() {
                         pageBody.removeClass('waiting');
@@ -47,10 +47,10 @@ angular.module('anol.catalog')
                         scope.sortedLayers = sorted.layers;
                         scope.removeWaiting();
                     });
-                    
+
                     scope.addedGroups = CatalogService.addedGroupsName;
                     scope.addedLayers = CatalogService.addedLayersName;
-                    
+
                     scope.toggleVariant = function() {
                         if (scope.variant === 'mouseover') {
                             scope.variant = 'abstract';
@@ -59,13 +59,14 @@ angular.module('anol.catalog')
                         }
                         CatalogService.setVariant(scope.variant);
                     };
-        
+
                     scope.addToMap = function(layer) {
                         CatalogService.addToMap(layer.name, true);
                     };
-                    scope.addGroupToMap = function(group) {
-                        CatalogService.addGroupToMap(group.name, true);
-                    };          
+                    scope.addGroupToMap = async function(group) {
+                        await CatalogService.addGroupToMap(group.name, true);
+                        $rootScope.$digest();
+                    };
                     scope.removeFromMap = function(layer) {
                         CatalogService.removeFromMap(layer);
                     };
@@ -97,7 +98,7 @@ angular.module('anol.catalog')
                             return terminTitle;
                         }
                     });
-                } 
+                }
             };
         })
         // filter directive needed when we want to be able to sort the objects on the catalog.
