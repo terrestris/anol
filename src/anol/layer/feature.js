@@ -148,10 +148,9 @@ class FeatureLayer extends AnolBaseLayer {
         if(angular.isFunction(defaultStyle)) {
             defaultStyle = defaultStyle()[0];
         }
-        if(angular.isDefined(this.style)) {
-            var createImageStyleFunction = angular.isDefined(this.style.externalGraphic) ? this.createIconStyle : this.createCircleStyle;
+        if (angular.isDefined(this.style)) {
             this.defaultStyle = new Style({
-                image: createImageStyleFunction.call(this, this.style, defaultStyle.getImage()),
+                image: this.createImageStyle(this.style, defaultStyle.getImage()),
                 fill: this.createFillStyle(this.style, defaultStyle.getFill()),
                 stroke: this.createStrokeStyle(this.style, defaultStyle.getStroke()),
                 text: this.createTextStyle(this.style, defaultStyle.getText())
@@ -282,9 +281,11 @@ class FeatureLayer extends AnolBaseLayer {
         var isDefaultCircle = defaultImageStyle instanceof CircleStyle;
         var isDefaultIcon = defaultImageStyle instanceof Icon;
 
-        if (isIcon || (!isCircle && isDefaultIcon)) {
+        if (!isCircle && !isIcon) {
+            return undefined;
+        } else if (isIcon || (!isCircle && isDefaultIcon)) {
             return this.createIconStyle(style, defaultImageStyle);
-        } else if(isCircle || (!isIcon && isDefaultCircle)) {
+        } else if (isCircle || (!isIcon && isDefaultCircle)) {
             return this.createCircleStyle(style, defaultImageStyle);
         }
         return defaultImageStyle;
@@ -565,7 +566,7 @@ class FeatureLayer extends AnolBaseLayer {
         source.clear();
         source.refresh();
         source.once('change', () => {
-           this.loaded = true;
+            this.loaded = true;
         });
     }
     _degreeToRad(degree) {

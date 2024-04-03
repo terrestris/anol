@@ -18,7 +18,7 @@ angular.module('anol.featurestyleeditor')
  * @description
  * Shows a form for editing feature style depending on its geometry type
  */
-    .directive('anolFeatureStyleEditor', ['$templateRequest', '$compile', '$rootScope', '$translate', 
+    .directive('anolFeatureStyleEditor', ['$templateRequest', '$compile', '$rootScope', '$translate',
         function($templateRequest, $compile, $rootScope, $translate) {
             var prepareStyleProperties = function(_style) {
                 var style = angular.copy(_style);
@@ -65,7 +65,7 @@ angular.module('anol.featurestyleeditor')
                         return '<div></div>';
                     }
                     return require('./templates/featurestyleeditor.html');
-                },           
+                },
                 link: {
                     pre: function(scope, element, attrs) {
                         if (attrs.templateUrl && attrs.templateUrl !== '') {
@@ -74,7 +74,7 @@ angular.module('anol.featurestyleeditor')
                                 element.html(template);
                                 $compile(template)(scope);
                             });
-                        }                 
+                        }
                         element.addClass('anol-styleeditor');
                         var unregisterStyleWatcher;
                         scope.$watch('feature', function(feature) {
@@ -103,9 +103,12 @@ angular.module('anol.featurestyleeditor')
                                             style[key] = value;
                                         }
                                         if(layerStyle[key] === value) {
-                                            style[key] = undefined;
+                                            delete style[key];
                                         }
                                     });
+                                    if (feature.get('isText')) {
+                                        delete style.radius;
+                                    }
                                     var featureStyle = feature.get('style') || {};
                                     var combinedStyle = angular.extend({}, featureStyle, style);
                                     if(angular.equals(combinedStyle, {})) {
