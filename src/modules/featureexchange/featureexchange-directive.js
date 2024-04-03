@@ -18,7 +18,7 @@ angular.module('anol.featureexchange')
  * @description
  * Download features as geojson
  */
-    .directive('anolFeatureexchange', ['$compile', '$templateRequest' ,'$translate', '$rootScope', 'MapService', 
+    .directive('anolFeatureexchange', ['$compile', '$templateRequest' ,'$translate', '$rootScope', 'MapService',
         function($compile, $templateRequest, $translate, $rootScope, MapService) {
             return {
                 restrict: 'A',
@@ -35,7 +35,7 @@ angular.module('anol.featureexchange')
                         return '<div></div>';
                     }
                     return require('./templates/featureexchange.html');
-                },        
+                },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
@@ -46,12 +46,12 @@ angular.module('anol.featureexchange')
                             uploadErrorElement = element.find('#upload-error');
                             addFileselectorChangeEvent();
                         });
-                    }     
+                    }
                     var fileselector = element.find('#fileselector');
                     var uploadErrorElement = element.find('#upload-error');
                     if (fileselector.length > 0) {
                         addFileselectorChangeEvent();
-                    }                    
+                    }
 
                     var format = new GeoJSON();
 
@@ -126,6 +126,11 @@ angular.module('anol.featureexchange')
                                     featureProjection: MapService.getMap().getView().getProjection(),
                                     dataProjection: scope.srs || 'EPSG:4326'
                                 });
+                                for (const feature of features) {
+                                    if (angular.isDefined(feature.get('style')?.text)) {
+                                        feature.set('isText', true);
+                                    }
+                                }
                                 scope.layer.clear();
                                 scope.layer.addFeatures(features);
                             };
