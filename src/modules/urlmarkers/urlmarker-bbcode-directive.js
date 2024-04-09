@@ -14,12 +14,12 @@ angular.module('anol.urlmarkers')
                     var contents = element.html().replace(/^\s+|\s+$/i, '');
 
                     for(var i in snippets) {
-                        var regexp = new RegExp('\\[' + i + '\\](.+?)\\[\/' + i.replace(/[^a-z]/g, '') + '\\]', 'gi');
+                        var regexp = new RegExp('\\[' + i + '\\](.+?)\\[\/' + i + '\\]', 'gi');
 
                         contents = contents.replace(regexp, snippets[i]);
                     }
 
-                    contents = contents.replace(new RegExp('\\[br\\]'), '<br>');
+                    contents = contents.replace(new RegExp('\\[br\\]', 'gi'), '<br>');
 
                     element.html(contents);
                 });
