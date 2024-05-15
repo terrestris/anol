@@ -33,6 +33,7 @@ class TMS extends AnolBaseLayer {
         };
         var options = $.extend(true, {}, defaults, _options);
         super(options);
+        this.constructorOptions = angular.copy(_options);
         this.CLASS_NAME = 'anol.layer.TMS';
         this.OL_LAYER_CLASS = TileLayer;
         this.OL_SOURCE_CLASS = XYZ;

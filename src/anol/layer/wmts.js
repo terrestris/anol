@@ -63,6 +63,7 @@ class WMTS extends AnolBaseLayer {
             }
         }
         super(options);
+        this.constructorOptions = angular.copy(_options);
         this.CLASS_NAME = 'anol.layer.WMTS';
         this.OL_LAYER_CLASS = TileLayer;
         this.OL_SOURCE_CLASS = WMTSSource;

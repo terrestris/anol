@@ -2,6 +2,10 @@ import './module.js';
 import OverviewMap from 'ol/control/OverviewMap';
 import { TOUCH as hasTouch } from 'ol/has';
 import View from 'ol/View';
+import SingleTileWMS from "../../anol/layer/singletilewms";
+import TiledWMS from "../../anol/layer/tiledwms";
+import TMS from "../../anol/layer/tms";
+import WMTS from "../../anol/layer/wmts";
 
 angular.module('anol.overviewmap')
 /**
@@ -27,14 +31,48 @@ angular.module('anol.overviewmap')
             scope: {
                 collapsed: '@anolOverviewMap',
                 tooltipPlacement: '@',
-                tooltipDelay: '@'
+                tooltipDelay: '@',
+                overviewMapLayerName: '@'
             },
             link: function(scope) {
                 scope.collapsed = scope.collapsed !== false;
-                var backgroundLayers = [];
-                angular.forEach(LayersService.backgroundLayers, function(layer) {
-                    backgroundLayers.push(layer.olLayer);
-                });
+                var backgroundLayers = LayersService.backgroundLayers
+                    .filter(layer => layer.name === scope.overviewMapLayerName)
+                    .map(layer => {
+                        // We have to recreate the anol layers here
+                        // since ol does not work properly when using
+                        // the same layer instances in multiple maps (e.g. map and overview map).
+                        const constructorOpts = layer.constructorOptions;
+                        constructorOpts.olLayer.visible = true;
+                        let layerInst;
+                        switch (layer.CLASS_NAME) {
+                            case 'anol.layer.SingleTileWMS':
+                                layerInst = new SingleTileWMS(constructorOpts);
+                                break;
+                            case 'anol.layer.TiledWMS':
+                                layerInst = new TiledWMS(constructorOpts);
+                                break;
+                            case 'anol.layer.TMS':
+                                layerInst = new TMS(constructorOpts);
+                                break;
+                            case 'anol.layer.WMTS':
+                                layerInst = new WMTS(constructorOpts);
+                                break;
+                            default:
+                                break;
+                        }
+                        if (!layerInst) {
+                            console.log('Could not create overlay layer');
+                            return undefined;
+                        }
+                        var sourceOptions = angular.extend({}, layerInst.olSourceOptions);
+                        const olSource = new layerInst.OL_SOURCE_CLASS(sourceOptions);
+                        olSource.set('anolLayers', [layerInst]);
+                        const layerOpts = layerInst.olLayerOptions;
+                        layerOpts.source = olSource;
+                        const olLayer = new layerInst.OL_LAYER_CLASS(layerOpts);
+                        return olLayer;
+                    });
 
                 var olControl = new OverviewMap({
                     layers: backgroundLayers,
