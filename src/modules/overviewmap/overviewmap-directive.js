@@ -17,9 +17,10 @@ angular.module('anol.overviewmap')
  * @requries anol.map.LayersService
  * @requries anol.map.MapService
  *
- * @param {boolean} anolOverviewMap Wheather start collapsed or not. Default true.
+ * @param {boolean} overviewMapCollapsed Whether start collapsed or not. Default true.
+ * @param {overviewMapLayerName} overviewMapLayerName The name of the layer to display in the overviewMap. Defaults to all layers in app.
  * @param {string} tooltipPlacement Position of tooltip
- * @param {number} tooltipDelay Time in milisecounds to wait before display tooltip
+ * @param {number} tooltipDelay Time in milliseconds to wait before display tooltip
  * @param {boolean} tooltipEnable Enable tooltips. Default true for non-touch screens, default false for touchscreens
  *
  * @description
@@ -29,7 +30,7 @@ angular.module('anol.overviewmap')
         return {
             restrict: 'A',
             scope: {
-                collapsed: '@anolOverviewMap',
+                collapsed: '=overviewMapCollapsed',
                 tooltipPlacement: '@',
                 tooltipDelay: '@',
                 overviewMapLayerName: '@'
