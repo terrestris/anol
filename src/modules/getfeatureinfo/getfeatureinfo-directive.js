@@ -204,6 +204,7 @@ angular.module('anol.getfeatureinfo')
                                     var count = 0;
                                     angular.forEach(responseLayers, function(rLayer) {
                                         if (rLayer.layers === undefined || rLayer.layers.length === 0) {
+                                            count++;
                                             return;
                                         }
 
@@ -249,6 +250,68 @@ angular.module('anol.getfeatureinfo')
                             }
                         };
 
+                        const createHtmlRequest = (layer, coordinate, viewResolution, view) => {
+                            var requestParams ={
+                                'INFO_FORMAT': 'text/html'
+                            };
+                            if(angular.isDefined(layer.featureinfo.featureCount)) {
+                                requestParams.FEATURE_COUNT = layer.featureinfo.featureCount;
+                            }
+
+                            var url = layer.getFeatureInfoUrl(
+                                coordinate, viewResolution, view.getProjection().getCode(), requestParams
+                            );
+                            if(angular.isDefined(scope.proxyUrl)) {
+                                url = scope.proxyUrl + layer.name + '/?' + url.split('?')[1];
+                            }
+                            if (!angular.isDefined(url)) {
+                                return $q.defer().resolve();
+                            }
+                            return $http.get(url).then(
+                                response => {
+                                    if(angular.isString(response.data) && response.data !== '' && response.data.search('^\s*<\?xml') === -1) {
+                                        return {
+                                            target: layer.featureinfo.target,
+                                            width: layer.featureinfo.width,
+                                            height: layer.featureinfo.height,
+                                            url: url,
+                                            response: response.data,
+                                            coordinate: coordinate
+                                        };
+                                    }
+                                }
+                            );
+                        };
+
+                        const createGmlRequest = (layer, coordinate, viewResolution, view) => {
+                            var gmlRequestParams = {
+                                'INFO_FORMAT': 'application/vnd.ogc.gml'
+                            };
+                            if(angular.isDefined(layer.featureinfo.featureCount)) {
+                                gmlRequestParams.FEATURE_COUNT = layer.featureinfo.featureCount;
+                            }
+
+                            var gmlUrl = layer.getFeatureInfoUrl(
+                                coordinate, viewResolution, view.getProjection().getCode(), gmlRequestParams
+                            );
+                            if(angular.isDefined(scope.proxyUrl)) {
+                                gmlUrl = scope.proxyUrl + layer.name + '/?' + gmlUrl.split('?')[1];
+                            }
+
+                            if(!angular.isDefined(gmlUrl)) {
+                                return $q.defer().resolve();
+                            }
+
+                            return $http.get(gmlUrl).then(
+                                response => ({
+                                    style: layer.featureinfo.gmlStyle,
+                                    gmlData: response.data,
+                                    title: layer.title,
+                                    catalog: layer.featureinfo.catalog,
+                                    group: layer.featureinfo.gmlGroup
+                                })
+                            );
+                        };
 
                         scope.handleClick = function(evt) {
                             var viewResolution = view.getResolution();
@@ -265,120 +328,42 @@ angular.module('anol.getfeatureinfo')
 
                             scope.showWaitingOverlay(coordinate);
 
-                            var requestPromises = [];
-                            // this is resolved after all requests started
-                            var requestsDeferred = $q.defer();
-                            requestsDeferred.promise.then(function() {
-                                // promises added before requests started
-                                // all promises will be resolved, otherwise we can't access the data
-                                // promises that should be rejected will be resolved with undefined
-                                $q.all(requestPromises).then(handleFeatureinfoResponses);
-                            });
-
-                            var gmlRequestPromises = [];
-                            var gmlRequestsDeferred = $q.defer();
-                            gmlRequestsDeferred.promise.then(function() {
-                                var content = $q.all(requestPromises.concat(gmlRequestPromises)).then(handleGMLFeatureinfoResponses);
-                                content.then(function(data) {
-                                    renderPopupContent();
-                                })
-                            });
-
-                            function renderPopupContent() {
+                            const renderPopupContent = () => {
                                 scope.popupProperties = {
                                     'coordinate': scope.coordinate,
                                     'content': scope.popupContentTemp.children()
                                 }
                             };
 
-                            angular.forEach(LayersService.flattedLayers(), function(layer) {
-                                if(!layer.getVisible()) {
-                                    return;
-                                }
-                                if(layer.olLayer instanceof VectorLayer) {
-                                    return;
-                                }
-                                if(!layer.featureinfo) {
-                                    return;
-                                }
+                            var htmlRequestPromises = LayersService.flattedLayers()
+                                .filter(layer => {
+                                    return layer.getVisible()
+                                        && !(layer.olLayer instanceof VectorLayer)
+                                        && layer.featureinfo
+                                        && layer.featureinfo.catalog !== true;
+                                })
+                                .map(layer => {
+                                    return createHtmlRequest(layer, coordinate, viewResolution, view);
+                                });
 
-                                if(layer.featureinfo.catalog !== true) {
-                                    var requestParams ={
-                                        'INFO_FORMAT': 'text/html'
-                                    };
-                                    if(angular.isDefined(layer.featureinfo.featureCount)) {
-                                        requestParams.FEATURE_COUNT = layer.featureinfo.featureCount;
-                                    }
+                            var gmlRequestPromises = LayersService.flattedLayers()
+                                .filter(layer => {
+                                    return layer.getVisible()
+                                        && !(layer.olLayer instanceof VectorLayer)
+                                        && layer.featureinfo
+                                        && layer.featureinfo.gml === true
+                                })
+                                .map(layer => {
+                                    return createGmlRequest(layer, coordinate, viewResolution, view);
+                                });
 
-                                    var url = layer.getFeatureInfoUrl(
-                                        coordinate, viewResolution, view.getProjection().getCode(), requestParams
-                                    );
-                                    if(angular.isDefined(scope.proxyUrl)) {
-                                        url = scope.proxyUrl + layer.name + '/?' + url.split('?')[1];
-                                    }
-                                    if(angular.isDefined(url)) {
-                                        var requestDeferred = $q.defer();
-                                        requestPromises.push(requestDeferred.promise);
-                                        $http.get(url).then(
-                                            function(response) {
-                                                if(angular.isString(response.data) && response.data !== '' && response.data.search('^\s*<\?xml') === -1) {
-                                                    requestDeferred.resolve({
-                                                        target: layer.featureinfo.target,
-                                                        width: layer.featureinfo.width,
-                                                        height: layer.featureinfo.height,
-                                                        url: url,
-                                                        response: response.data,
-                                                        coordinate: coordinate
-                                                    });
-                                                } else {
-                                                    requestDeferred.resolve();
-                                                }
-                                            },
-                                            function() {
-                                                requestDeferred.resolve();
-                                            }
-                                        );
-                                    }
-                                }
-
-                                if(layer.featureinfo.gml !== true) {
-                                    return;
-                                }
-                                var gmlRequestParams = {
-                                    'INFO_FORMAT': 'application/vnd.ogc.gml'
-                                };
-                                if(angular.isDefined(layer.featureinfo.featureCount)) {
-                                    gmlRequestParams.FEATURE_COUNT = layer.featureinfo.featureCount;
-                                }
-
-                                var gmlUrl = layer.getFeatureInfoUrl(
-                                    coordinate, viewResolution, view.getProjection().getCode(), gmlRequestParams
-                                );
-                                if(angular.isDefined(scope.proxyUrl)) {
-                                    gmlUrl = scope.proxyUrl + layer.name + '/?' + gmlUrl.split('?')[1];
-                                }
-
-                                if(angular.isDefined(gmlUrl)) {
-                                    var gmlRequestDeferred = $q.defer();
-                                    gmlRequestPromises.push(gmlRequestDeferred.promise);
-                                    $http.get(gmlUrl).then(
-                                        function(response) {
-                                            gmlRequestDeferred.resolve({
-                                                style: layer.featureinfo.gmlStyle,
-                                                gmlData: response.data,
-                                                title: layer.title,
-                                                catalog: layer.featureinfo.catalog,
-                                                group: layer.featureinfo.gmlGroup
-                                            });
-                                        },
-                                        function() {
-                                            gmlRequestDeferred.resolve();
-                                        }
-                                    );
-                                }
-                            });
-                            requestsDeferred.resolve();
-                            gmlRequestsDeferred.resolve();
+                            $q.all(htmlRequestPromises)
+                                .then(handleFeatureinfoResponses)
+                                .then(() => $q.all(gmlRequestPromises))
+                                .then(handleGMLFeatureinfoResponses)
+                                .then(() => {
+                                    renderPopupContent();
+                                });
                         };
 
                         scope.hideWaitingOverlay = function() {
