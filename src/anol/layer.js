@@ -56,6 +56,7 @@ class AnolBaseLayer {
         if(options === false) {
             return;
         }
+        this.constructorOptions = angular.copy(options);
         this.CLASS_NAME = 'anol.layer.Layer';
         this.OL_LAYER_CLASS = undefined;
         this.OL_SOURCE_CLASS = undefined;
