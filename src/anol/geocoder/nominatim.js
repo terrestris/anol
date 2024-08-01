@@ -19,7 +19,7 @@ class Nominatim extends BaseGeocoder {
             super();
             return;
         }
-        options.url = 'http://nominatim.openstreetmap.org/search?';
+        options.url = angular.isUndefined(options.url) ? 'http://nominatim.openstreetmap.org/search?' : options.url;
         super(options);
         this.options = options;
         this.CLASS_NAME = 'anol.geocoder.Nominatim';
