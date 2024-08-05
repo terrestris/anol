@@ -30,9 +30,24 @@ class Nominatim extends BaseGeocoder {
         return result.display_name;
     }
 
+    handleResponse(response) {
+        var self = this;
+        var results = [];
+        $.each(response, function(idx, result) {
+            results.push({
+                displayText: self.extractDisplayText(result),
+                wkt: result.geotext,
+                projectionCode: self.RESULT_PROJECTION,
+                sml: result.sml,
+            },
+        });
+        return results;
+    }
+
     getData(searchString) {
         var data = {
             q: searchString,
+            polygon_text: 1,
             format: 'json',
             limit: angular.isDefined(this.options.limit) ? this.options.limit : 10
         };
