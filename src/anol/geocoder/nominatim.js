@@ -38,8 +38,8 @@ class Nominatim extends BaseGeocoder {
                 displayText: self.extractDisplayText(result),
                 wkt: result.geotext,
                 projectionCode: self.RESULT_PROJECTION,
-                sml: result.sml,
-            },
+                sml: result.sml
+            });
         });
         return results;
     }
