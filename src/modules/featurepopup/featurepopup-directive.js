@@ -2,6 +2,7 @@ import './module.js';
 import '../util';
 import Overlay from 'ol/Overlay';
 import Cluster from 'ol/source/Cluster';
+import VectorTile from 'ol/source/VectorTile';
 import { unByKey } from 'ol/Observable';
 
 // TODO rename to popup
@@ -215,8 +216,14 @@ angular.module('anol.featurepopup')
                                     return;
                                 }
 
-                                var _features = layer.olLayer.getSource()
-                                    .getFeaturesInExtent(extent)
+                                let _featuresInExtent;
+                                if (layer.olLayer.getSource() instanceof VectorTile) {
+                                  _featuresInExtent = layer.olLayer.getFeaturesInExtent(extent);
+                                } else {
+                                  _featuresInExtent = layer.olLayer.getSource()
+                                    .getFeaturesInExtent(extent);
+                                }
+                                var _features = _featuresInExtent
                                     .filter(feature => scope.featureFilter({ feature }));
 
                                 if(_features.length > 0) {
