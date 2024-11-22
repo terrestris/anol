@@ -182,7 +182,7 @@ angular.module('anol.map')
                         layerFilter: layer => layer === self.selectClusterInteraction.overlayLayer_
                     });
 
-                    return features?.filter(f => f.get('selectclusterfeature')).length > 0;
+                    return features.filter(f => f.get('selectclusterfeature')).length > 0;
                 };
 
                 MapService.addCursorPointerCondition(changeCursorCondition);

@@ -50,7 +50,7 @@ angular.module('anol.urlmarkers')
                     const clicked = map.getFeaturesAtPixel(e.pixel, {
                         hitTolerance: 10
                     });
-                    const feature = clicked?.find(f =>
+                    const feature = clicked.find(f =>
                         features.includes(f) && !featuresWithPopup.includes(f)
                     );
                     if (feature) {

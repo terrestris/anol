@@ -304,7 +304,7 @@ angular.module('anol.featurepopup')
                             },
                             hitTolerance: 10
                         });
-                        return features?.filter(feature => scope.featureFilter({feature})).length > 0;
+                        return features.filter(feature => scope.featureFilter({feature})).length > 0;
                     };
 
                     var bindCursorChange = function() {
