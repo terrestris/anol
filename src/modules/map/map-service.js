@@ -1,7 +1,6 @@
 import './module.js';
 
 import {Map} from 'ol';
-import {TOUCH as hasTouch} from 'ol/has';
 
 import './layers-service.js';
 import './controls-service.js';
@@ -93,7 +92,7 @@ angular.module('anol.map')
             var MapService = function (view, cursorPointerConditions, twoFingersPinchDrag, twoFingersPinchDragText) {
                 this.view = view;
                 this.map = undefined;
-                this.hasTouch = hasTouch;
+                this.hasTouch = 'ontouchstart' in window;
                 this.cursorPointerConditions = cursorPointerConditions;
                 this.twoFingersPinchDrag = twoFingersPinchDrag;
                 this.twoFingersPinchDragText = twoFingersPinchDragText;

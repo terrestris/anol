@@ -1,5 +1,4 @@
 import './module.js';
-import { TOUCH as hasTouch } from 'ol/has';
 import { asString as colorAsString } from 'ol/color';
 import VectorLayer from 'ol/layer/Vector';
 
@@ -63,7 +62,7 @@ angular.module('anol.legend')
                         scope.tooltipDelay = angular.isDefined(scope.tooltipDelay) ?
                             scope.tooltipDelay : 500;
                         scope.tooltipEnable = angular.isDefined(scope.tooltipEnable) ?
-                            scope.tooltipEnable : !hasTouch;
+                            scope.tooltipEnable : !('ontouchstart' in window);
                         scope.showInactive = (scope.showInactive === true || scope.showInactive === 'true');
 
                         // get callback from wrapper function

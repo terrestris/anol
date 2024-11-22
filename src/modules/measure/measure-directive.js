@@ -6,7 +6,6 @@ import LineString from 'ol/geom/LineString';
 import Modify from 'ol/interaction/Modify';
 import Polygon from 'ol/geom/Polygon';
 import Draw from 'ol/interaction/Draw';
-import { TOUCH as hasTouch } from 'ol/has';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { transform } from 'ol/proj';
@@ -247,7 +246,7 @@ angular.module('anol.measure')
                         scope.tooltipDelay = angular.isDefined(scope.tooltipDelay) ?
                             scope.tooltipDelay : 500;
                         scope.tooltipEnable = angular.isDefined(scope.tooltipEnable) ?
-                            scope.tooltipEnable : !hasTouch;
+                            scope.tooltipEnable : !('ontouchstart' in window);
                         scope.geodesic = scope.geodesic === true || scope.geodesic === 'true';
                         scope.labelSegments = angular.isDefined(scope.labelSegments) ?
                             scope.labelSegments : false;

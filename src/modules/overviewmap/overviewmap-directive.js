@@ -1,6 +1,5 @@
 import './module.js';
 import OverviewMap from 'ol/control/OverviewMap';
-import { TOUCH as hasTouch } from 'ol/has';
 import View from 'ol/View';
 import SingleTileWMS from "../../anol/layer/singletilewms";
 import TiledWMS from "../../anol/layer/tiledwms";
@@ -98,7 +97,7 @@ angular.module('anol.overviewmap')
                 overviewmapButton.attr('tooltip-placement', scope.tooltipPlacement || 'right');
                 overviewmapButton.attr('tooltip-append-to-body', true);
                 overviewmapButton.attr('tooltip-popup-delay', scope.tooltipDelay || 500);
-                overviewmapButton.attr('tooltip-enable', angular.isUndefined(scope.tooltipEnable) ? !hasTouch : scope.tooltipEnable);
+                overviewmapButton.attr('tooltip-enable', angular.isUndefined(scope.tooltipEnable) ? !('ontouchstart' in window) : scope.tooltipEnable);
                 overviewmapButton.attr('tooltip-trigger', 'mouseenter');
                 // add icon
                 // cannot use ng-class, because icon change comes to late after click

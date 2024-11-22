@@ -1,5 +1,4 @@
 import './module.js';
-import { TOUCH as hasTouch } from 'ol/has';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Select from 'ol/interaction/Select';
@@ -64,7 +63,7 @@ angular.module('anol.geolocation')
                     scope.tooltipDelay = angular.isDefined(scope.tooltipDelay) ?
                         scope.tooltipDelay : 500;
                     scope.tooltipEnable = angular.isDefined(scope.tooltipEnable) ?
-                        scope.tooltipEnable : !hasTouch;
+                        scope.tooltipEnable : !('ontouchstart' in window);
                     if(scope.showPosition) {
                         var geolocationLayer = new anol.layer.Feature({
                             name: 'geolocationLayer',
