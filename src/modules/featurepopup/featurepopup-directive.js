@@ -121,11 +121,12 @@ angular.module('anol.featurepopup')
 
                     scope.overlayOptions = {
                         element: overlayElement[0],
-                        autoPan: true,
-                        autoPanAnimation: {
+                        autoPan: {
+                          animation: {
                             duration: 250
-                        },
-                        autoPanMargin: scope.autoPanMargin
+                          },
+                          margin: scope.autoPanMargin
+                        }
                     };
 
                     if(angular.isDefined(scope.coordinate)) {
