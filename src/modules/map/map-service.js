@@ -113,8 +113,7 @@ angular.module('anol.map')
                     this.map = new Map(angular.extend({}, {
                         controls: [],
                         interactions: [],
-                        layers: [],
-                        loadTilesWhileInteracting: true
+                        layers: []
                     }));
                     this.map.setView(this.view);
                     if (angular.isDefined(_bbox)) {
