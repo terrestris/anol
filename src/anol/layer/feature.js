@@ -558,7 +558,6 @@ class FeatureLayer extends AnolBaseLayer {
     _refresh() {
         this.loaded = false;
         const source = this.olLayer.getSource();
-        source.clear();
         source.refresh();
         source.once('change', () => {
             this.loaded = true;

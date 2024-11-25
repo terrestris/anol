@@ -106,19 +106,7 @@ class BBOXGeoJSON  extends StaticGeoJSON {
     }
     responseHandler(response, featureProjection, dataProjection) {
         var self = this;
-        // TODO find a better solution
-        // remove all features from source.
-        // otherwise features in source might be duplicated
-        // cause source.readFeatures don't look in source for
-        // existing received features.
-        // we can't use source.clear() at this place, cause
-        // source.clear() will trigger to reload features from server
-        // and this leads to an infinite loop
-        // even with opt_fast=true
-        var sourceFeatures = self.olLayer.getSource().getFeatures();
-        for(var i = 0; i < sourceFeatures.length; i++) {
-            self.olLayer.getSource().removeFeature(sourceFeatures[i]);
-        }
+        self.olLayer.getSource().clear();
 
         var format = new GeoJSON({
             dataProjection: dataProjection,

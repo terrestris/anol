@@ -66,7 +66,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
         anolLayers.push(other);
         this.olSource.set('anolLayers', anolLayers);
 
-        if(this.isClustered) {
+        if(this.isClustered()) {
             return this.olLayer.getSource();
         }
         return this.olSource;
@@ -74,10 +74,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
 
     setVisible(visible) {
         super.setVisible(visible);
-        // find better solution than clear, cause it's remove all features from the source, not only
-        // features related to current layer. But we need to call clear, otherwise source extent is not
-        // resetted and it will not be reloaded with updated url params
-        this.olSource.clear(true);
+        this.olSource.refresh();
     }
 
     /**
@@ -137,19 +134,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
 
     responseHandler(response, featureProjection) {
         var self = this;
-        // TODO find a better solution
-        // remove all features from source.
-        // otherwise features in source might be duplicated
-        // cause source.readFeatures don't look in source for
-        // existing received features.
-        // we can't use source.clear() at this place, cause
-        // source.clear() will trigger to reload features from server
-        // and this leads to an infinite loop
-        // even with opt_fast=true
-        var sourceFeatures = self.olSource.getFeatures();
-        for(var i = 0; i < sourceFeatures.length; i++) {
-            self.olSource.removeFeature(sourceFeatures[i]);
-        }
+        self.olSource.clear();
         var format = new GeoJSON();
         var features = format.readFeatures(response, {
             featureProjection: featureProjection
