@@ -318,7 +318,6 @@ class FeatureLayer extends AnolBaseLayer {
             styleOptions.rotation = defaultIconStyle.getRotation();
             styleOptions.scale = defaultIconStyle.getScale();
             styleOptions.size = defaultIconStyle.getSize();
-            styleOptions.imgSize = defaultIconStyle.getSize();
         }
 
         if(angular.isDefined(style.externalGraphic)) {
@@ -337,10 +336,6 @@ class FeatureLayer extends AnolBaseLayer {
 
         if(angular.isDefined(style.graphicWidth) && angular.isDefined(style.graphicHeight)) {
             styleOptions.size = [
-                parseInt(style.graphicWidth),
-                parseInt(style.graphicHeight)
-            ];
-            styleOptions.imgSize = [
                 parseInt(style.graphicWidth),
                 parseInt(style.graphicHeight)
             ];
@@ -563,7 +558,6 @@ class FeatureLayer extends AnolBaseLayer {
     _refresh() {
         this.loaded = false;
         const source = this.olLayer.getSource();
-        source.clear();
         source.refresh();
         source.once('change', () => {
             this.loaded = true;

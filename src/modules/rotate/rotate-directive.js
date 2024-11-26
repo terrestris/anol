@@ -1,6 +1,5 @@
 import './module.js';
 import Rotate from 'ol/control/Rotate';
-import { TOUCH as hasTouch } from 'ol/has';
 
 angular.module('anol.rotation')
 /**
@@ -40,7 +39,7 @@ angular.module('anol.rotation')
                     rotateButton.attr('tooltip-placement', scope.zoomInTooltipPlacement || 'right');
                     rotateButton.attr('tooltip-append-to-body', true);
                     rotateButton.attr('tooltip-popup-delay', scope.tooltipDelay || 500);
-                    rotateButton.attr('tooltip-enable', angular.isUndefined(scope.tooltipEnable) ? !hasTouch : scope.tooltipEnable);
+                    rotateButton.attr('tooltip-enable', angular.isUndefined(scope.tooltipEnable) ? !('ontouchstart' in window) : scope.tooltipEnable);
                     rotateButton.attr('tooltip-trigger', 'mouseenter');
 
                     $compile(controlElement)(scope);

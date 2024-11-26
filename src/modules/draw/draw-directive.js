@@ -2,7 +2,6 @@ import './module.js';
 import '../util.js';
 import {DigitizeState} from "../savemanager/digitize-state";
 
-import {TOUCH as hasTouch} from 'ol/has';
 import Draw from 'ol/interaction/Draw';
 import Select from 'ol/interaction/Select';
 import Modify from 'ol/interaction/Modify';
@@ -85,7 +84,7 @@ angular.module('anol.draw')
                     scope.freeDrawing = angular.isDefined(scope.freeDrawing) ?
                         scope.freeDrawing : false;
                     scope.tooltipEnable = angular.isDefined(scope.tooltipEnable) ?
-                        scope.tooltipEnable : !hasTouch;
+                        scope.tooltipEnable : !('ontouchstart' in window);
                     scope.tooltipDelay = angular.isDefined(scope.tooltipDelay) ?
                         scope.tooltipDelay : 500;
                     scope.pointTooltipPlacement = angular.isDefined(scope.pointTooltipPlacement) ?

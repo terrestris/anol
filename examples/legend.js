@@ -63,8 +63,7 @@ angular.module('example', ['anol', 'anol.map', 'anol.featurepopup', 'anol.zoom',
       olLayer: {
         style: new Style({
           image: new Icon({
-            src: 'data/rail-18.svg',
-            imgSize: [18, 18]
+            src: 'data/rail-18.svg'
           })
         }),
         source: {
@@ -77,8 +76,7 @@ angular.module('example', ['anol', 'anol.map', 'anol.featurepopup', 'anol.zoom',
       name: 'lineLayer',
       title: 'Line',
       legend: {
-        url: 'data/rail-18.svg',
-        imgSize: [18, 18]
+        url: 'data/rail-18.svg'
       },
       olLayer: {
         source: {

@@ -167,9 +167,8 @@ class AnolBaseLayer {
         angular.element(this).off('anol.layer.visible:change', func);
     }
     refresh() {
-        if(this.olLayer instanceof BaseLayer && this.olLayer.getSource() instanceof Source) {
-            var source = this.olLayer.getSource();
-            source.refresh();
+        if(this.olLayer instanceof BaseLayer) {
+            this.olLayer.changed();
         }
     }
     _createSourceOptions(srcOptions) {

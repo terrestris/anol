@@ -1,5 +1,4 @@
 import './module.js';
-import { TOUCH as hasTouch } from 'ol/has';
 
 angular.module('anol.layerswitcher')
 
@@ -64,7 +63,7 @@ angular.module('anol.layerswitcher')
                         scope.tooltipDelay = angular.isDefined(scope.tooltipDelay) ?
                             scope.tooltipDelay : 500;
                         scope.tooltipEnable = angular.isDefined(scope.tooltipEnable) ?
-                            scope.tooltipEnable : !hasTouch;
+                            scope.tooltipEnable : !('ontouchstart' in window);
 
                         scope.backgroundLayers = LayersService.backgroundLayers;
                         scope.overlayLayers = LayersService.overlayLayers;

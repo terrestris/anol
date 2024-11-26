@@ -1,7 +1,6 @@
 import './module.js';
 import { PinchRotate, DragPan } from 'ol/interaction.js';
 import { Control } from 'ol/control.js';
-import { TOUCH as hasTouch } from 'ol/has.js';
 
 angular.module('anol.map')
 /**
@@ -34,7 +33,7 @@ angular.module('anol.map')
                         // set touchAction to it's default value.
                         // This may cause page zoom on IE >= 10 browsers but allows us
                         // to scroll the page when only one finger has touched and dragged the map
-                        if(hasTouch && MapService.twoFingersPinchDrag) {
+                        if('ontouchstart' in window && MapService.twoFingersPinchDrag) {
                             var viewport = scope.map.getViewport();
                             viewport.style.touchAction = 'auto';
                             viewport.style.msTouchAction = 'auto';
@@ -50,7 +49,7 @@ angular.module('anol.map')
 
                             // add interactions from InteractionsService to map
                             angular.forEach(InteractionsService.interactions, function(interaction) {
-                                if(hasTouch && MapService.twoFingersPinchDrag) {
+                                if('ontouchstart' in window && MapService.twoFingersPinchDrag) {
                                     // when twoFingerPinchDrag is true, no PinchRotate interaction
                                     // is added. This should improve map handling for users in twoFingerPinchDrag-mode
                                     if(interaction instanceof PinchRotate) {
@@ -73,7 +72,7 @@ angular.module('anol.map')
 
                             InteractionsService.registerMap(scope.map);
 
-                            if(hasTouch && MapService.twoFingersPinchDrag === true) {
+                            if('ontouchstart' in window && MapService.twoFingersPinchDrag === true) {
                                 var useKeyControl, dragPan;
                                 var pointers = 0;
 

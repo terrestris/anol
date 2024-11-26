@@ -1,5 +1,4 @@
 import './module.js';
-import { TOUCH as hasTouch } from 'ol/has';
 
 angular.module('anol.attribution')
 
@@ -76,7 +75,7 @@ angular.module('anol.attribution')
                     scope.tooltipDelay = angular.isDefined(scope.tooltipDelay) ?
                         scope.tooltipDelay : 500;
                     scope.tooltipEnable = angular.isDefined(scope.tooltipEnable) ?
-                        scope.tooltipEnable : !hasTouch;
+                        scope.tooltipEnable : !('ontouchstart' in window);
                     scope.layersService = LayersService;
 
                     ControlsService.addControl(

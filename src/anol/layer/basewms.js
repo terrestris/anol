@@ -174,7 +174,7 @@ class BaseWMS extends AnolBaseLayer {
             params
         );
 
-        return this.olLayer.getSource().getGetFeatureInfoUrl(
+        return this.olLayer.getSource().getFeatureInfoUrl(
             coordinate, resolution, projection, requestParams
         );
     }

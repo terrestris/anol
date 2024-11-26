@@ -2,6 +2,8 @@ import './module.js';
 import '../util';
 import Overlay from 'ol/Overlay';
 import Cluster from 'ol/source/Cluster';
+import VectorSource from 'ol/source/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
 import { unByKey } from 'ol/Observable';
 
 // TODO rename to popup
@@ -121,11 +123,12 @@ angular.module('anol.featurepopup')
 
                     scope.overlayOptions = {
                         element: overlayElement[0],
-                        autoPan: true,
-                        autoPanAnimation: {
+                        autoPan: {
+                          animation: {
                             duration: 250
-                        },
-                        autoPanMargin: scope.autoPanMargin
+                          },
+                          margin: scope.autoPanMargin
+                        }
                     };
 
                     if(angular.isDefined(scope.coordinate)) {
@@ -214,8 +217,14 @@ angular.module('anol.featurepopup')
                                     return;
                                 }
 
-                                var _features = layer.olLayer.getSource()
-                                    .getFeaturesInExtent(extent)
+                                let _featuresInExtent;
+                                if (layer.olLayer instanceof VectorTileLayer) {
+                                  _featuresInExtent = layer.olLayer.getFeaturesInExtent(extent);
+                                } else if (layer.olLayer.getSource() instanceof VectorSource) {
+                                  _featuresInExtent = layer.olLayer.getSource()
+                                    .getFeaturesInExtent(extent);
+                                }
+                                var _features = _featuresInExtent
                                     .filter(feature => scope.featureFilter({ feature }));
 
                                 if(_features.length > 0) {
@@ -304,7 +313,7 @@ angular.module('anol.featurepopup')
                             },
                             hitTolerance: 10
                         });
-                        return features?.filter(feature => scope.featureFilter({feature})).length > 0;
+                        return features.filter(feature => scope.featureFilter({feature})).length > 0;
                     };
 
                     var bindCursorChange = function() {
