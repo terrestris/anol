@@ -2,7 +2,8 @@ import './module.js';
 import '../util';
 import Overlay from 'ol/Overlay';
 import Cluster from 'ol/source/Cluster';
-import VectorTile from 'ol/source/VectorTile';
+import VectorSource from 'ol/source/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
 import { unByKey } from 'ol/Observable';
 
 // TODO rename to popup
@@ -217,9 +218,9 @@ angular.module('anol.featurepopup')
                                 }
 
                                 let _featuresInExtent;
-                                if (layer.olLayer.getSource() instanceof VectorTile) {
+                                if (layer.olLayer instanceof VectorTileLayer) {
                                   _featuresInExtent = layer.olLayer.getFeaturesInExtent(extent);
-                                } else {
+                                } else if (layer.olLayer.getSource() instanceof VectorSource) {
                                   _featuresInExtent = layer.olLayer.getSource()
                                     .getFeaturesInExtent(extent);
                                 }
