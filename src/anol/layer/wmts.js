@@ -37,31 +37,6 @@ class WMTS extends AnolBaseLayer {
             }
         };
         var options = $.extend(true, {}, defaults, _options );
-        var hqUrl = options.olLayer.source.hqUrl || false;
-        delete options.olLayer.source.hqUrl;
-        var hqLayer = options.olLayer.source.hqLayer || false;
-        delete options.olLayer.source.hqLayer;
-        var hqMatrixSet = options.olLayer.source.hqMatrixSet || false;
-        delete options.olLayer.source.hqMatrixSet;
-
-        if(DEVICE_PIXEL_RATIO > 1) {
-            var useHq = false;
-            if(hqUrl !== false) {
-                options.olLayer.source.url = hqUrl;
-                useHq = true;
-            }
-            if(hqLayer !== false) {
-                options.olLayer.source.layer = hqLayer;
-                useHq = true;
-            }
-            if(hqMatrixSet !== false) {
-                options.olLayer.source.matrixSet = hqMatrixSet;
-                useHq = true;
-            }
-            if(useHq) {
-                options.olLayer.source.tilePixelRatio = 2;
-            }
-        }
         super(options);
         this.constructorOptions = angular.copy(_options);
         this.CLASS_NAME = 'anol.layer.WMTS';
@@ -90,6 +65,28 @@ class WMTS extends AnolBaseLayer {
     }
     _createSourceOptions(srcOptions) {
         srcOptions = super._createSourceOptions(srcOptions);
+        var hqUrl = srcOptions.hqUrl || false;
+        delete srcOptions.hqUrl;
+        var hqLayer = srcOptions.hqLayer || false;
+        delete srcOptions.hqLayer;
+        var hqMatrixSet = srcOptions.hqMatrixSet || false;
+        delete srcOptions.hqMatrixSet;
+
+        let useHq = false;
+        if(DEVICE_PIXEL_RATIO > 1) {
+            if(hqUrl !== false) {
+                srcOptions.url = hqUrl;
+                useHq = true;
+            }
+            if(hqLayer !== false) {
+                srcOptions.layer = hqLayer;
+                useHq = true;
+            }
+            if(hqMatrixSet !== false) {
+                srcOptions.matrixSet = hqMatrixSet;
+                useHq = true;
+            }
+        }
         var levels = srcOptions.levels;
         var extent = srcOptions.extent || srcOptions.projection.getExtent();
         var w = getWidth(extent);
@@ -98,11 +95,13 @@ class WMTS extends AnolBaseLayer {
         var url = this._createRequestUrl(srcOptions);
         srcOptions = $.extend(true, {}, srcOptions, {
             url: url,
+            tileSize: useHq ? srcOptions.tileSize.map(val => val * 2) : srcOptions.tileSize,
             tileGrid: new WMTSTileGrid({
                 extent: extent,
                 origin: getTopLeft(extent),
                 resolutions: this._createResolution(levels, minRes),
-                matrixIds: this._createMatrixIds(levels)
+                matrixIds: this._createMatrixIds(levels),
+                tileSize: srcOptions.tileSize
             }),
             requestEncoding: 'REST',
             style: 'default'
