@@ -6,6 +6,8 @@ import VectorSource from 'ol/source/Vector';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import { unByKey } from 'ol/Observable';
 
+import content from './templates/popup.html';
+
 // TODO rename to popup
 angular.module('anol.featurepopup')
 /**
@@ -58,7 +60,7 @@ angular.module('anol.featurepopup')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/popup.html');
+                    return content;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

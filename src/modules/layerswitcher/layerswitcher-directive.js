@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/layerswitcher.html';
+
 angular.module('anol.layerswitcher')
 
 /**
@@ -31,7 +33,7 @@ angular.module('anol.layerswitcher')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/layerswitcher.html');
+                    return template;
                 },
                 scope: {
                     anolLayerswitcher: '@anolLayerswitcher',

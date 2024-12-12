@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/featureproperties.html';
+
 angular.module('anol.featureproperties')
 /**
  * @ngdoc directive
@@ -36,7 +38,7 @@ angular.module('anol.featureproperties')
  *
  *
  */
-    .directive('anolFeatureProperties', ['$templateRequest', '$compile', '$translate', 
+    .directive('anolFeatureProperties', ['$templateRequest', '$compile', '$translate',
         function($templateRequest, $compile, $translate) {
             return {
                 restrict: 'A',
@@ -51,8 +53,8 @@ angular.module('anol.featureproperties')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/featureproperties.html');
-                },           
+                    return template;
+                },
                 link: function(scope, element, attrs, FeaturePopupController) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
@@ -60,7 +62,7 @@ angular.module('anol.featureproperties')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    } 
+                    }
                     scope.translationNamespace = angular.isDefined(scope.translationNamespace) ?
                         scope.translationNamespace : 'featureproperties';
 

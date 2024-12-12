@@ -10,6 +10,8 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { transform } from 'ol/proj';
 
+import template from './templates/measure.html';
+
 angular.module('anol.measure')
 /**
  * @ngdoc directive
@@ -237,7 +239,7 @@ angular.module('anol.measure')
                     title: '@'
                 },
                 template: function() {
-                    return require('./templates/measure.html');
+                    return template;
                 },
                 link: {
                     pre: function(scope, element) {

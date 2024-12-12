@@ -1,6 +1,8 @@
 import './module.js';
 import GeoJSON from 'ol/format/GeoJSON.js'
 
+import template from './templates/print.html';
+
 angular.module('anol.print')
 /**
  * @ngdoc directive
@@ -31,7 +33,7 @@ angular.module('anol.print')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/print.html');
+                    return template;
                 },
                 scope: {
                     showPrintArea: '='

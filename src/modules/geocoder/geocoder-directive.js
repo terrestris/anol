@@ -5,6 +5,8 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Select from 'ol/interaction/Select';
 
+import template from './templates/searchbox.html';
+
 angular.module('anol.geocoder')
 /**
  * @ngdoc directive
@@ -43,7 +45,7 @@ angular.module('anol.geocoder')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/searchbox.html');
+                    return template;
                 },
                 link: function(scope, element, attrs, AnolMapController) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

@@ -12,6 +12,8 @@ import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import Text from 'ol/style/Text';
 
+import template from './templates/draw.html'
+
 angular.module('anol.draw')
     /**
      * @ngdoc directive
@@ -67,7 +69,7 @@ angular.module('anol.draw')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/draw.html');
+                    return template;
                 },
                 link: function (scope, element, attrs, AnolMapController) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

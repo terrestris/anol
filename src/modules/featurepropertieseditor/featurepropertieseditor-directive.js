@@ -1,6 +1,8 @@
 import './module.js';
 import {DigitizeState} from "../savemanager/digitize-state";
 
+import template from './templates/featurepropertieseditor.html';
+
 angular.module('anol.featurepropertieseditor')
 /**
  * @ngdoc directive
@@ -27,7 +29,7 @@ angular.module('anol.featurepropertieseditor')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/featurepropertieseditor.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

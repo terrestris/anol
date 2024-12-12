@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/featurestyleeditor.html';
+
 angular.module('anol.featurestyleeditor')
 /**
  * @ngdoc directive
@@ -64,7 +66,7 @@ angular.module('anol.featurestyleeditor')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/featurestyleeditor.html');
+                    return template;
                 },
                 link: {
                     pre: function(scope, element, attrs) {

@@ -2,6 +2,7 @@ import './module.js';
 import { asString as colorAsString } from 'ol/color';
 import VectorLayer from 'ol/layer/Vector';
 
+import template from './templates/legend.html';
 
 angular.module('anol.legend')
 /**
@@ -23,7 +24,7 @@ angular.module('anol.legend')
  * @description
  * Adds a legend to map
  */
-    .directive('anolLegend', ['$templateRequest', '$compile', 'LayersService', 'ControlsService', 'CatalogService',  
+    .directive('anolLegend', ['$templateRequest', '$compile', 'LayersService', 'ControlsService', 'CatalogService',
         function($templateRequest, $compile, LayersService, ControlsService, CatalogService) {
             return {
                 restrict: 'A',
@@ -33,8 +34,8 @@ angular.module('anol.legend')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/legend.html');
-                },           
+                    return template;
+                },
                 scope: {
                     anolLegend: '@',
                     // TODO compare with featurepopup openCallback. Why a callback wrapper is added here?
@@ -52,7 +53,7 @@ angular.module('anol.legend')
                                 element.html(template);
                                 $compile(template)(scope);
                             });
-                        }                 
+                        }
                         scope.collapsed = false;
                         scope.showToggle = false;
 
@@ -95,7 +96,7 @@ angular.module('anol.legend')
                                     if(overlayLayer.legend !== false) {
                                         layers.push(overlayLayer);
                                     }
-                                }); 
+                                });
                                 if (layers.length >= 1 || group.legend) {
                                     scope.legendLayers.push({
                                         'group': group,

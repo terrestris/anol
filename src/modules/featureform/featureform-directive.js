@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/featureform.html';
+
 /**
  * @typedef {object} SelectOption
  * @property {string} [label]
@@ -52,7 +54,7 @@ angular.module('anol.featureform')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/featureform.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

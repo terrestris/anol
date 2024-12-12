@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/savemanager.html';
+
 angular.module('anol.savemanager')
 
 /**
@@ -14,7 +16,7 @@ angular.module('anol.savemanager')
  * @description
  * Provides save button for each saveable layer with changes
  */
-    .directive('anolSavemanager', ['$templateRequest', '$compile', 'SaveManagerService', 
+    .directive('anolSavemanager', ['$templateRequest', '$compile', 'SaveManagerService',
         function($templateRequest, $compile, SaveManagerService) {
             return {
                 restrict: 'A',
@@ -22,8 +24,8 @@ angular.module('anol.savemanager')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/savemanager.html');
-                },                 
+                    return template;
+                },
                 scope: {},
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
@@ -32,7 +34,7 @@ angular.module('anol.savemanager')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    }             
+                    }
                     scope.unsavedLayers = SaveManagerService.changedLayers;
                     scope.changedFeatures = SaveManagerService.changedFeatures;
 

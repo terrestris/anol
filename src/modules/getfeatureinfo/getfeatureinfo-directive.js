@@ -4,6 +4,8 @@ import WMSGetFeatureInfo from 'ol/format/WMSGetFeatureInfo';
 import VectorLayer from 'ol/layer/Vector';
 import { unByKey } from 'ol/Observable';
 
+import template from './templates/getfeatureinfo.html';
+
 angular.module('anol.getfeatureinfo')
 /**
  * @ngdoc directive
@@ -49,7 +51,7 @@ angular.module('anol.getfeatureinfo')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/getfeatureinfo.html');
+                    return template;
                 },
                 link: {
                     pre: function(scope, element, attrs) {

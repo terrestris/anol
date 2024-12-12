@@ -1,6 +1,8 @@
 import './module.js';
 import GeoJSON from 'ol/format/GeoJSON';
 
+import template from './templates/featureexchange.html';
+
 angular.module('anol.featureexchange')
 
 /**
@@ -34,7 +36,7 @@ angular.module('anol.featureexchange')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/featureexchange.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

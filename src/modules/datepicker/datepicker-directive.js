@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/datepicker.html';
+
 angular.module('anol.datepicker')
     /**
      * @ngdoc directive
@@ -25,7 +27,7 @@ angular.module('anol.datepicker')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/datepicker.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

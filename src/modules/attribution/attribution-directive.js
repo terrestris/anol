@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/attribution.html';
+
 angular.module('anol.attribution')
 
 /**
@@ -59,7 +61,7 @@ angular.module('anol.attribution')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/attribution.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
@@ -68,7 +70,7 @@ angular.module('anol.attribution')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    } 
+                    }
                     // attribute defaults
                     scope.tooltipPlacement = angular.isDefined(scope.tooltipPlacement) ?
                         scope.tooltipPlacement : 'left';

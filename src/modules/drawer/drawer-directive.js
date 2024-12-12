@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/drawer.html';
+
 angular.module('anol.drawer')
     .directive('anolDrawer', [
         function() {
@@ -15,7 +17,7 @@ angular.module('anol.drawer')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/drawer.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (angular.isUndefined(scope.open)) {

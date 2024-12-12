@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/savemanager.html';
+
 angular.module('anol.savesettings')
 
     .directive('anolSavesettings', ['$templateRequest', '$compile', 'SaveSettingsService', 'ProjectSettings', 'NotificationService',
@@ -10,20 +12,20 @@ angular.module('anol.savesettings')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/savemanager.html');
-                },        
+                    return template;
+                },
                 scope: {
                     modalCallBack:'&'
                 },
                 link: function(scope, element, attrs) {
-            
+
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
                             var template = angular.element(html);
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    }    
+                    }
 
                     var pageBody = angular.element(document).find('body');
                     scope.addWaiting = function() {
@@ -49,7 +51,7 @@ angular.module('anol.savesettings')
                     };
                     scope.save = function(name) {
                         // load project name to overwrite
-                        if (angular.isUndefined(name) || scope.id) { 
+                        if (angular.isUndefined(name) || scope.id) {
                             angular.forEach(scope.projectSettings, function(value) {
                                 if (value.id == scope.id) {
                                     name = value.name;
@@ -84,7 +86,7 @@ angular.module('anol.savesettings')
                             NotificationService.addError(data.message);
                             scope.removeWaiting();
                         });
-                    };                 
+                    };
                 }
             };
         }]);

@@ -5,9 +5,9 @@
  * Base anol module
  */
 
-require('angular-ui-bootstrap');
-require('angular-translate');
-require('angular-sanitize');
+import 'angular-ui-bootstrap';
+import 'angular-translate';
+import 'angular-sanitize';
 
 angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
 /**

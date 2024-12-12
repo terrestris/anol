@@ -4,6 +4,8 @@ import Point from 'ol/geom/Point';
 import Select from 'ol/interaction/Select';
 import Geolocation from 'ol/Geolocation';
 
+import template from './templates/geolocation.html';
+
 angular.module('anol.geolocation')
 /**
  * @ngdoc directive
@@ -43,8 +45,8 @@ angular.module('anol.geolocation')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/geolocation.html');
-                },           
+                    return template;
+                },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
                         $templateRequest(attrs.templateUrl).then(function(html){
@@ -52,7 +54,7 @@ angular.module('anol.geolocation')
                             element.html(template);
                             $compile(template)(scope);
                         });
-                    }         
+                    }
                     scope.anolGeolocation = 'false' !== scope.anolGeolocation;
                     scope.showPosition = 'false' !== scope.showPosition;
                     scope.highlight = angular.isDefined(scope.highlight) ? parseInt(scope.highlight) : false;

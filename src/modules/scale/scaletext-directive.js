@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/scaletext.html';
+
 angular.module('anol.scale')
 
 /**
@@ -20,7 +22,7 @@ angular.module('anol.scale')
 
         var getScaleFromResolution = function(resolution, units) {
           var scale = INCHES_PER_UNIT[units] * DOTS_PER_INCH * resolution;
-          return Math.round(scale);;
+          return Math.round(scale);
         };
         return getScaleFromResolution(view.getResolution(), units)
     })
@@ -70,8 +72,8 @@ angular.module('anol.scale')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/scaletext.html');
-                },         
+                    return template;
+                },
                 scope: {},
                 link: {
                     pre: function(scope, element, attrs, AnolMapController) {
@@ -81,7 +83,7 @@ angular.module('anol.scale')
                                 element.html(template);
                                 $compile(template)(scope);
                             });
-                        }                 
+                        }
                         scope.view = MapService.getMap().getView();
                         if(angular.isObject(AnolMapController)) {
                             element.addClass('ol-unselectable');
@@ -98,7 +100,7 @@ angular.module('anol.scale')
                     post: function(scope) {
                         scope.updateScale = function() {
                             if (scope.scale > 0) {
-                                var resolution = calculateResolutionFromScale(scope.view, scope.scale) 
+                                var resolution = calculateResolutionFromScale(scope.view, scope.scale)
                                 scope.view.setResolution(resolution)
                             }
                         }

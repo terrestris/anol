@@ -1,5 +1,7 @@
 import './module.js';
 
+import template from './templates/catalog.html';
+
 angular.module('anol.catalog')
 /**
  * @ngdoc directive
@@ -19,7 +21,7 @@ angular.module('anol.catalog')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/catalog.html');
+                    return template;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {

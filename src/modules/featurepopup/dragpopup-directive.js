@@ -1,6 +1,8 @@
 import './module.js';
 import Control from 'ol/control/Control';
 
+import template from './templates/dragpopup.html';
+
 // TODO rename to popup
 angular.module('anol.featurepopup')
 /**
@@ -22,8 +24,8 @@ angular.module('anol.featurepopup')
                 if (tAttrs.templateUrl) {
                     return tAttrs.templateUrl;
                 }
-                return require('./templates/dragpopup.html');
-            },         
+                return template;
+            },
             link: function(scope, element) {
                 element.css('display', 'none');
                 scope.feature = undefined;
