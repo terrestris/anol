@@ -1,35 +1,35 @@
 import './module.js';
 import {transform} from 'ol/proj';
-import {unByKey} from 'ol/Observable.js';
-import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
+import {unByKey} from 'ol/Observable';
 import Select from 'ol/interaction/Select';
 
+import templateHTML from './templates/searchbox.html';
+
 angular.module('anol.geocoder')
-/**
- * @ngdoc directive
- * @name anol.geocoder.directive:anolGeocoderSearchbox
- *
- * @restrict A
- * @required $timeout
- * @requires anol.map.MapService
- * @requires anol.map.ControlsService
- *
- * @param {string} anolGeocoderSearchbox Name of geocoder to use. Must be an available anol.geocoder
- * @param {string} zoomLevel Level to show result in
- * @param {object} geocoderOptions Options for selected geocoder
- * @param {string} proxyUrl Proxy to use
- * @param {number} highlight Time result marker is visible. Use 0 for invinitiv visibility (removeable by click)
- * @param {string} templateUrl Url to template to use instead of default one
- *
- * @description
- * Search for a location string on given geocoder, display and select results
- */
+    /**
+     * @ngdoc directive
+     * @name anol.geocoder.directive:anolGeocoderSearchbox
+     *
+     * @restrict A
+     * @required $timeout
+     * @requires anol.map.MapService
+     * @requires anol.map.ControlsService
+     *
+     * @param {string} anolGeocoderSearchbox Name of geocoder to use. Must be an available anol.geocoder
+     * @param {string} zoomLevel Level to show result in
+     * @param {object} geocoderOptions Options for selected geocoder
+     * @param {string} proxyUrl Proxy to use
+     * @param {number} highlight Time result marker is visible. Use 0 for invinitiv visibility (removeable by click)
+     * @param {string} templateUrl Url to template to use instead of default one
+     *
+     * @description
+     * Search for a location string on given geocoder, display and select results
+     */
 
     .directive('anolGeocoderSearchbox', ['$rootScope', '$templateRequest', '$filter', '$compile', '$timeout', '$location',
         '$translate', 'MapService', 'ControlsService', 'InteractionsService', 'LayersService', 'GeocoderService',
-        function($rootScope, $templateRequest, $filter, $compile, $timeout, $location, $translate, MapService,
-                 ControlsService, InteractionsService, LayersService, GeocoderService) {
+        function ($rootScope, $templateRequest, $filter, $compile, $timeout, $location, $translate, MapService,
+                  ControlsService, InteractionsService, LayersService, GeocoderService) {
             return {
                 restrict: 'A',
                 require: '?^anolMap',
@@ -39,16 +39,31 @@ angular.module('anol.geocoder')
                     showSearchDropdown: '=',
                     toUrlMarker: '=?'
                 },
-                template: function(tElement, tAttrs) {
+                template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/searchbox.html');
+                    return templateHTML;
                 },
-                link: function(scope, element, attrs, AnolMapController) {
+                link: function (scope, element, attrs, AnolMapController) {
+                    const removeUrlMarker = function () {
+                        if (scope.toUrlMarker !== true) {
+                            return;
+                        }
+                        if (!scope.urlMarkerAdded) {
+                            return;
+                        }
+                        var urlParams = $location.search();
+                        var urlMarkers = urlParams.marker;
+                        if (urlMarkers.length > 0) {
+                            urlMarkers.pop();
+                        }
+                        $location.search('marker', urlMarkers);
+                        scope.urlMarkerAdded = false;
+                    };
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
-                        $templateRequest(attrs.templateUrl).then(function(html){
-                            var template = angular.element(html);
+                        $templateRequest(attrs.templateUrl).then(function (html) {
+                            const template = angular.element(html);
                             element.append(template);
                             $compile(template)(scope);
                         });
@@ -69,10 +84,10 @@ angular.module('anol.geocoder')
                         scope.activeGeocoderConfig = initialConfigs[0]
                     }
 
-                    var removeMarkerInteraction;
-                    var translations = $translate([
+                    let removeMarkerInteraction;
+                    $translate([
                         'anol.geocoder.PLACEHOLDER',
-                    ]).then(function(translations) {
+                    ]).then(function (translations) {
                         scope.placeholderBase = translations['anol.geocoder.PLACEHOLDER'];
                         scope.geocoder = setAnolGeocoder(scope.activeGeocoderConfig);
                         scope.markerLayer = createMarkerLayer(scope.activeGeocoderConfig);
@@ -90,41 +105,41 @@ angular.module('anol.geocoder')
                     scope.byResultList = false;
                     scope.map = MapService.getMap();
 
-                    var changeCursorCondition = function(pixel) {
-                        return MapService.getMap().hasFeatureAtPixel(pixel, function(layer) {
+                    const changeCursorCondition = function (pixel) {
+                        return MapService.getMap().hasFeatureAtPixel(pixel, function (layer) {
                             return scope.markerLayer === layer.get('anolLayer');
                         });
                     };
 
-                    var addUrlMarker = function(coordinate, projectionCode, label) {
-                        if(scope.toUrlMarker !== true) {
+                    const addUrlMarker = function (coordinate, projectionCode, label) {
+                        if (scope.toUrlMarker !== true) {
                             return;
                         }
                         removeUrlMarker();
-                        var position = transform(
+                        const position = transform(
                             coordinate,
                             projectionCode,
                             'EPSG:4326'
                         );
-                        var urlParams = $location.search();
+                        const urlParams = $location.search();
 
-                        var urlMarkers = [];
+                        // let urlMarkers = [];
+                        //
+                        // if (angular.isDefined(urlParams.marker)) {
+                        //     if (angular.isArray(urlParams.marker)) {
+                        //         urlMarkers = urlParams.marker;
+                        //     } else {
+                        //         urlMarkers.push(urlParams.marker);
+                        //     }
+                        // }
 
-                        if(angular.isDefined(urlParams.marker)) {
-                            if(angular.isArray(urlParams.marker)) {
-                                urlMarkers = urlParams.marker;
-                            } else {
-                                urlMarkers.push(urlParams.marker);
-                            }
-                        }
-
-                        var urlMarker = {
+                        const urlMarker = {
                             'color': scope.urlMarkerColor || 'aa0000',
-                            'coord':  position.join(','),
+                            'coord': position.join(','),
                             'srs': '4326',
                             'label': label
                         };
-                        if(scope.urlMarkerWithLabel === 'true') {
+                        if (scope.urlMarkerWithLabel === 'true') {
                             urlMarker.label = label;
                         }
                         // var urlMarkerParams = [];
@@ -137,38 +152,23 @@ angular.module('anol.geocoder')
                         // scope.urlMarkerAdded = true;
                     };
 
-                    var removeUrlMarker = function() {
-                        if(scope.toUrlMarker !== true) {
-                            return;
-                        }
-                        if(!scope.urlMarkerAdded) {
-                            return;
-                        }
-                        var urlParams = $location.search();
-                        var urlMarkers = urlParams.marker;
-                        if(urlMarkers.length > 0) {
-                            urlMarkers.pop();
-                        }
-                        $location.search('marker', urlMarkers);
-                        scope.urlMarkerAdded = false;
-                    };
 
-                    var addSearchResult = function(feature) {
+                    const addSearchResult = function (feature) {
                         var layers = scope.map.getLayers();
                         scope.markerLayer.olLayer.setZIndex(layers.getLength() + 20);
                         var markerSource = scope.markerLayer.olLayer.getSource();
                         markerSource.addFeature(feature);
 
-                        if(scope.highlight > 0) {
-                            $timeout(function() {
+                        if (scope.highlight > 0) {
+                            $timeout(function () {
                                 markerSource.clear();
                             }, scope.highlight);
                         } else {
                             removeMarkerInteraction = new Select({
                                 layers: [scope.markerLayer.olLayer]
                             });
-                            removeMarkerInteraction.on('select', function(evt) {
-                                if(evt.selected.length > 0) {
+                            removeMarkerInteraction.on('select', function (evt) {
+                                if (evt.selected.length > 0) {
                                     removeMarkerInteraction.getFeatures().clear();
                                     markerSource.clear();
                                     InteractionsService.removeInteraction(removeMarkerInteraction);
@@ -182,62 +182,62 @@ angular.module('anol.geocoder')
                         }
                     };
 
-                    var addMarker = function(position) {
-                        var markerFeature = new Feature({
-                            geometry: new Point(position)
-                        });
-                        var markerSource = scope.markerLayer.olLayer.getSource();
-                        markerSource.addFeature(markerFeature);
-                        if(scope.highlight > 0) {
-                            $timeout(function() {
-                                markerSource.clear();
-                            }, scope.highlight);
-                        } else {
-                            removeMarkerInteraction = new Select({
-                                layers: [scope.markerLayer.olLayer]
-                            });
-                            removeMarkerInteraction.on('select', function(evt) {
-                                if(evt.selected.length > 0) {
-                                    removeMarkerInteraction.getFeatures().clear();
-                                    markerSource.clear();
-                                    InteractionsService.removeInteraction(removeMarkerInteraction);
-                                    MapService.removeCursorPointerCondition(changeCursorCondition);
-                                    removeMarkerInteraction = undefined;
-                                    removeUrlMarker();
-                                }
-                            });
-                            InteractionsService.addInteraction(removeMarkerInteraction);
-                            MapService.addCursorPointerCondition(changeCursorCondition);
-                        }
-                    };
+                    // const addMarker = function (position) {
+                    //     var markerFeature = new Feature({
+                    //         geometry: new Point(position)
+                    //     });
+                    //     var markerSource = scope.markerLayer.olLayer.getSource();
+                    //     markerSource.addFeature(markerFeature);
+                    //     if (scope.highlight > 0) {
+                    //         $timeout(function () {
+                    //             markerSource.clear();
+                    //         }, scope.highlight);
+                    //     } else {
+                    //         removeMarkerInteraction = new Select({
+                    //             layers: [scope.markerLayer.olLayer]
+                    //         });
+                    //         removeMarkerInteraction.on('select', function (evt) {
+                    //             if (evt.selected.length > 0) {
+                    //                 removeMarkerInteraction.getFeatures().clear();
+                    //                 markerSource.clear();
+                    //                 InteractionsService.removeInteraction(removeMarkerInteraction);
+                    //                 MapService.removeCursorPointerCondition(changeCursorCondition);
+                    //                 removeMarkerInteraction = undefined;
+                    //                 removeUrlMarker();
+                    //             }
+                    //         });
+                    //         InteractionsService.addInteraction(removeMarkerInteraction);
+                    //         MapService.addCursorPointerCondition(changeCursorCondition);
+                    //     }
+                    // };
 
                     function createMarkerStyle(activeGeocoderConfig) {
-                        var markerStyle = {};
+                        let markerStyle = {};
                         if (angular.isDefined(activeGeocoderConfig.resultMarker)) {
                             markerStyle = {
-                              'externalGraphic': scope.graphicFileUrl + activeGeocoderConfig.resultMarker.graphicFile,
-                              'graphicWidth': activeGeocoderConfig.resultMarker.graphicWidth,
-                              'graphicHeight': activeGeocoderConfig.resultMarker.graphicHeight,
-                              'graphicYAnchor': activeGeocoderConfig.resultMarker.graphicYAnchor,
-                              'graphicScale': activeGeocoderConfig.resultMarker.graphicScale,
-                              'strokeColor': activeGeocoderConfig.resultMarker.strokeColor,
-                              'strokeWidth': activeGeocoderConfig.resultMarker.strokeWidth,
-                              'strokeOpacity': activeGeocoderConfig.resultMarker.strokeOpacity,
-                              'fillOpacity': activeGeocoderConfig.resultMarker.fillOpacity,
-                              'fillColor': activeGeocoderConfig.resultMarker.fillColor,
+                                'externalGraphic': scope.graphicFileUrl + activeGeocoderConfig.resultMarker.graphicFile,
+                                'graphicWidth': activeGeocoderConfig.resultMarker.graphicWidth,
+                                'graphicHeight': activeGeocoderConfig.resultMarker.graphicHeight,
+                                'graphicYAnchor': activeGeocoderConfig.resultMarker.graphicYAnchor,
+                                'graphicScale': activeGeocoderConfig.resultMarker.graphicScale,
+                                'strokeColor': activeGeocoderConfig.resultMarker.strokeColor,
+                                'strokeWidth': activeGeocoderConfig.resultMarker.strokeWidth,
+                                'strokeOpacity': activeGeocoderConfig.resultMarker.strokeOpacity,
+                                'fillOpacity': activeGeocoderConfig.resultMarker.fillOpacity,
+                                'fillColor': activeGeocoderConfig.resultMarker.fillColor,
                             }
                         }
                         return markerStyle;
                     }
 
                     function createMarkerLayer(activeGeocoderConfig) {
-                        var markerStyle = createMarkerStyle(activeGeocoderConfig)
-                        var markerLayer = new anol.layer.Feature({
+                        const markerStyle = createMarkerStyle(activeGeocoderConfig);
+                        const markerLayer = new anol.layer.Feature({
                             name: 'geocoderLayer',
                             displayInLayerswitcher: false,
                             style: markerStyle
                         });
-                        var markerOlLayerOptions = markerLayer.olLayerOptions;
+                        const markerOlLayerOptions = markerLayer.olLayerOptions;
                         markerOlLayerOptions.source = new markerLayer.OL_SOURCE_CLASS(markerLayer.olSourceOptions);
                         markerLayer.setOlLayer(new markerLayer.OL_LAYER_CLASS(markerOlLayerOptions));
                         LayersService.addSystemLayer(markerLayer);
@@ -254,10 +254,10 @@ angular.module('anol.geocoder')
                         return GeocoderService.getGeocoder(activeGeocoderConfig.name);
                     }
 
-                    scope.$watchCollection(() => GeocoderService.getSearchBoxConfigs(), function(newConfigs) {
-                        var found = false;
-                        var baseGeocoderConfigs = [];
-                        var layerGeocoderConfigs = [];
+                    scope.$watchCollection(() => GeocoderService.getSearchBoxConfigs(), function (newConfigs) {
+                        let found = false;
+                        const baseGeocoderConfigs = [];
+                        const layerGeocoderConfigs = [];
 
                         for (const geocoder of newConfigs) {
                             if (geocoder.name === scope.activeGeocoderConfig.name) {
@@ -284,7 +284,7 @@ angular.module('anol.geocoder')
                         scope.searchDropdown = newConfigs.length > 1;
                     });
 
-                    scope.$watch('searchString', function(value) {
+                    scope.$watch('searchString', function (value) {
                         if (scope.byResultList) return;
 
                         if (angular.isUndefined(value)) {
@@ -312,21 +312,21 @@ angular.module('anol.geocoder')
                     });
 
                     scope.$on('showSearchResult', function (evt, result) {
-                        scope.showResult(result, false, { animate: false });
+                        scope.showResult(result, false, {animate: false});
                     });
 
-                    scope.filterCatalogResults = function() {
+                    scope.filterCatalogResults = function () {
                         let searchString = scope.searchString.toString();
-                        var filterdResult = [];
+                        const filterdResult = [];
 
-                        angular.forEach(scope.searchResults, function(result) {
+                        angular.forEach(scope.searchResults, function (result) {
                             if (result.displayText.toLowerCase() === searchString.toLowerCase()) {
                                 filterdResult.push(result);
                             }
                         });
 
-                        if (filterdResult.length === 0){
-                            angular.forEach(scope.searchResults, function(result) {
+                        if (filterdResult.length === 0) {
+                            angular.forEach(scope.searchResults, function (result) {
                                 if (result.displayText.indexOf(searchString) !== -1) {
                                     filterdResult.push(result);
                                 }
@@ -335,17 +335,17 @@ angular.module('anol.geocoder')
                         return filterdResult;
                     };
 
-                    scope.selectCatalogResult = function(result) {
+                    scope.selectCatalogResult = function (result) {
                         scope.searchString = undefined;
                         scope.searchTerms.push(result);
                         scope.searchTerm = result.key
                         scope.startSearch();
                     }
 
-                    scope.searchButton = function() {
+                    scope.searchButton = function () {
                         if (scope.geocoder.isCatalog) {
                             if (angular.isDefined(scope.searchString)) {
-                                var filterdResult = scope.filterCatalogResults();
+                                const filterdResult = scope.filterCatalogResults();
                                 if (filterdResult.length === 1) {
                                     if (scope.geocoder.hasNextStep()) {
                                         scope.selectCatalogResult(filterdResult[0]);
@@ -358,8 +358,8 @@ angular.module('anol.geocoder')
                         }
 
                         if (scope.activeGeocoderConfig.autoSearchChars) {
-                            var found = false;
-                            angular.forEach(scope.searchResults, function(result) {
+                            let found = false;
+                            angular.forEach(scope.searchResults, function (result) {
                                 if (result.sml === 1) {
                                     scope.showResult(result, false)
                                     found = true;
@@ -373,7 +373,7 @@ angular.module('anol.geocoder')
                         scope.startSearch();
                     }
 
-                    scope.resetSteps = function(event, index) {
+                    scope.resetSteps = function (event, index) {
                         event.preventDefault();
                         if (index === -1) {
                             scope.searchTerms = [];
@@ -393,7 +393,7 @@ angular.module('anol.geocoder')
                         scope.startSearch();
                     }
 
-                    scope.startSearch = function(showResultDirect) {
+                    scope.startSearch = function (showResultDirect) {
                         scope.searchResults = [];
                         scope.noResults = false;
                         scope.markerLayer.clear();
@@ -402,7 +402,7 @@ angular.module('anol.geocoder')
                         if (!scope.geocoder.isCatalog) {
                             if (angular.isUndefined(scope.searchString) ||
                                 scope.searchString.length < scope.activeGeocoderConfig.autoSearchChars) {
-                                    return;
+                                return;
                             }
                         }
                         scope.searchInProgress = true;
@@ -411,9 +411,9 @@ angular.module('anol.geocoder')
                             scope.searchTerm = scope.searchString;
                         }
                         scope.geocoder.request(scope.searchTerm)
-                            .then(function(results) {
+                            .then(function (results) {
                                 scope.searchInProgress = false;
-                                if(results.length === 0) {
+                                if (results.length === 0) {
                                     scope.noResults = true;
                                 } else {
                                     scope.searchResults = results;
@@ -422,7 +422,7 @@ angular.module('anol.geocoder')
                                 }
 
                                 if (angular.isDefined(showResultDirect) && showResultDirect === true) {
-                                    angular.forEach(results, function(result) {
+                                    angular.forEach(results, function (result) {
                                         if (result.sml === 1) {
                                             scope.showResult(result, false)
                                         }
@@ -437,7 +437,7 @@ angular.module('anol.geocoder')
                             });
                     };
 
-                    scope.activateGeocoder = function(geocoderConfig) {
+                    scope.activateGeocoder = function (geocoderConfig) {
                         if (scope.geocoder.isCatalog) {
                             scope.geocoder.step = 0;
                         }
@@ -453,32 +453,32 @@ angular.module('anol.geocoder')
                         scope.searchTerm = undefined;
 
                         // update style and clear source
-                        var markerStyle = createMarkerStyle(scope.activeGeocoderConfig);
-                        var markerSource = scope.markerLayer.olLayer.getSource();
+                        const markerStyle = createMarkerStyle(scope.activeGeocoderConfig);
+                        const markerSource = scope.markerLayer.olLayer.getSource();
                         markerSource.clear();
                         scope.markerLayer.style = markerStyle;
                         scope.markerLayer.setStyle();
                     }
 
-                    scope.hideElement = function() {
+                    scope.hideElement = function () {
                         element.find('.anol-searchbox').removeClass('open');
                         unByKey(scope.handleHideElement);
                     }
-                    scope.hideGeocoderList = function() {
+                    scope.hideGeocoderList = function () {
                         $scope.showGeocoderList = false;
                     }
 
-                    scope.handleInputKeypress = function(event) {
+                    scope.handleInputKeypress = function (event) {
                         event.stopPropagation();
-                        if((event.key === 'ArrowDown' || event.keyCode === 40) && scope.searchResults.length > 0) {
+                        if ((event.key === 'ArrowDown' || event.keyCode === 40) && scope.searchResults.length > 0) {
                             event.preventDefault();
                             element.find('.dropdown-menu li a:first').focus();
                         }
-                        if(event.key === 'Enter' || event.keyCode === 13) {
+                        if (event.key === 'Enter' || event.keyCode === 13) {
                             if (scope.geocoder.isCatalog) {
                                 event.preventDefault();
                                 if (angular.isDefined(scope.searchString)) {
-                                    var filterdResult = scope.filterCatalogResults();
+                                    const filterdResult = scope.filterCatalogResults();
                                     if (filterdResult.length === 1) {
                                         if (scope.geocoder.hasNextStep()) {
                                             scope.selectCatalogResult(filterdResult[0]);
@@ -494,7 +494,7 @@ angular.module('anol.geocoder')
                         }
                         return false;
                     };
-                    scope.handleInputFocus = function(event) {
+                    scope.handleInputFocus = function () {
                         if (scope.searchResults.length > 0) {
                             scope.showResultList = true;
                         }
@@ -511,26 +511,26 @@ angular.module('anol.geocoder')
                             }
                         }
                     };
-                    scope.handleInputBlur = function(event) {
+                    scope.handleInputBlur = function (event) {
                     };
-                    scope.handleResultListMousedown = function(event) {
+                    scope.handleResultListMousedown = function () {
                         scope.isScrolling = true;
                     };
-                    scope.handleResultListMouseup = function(event) {
+                    scope.handleResultListMouseup = function () {
                         scope.isScrolling = false;
                     };
 
-                    scope.handleResultElementKeypress = function(event) {
+                    scope.handleResultElementKeypress = function (event) {
                         event.stopPropagation();
-                        var targetParent = angular.element(event.currentTarget).parent();
-                        if(event.key === 'ArrowDown' || event.keyCode === 40) {
+                        const targetParent = angular.element(event.currentTarget).parent();
+                        if (event.key === 'ArrowDown' || event.keyCode === 40) {
                             event.preventDefault();
                             targetParent.next().find('a').focus();
                         }
-                        if(event.key === 'ArrowUp' || event.keyCode === 38) {
+                        if (event.key === 'ArrowUp' || event.keyCode === 38) {
                             event.preventDefault();
-                            var target = targetParent.prev().find('a');
-                            if(target.length === 0) {
+                            const target = targetParent.prev().find('a');
+                            if (target.length === 0) {
                                 element.find('.form-control').focus();
                             } else {
                                 target.focus();
@@ -539,37 +539,37 @@ angular.module('anol.geocoder')
                         return false;
                     };
 
-                    scope.handleResultElementMouseover = function(event) {
+                    scope.handleResultElementMouseover = function (event) {
                         scope.isScrolling = false;
                         angular.element(event.currentTarget).focus();
                     };
 
-                    scope.handleResultElementFocus = function(event) {
+                    scope.handleResultElementFocus = function () {
                         scope.showResultList = true;
                     };
 
-                    scope.handleResultElementBlur = function(event) {
-                        if(scope.isScrolling) {
+                    scope.handleResultElementBlur = function (event) {
+                        if (scope.isScrolling) {
                             angular.element(event.currentTarget).focus();
                         } else {
                             scope.showResultList = false;
                         }
                     };
 
-                    scope.showResult = function(result, fromResultList) {
+                    scope.showResult = function (result, fromResultList) {
                         if (this.geocoder && this.geocoder.isCatalog && this.geocoder.hasNextStep()) {
                             scope.selectCatalogResult(result);
                             return;
                         }
 
                         scope.byResultList = true;
-                        var view = MapService.getMap().getView();
+                        const view = MapService.getMap().getView();
 
                         const feature = GeocoderService.parseFeature(result, view.getProjection());
 
                         // clear marker if result was selected from list
                         if (angular.isDefined(fromResultList) && fromResultList === true) {
-                            var markerSource = scope.markerLayer.olLayer.getSource();
+                            const markerSource = scope.markerLayer.olLayer.getSource();
                             markerSource.clear();
                         }
 
@@ -597,12 +597,12 @@ angular.module('anol.geocoder')
                             }
                         }
 
-                        $timeout(function() {
+                        $timeout(function () {
                             scope.byResultList = false;
                         });
                     };
 
-                    if(angular.isObject(AnolMapController)) {
+                    if (angular.isObject(AnolMapController)) {
                         ControlsService.addControl(new anol.control.Control({
                             element: element
                         }));
@@ -610,33 +610,33 @@ angular.module('anol.geocoder')
                 }
             }
         }])
-        .filter('searchCatalogFilter', function(){
-            return function(dataArray, searchTerm, geocoder) {
-                if (geocoder && !geocoder.isCatalog) {
-                    return dataArray;
-                }
-                if (!dataArray) {
-                    return;
-                }
-                else if (!searchTerm) {
-                    return dataArray;
-                }
-                else {
-                    var term = searchTerm.toLowerCase();
-                    var results = [];
-                    angular.forEach(dataArray, function(item) {
-                        if (item.displayText.toLowerCase().indexOf(term) > -1) {
-                            results.push(item)
-                        }
-                    });
+    .filter('searchCatalogFilter', function () {
+        return function (dataArray, searchTerm, geocoder) {
+            if (geocoder && !geocoder.isCatalog) {
+                return dataArray;
+            }
+            if (!dataArray) {
+                return;
+            }
 
-                    if (results.length === 1) {
-                        return results;
-                    }
+            if (!searchTerm) {
+                return dataArray;
+            }
 
-                    return dataArray.filter(function(item){
-                        return item.displayText.toLowerCase().indexOf(term) > -1;
-                    });
+            var term = searchTerm.toLowerCase();
+            var results = [];
+            angular.forEach(dataArray, function (item) {
+                if (item.displayText.toLowerCase().indexOf(term) > -1) {
+                    results.push(item)
                 }
-            };
-        });
+            });
+
+            if (results.length === 1) {
+                return results;
+            }
+
+            return dataArray.filter(function (item) {
+                return item.displayText.toLowerCase().indexOf(term) > -1;
+            });
+        };
+    });

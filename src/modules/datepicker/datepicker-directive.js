@@ -1,5 +1,7 @@
 import './module.js';
 
+import templateHTML from './templates/datepicker.html';
+
 angular.module('anol.datepicker')
     /**
      * @ngdoc directive
@@ -15,34 +17,34 @@ angular.module('anol.datepicker')
      *
      */
     .directive('anolDatePicker', ['$templateRequest', '$compile',
-        function($templateRequest, $compile) {
+        function ($templateRequest, $compile) {
             return {
                 restrict: 'E',
                 scope: {
                     date: '='
                 },
-                template: function(tElement, tAttrs) {
+                template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/datepicker.html');
+                    return templateHTML;
                 },
-                link: function(scope, element, attrs) {
+                link: function (scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
-                        $templateRequest(attrs.templateUrl).then(function(html){
+                        $templateRequest(attrs.templateUrl).then(function (html) {
                             var template = angular.element(html);
                             element.html(template);
                             $compile(template)(scope);
                         });
                     }
 
-                    var dt = scope.date;
+                    const dt = scope.date;
                     scope.dt = dt ? new Date(dt) : undefined;
 
-                    scope.$watch('dt', function(newValue) {
+                    scope.$watch('dt', function (newValue) {
                         scope.date = newValue ? newValue.toISOString() : undefined;
                     });
-                    scope.$watch('date', function(newValue) {
+                    scope.$watch('date', function (newValue) {
                         scope.dt = newValue ? new Date(newValue) : undefined;
                     });
 

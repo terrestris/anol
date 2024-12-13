@@ -5,25 +5,25 @@
  * Base anol module
  */
 
-require('angular-ui-bootstrap');
-require('angular-translate');
-require('angular-sanitize');
+import 'angular-ui-bootstrap';
+import 'angular-translate';
+import 'angular-sanitize';
 
 angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
-/**
- * @ngdoc object
- * @name anol.constant:DefaultMapName
- * @description
- * Id and class added to ol.Map DOM-element
- */
+    /**
+     * @ngdoc object
+     * @name anol.constant:DefaultMapName
+     * @description
+     * Id and class added to ol.Map DOM-element
+     */
     .constant('DefaultMapName', 'anol-map')
-// found at http://stackoverflow.com/a/21098541
-    .filter('html',['$sce', function($sce) {
-        return function(input){
+    // found at http://stackoverflow.com/a/21098541
+    .filter('html', ['$sce', function ($sce) {
+        return function (input) {
             return $sce.trustAsHtml(input);
         };
     }])
-    .config(['$translateProvider', function($translateProvider) {
+    .config(['$translateProvider', function ($translateProvider) {
         $translateProvider.useSanitizeValueStrategy('escape');
         // define default language
         // see https://angular-translate.github.io/docs/#/guide/12_asynchronous-loading 'FOUC - Flash of untranslated content'

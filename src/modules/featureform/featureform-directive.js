@@ -1,5 +1,7 @@
 import './module.js';
 
+import templateHTML from './templates/featureform.html';
+
 /**
  * @typedef {object} SelectOption
  * @property {string} [label]
@@ -52,7 +54,7 @@ angular.module('anol.featureform')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return require('./templates/featureform.html');
+                    return templateHTML;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
@@ -69,7 +71,7 @@ angular.module('anol.featureform')
                     /**
                      * @param {ol.Feature} feature
                      */
-                    var featureChangeHandler = function (feature) {
+                    const featureChangeHandler = function (feature) {
                         if (feature) {
                             scope.formValues = feature.get('formValues');
 
