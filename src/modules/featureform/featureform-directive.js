@@ -1,6 +1,6 @@
 import './module.js';
 
-import template from './templates/featureform.html';
+import templateHTML from './templates/featureform.html';
 
 /**
  * @typedef {object} SelectOption
@@ -54,7 +54,7 @@ angular.module('anol.featureform')
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return template;
+                    return templateHTML;
                 },
                 link: function(scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
@@ -71,7 +71,7 @@ angular.module('anol.featureform')
                     /**
                      * @param {ol.Feature} feature
                      */
-                    var featureChangeHandler = function (feature) {
+                    const featureChangeHandler = function (feature) {
                         if (feature) {
                             scope.formValues = feature.get('formValues');
 

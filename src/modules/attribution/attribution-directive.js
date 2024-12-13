@@ -1,28 +1,28 @@
 import './module.js';
 
-import template from './templates/attribution.html';
+import templateHTML from './templates/attribution.html';
 
 angular.module('anol.attribution')
 
-/**
- * @ngdoc filter
- * @name anol.attribution.filter:uniqueActiveAttribution
- *
- * @description
- * Reduce given layers to visible once with, removes layers with duplicated attribution
- */
-    .filter('uniqueActiveAttribution', function() {
-        return function(layers) {
-            var founds = {};
-            var newLayers = [];
-            angular.forEach(layers, function(layer) {
-                if(!layer.getVisible()) {
+    /**
+     * @ngdoc filter
+     * @name anol.attribution.filter:uniqueActiveAttribution
+     *
+     * @description
+     * Reduce given layers to visible once with, removes layers with duplicated attribution
+     */
+    .filter('uniqueActiveAttribution', function () {
+        return function (layers) {
+            const founds = {};
+            const newLayers = [];
+            angular.forEach(layers, function (layer) {
+                if (!layer.getVisible()) {
                     return;
                 }
-                if(angular.isUndefined(layer.attribution) || layer.attribution === null) {
+                if (angular.isUndefined(layer.attribution) || layer.attribution === null) {
                     return;
                 }
-                if(founds[layer.attribution] === true) {
+                if (founds[layer.attribution] === true) {
                     return;
                 }
                 founds[layer.attribution] = true;
@@ -31,24 +31,24 @@ angular.module('anol.attribution')
             return newLayers;
         };
     })
-/**
- * @ngdoc directive
- * @name anol.attribution.directive:anolAttribution
- *
- * @requires $compile
- * @requires anol.map.ControlsService
- *
- * @param {boolean} anolAttribution Start with open attributions. Default false.
- * @param {string} attributionTooltipPlacement Tooltip position for attribution in button
- * @param {number} tooltipDelay Time in milisecounds to wait before display tooltip. Default 500ms
- * @param {boolean} tooltipEnable Enable tooltips. Default true for non-touch screens, default false for touchscreens
- * @param {string} templateUrl Url to template to use instead of default one
- *
- * @description
- * Provides attribution buttons
- */
+    /**
+     * @ngdoc directive
+     * @name anol.attribution.directive:anolAttribution
+     *
+     * @requires $compile
+     * @requires anol.map.ControlsService
+     *
+     * @param {boolean} anolAttribution Start with open attributions. Default false.
+     * @param {string} attributionTooltipPlacement Tooltip position for attribution in button
+     * @param {number} tooltipDelay Time in milisecounds to wait before display tooltip. Default 500ms
+     * @param {boolean} tooltipEnable Enable tooltips. Default true for non-touch screens, default false for touchscreens
+     * @param {string} templateUrl Url to template to use instead of default one
+     *
+     * @description
+     * Provides attribution buttons
+     */
     .directive('anolAttribution', ['$templateRequest', '$compile', 'ControlsService', 'LayersService',
-        function($templateRequest, $compile, ControlsService, LayersService) {
+        function ($templateRequest, $compile, ControlsService, LayersService) {
             return {
                 restrict: 'A',
                 scope: {
@@ -57,16 +57,16 @@ angular.module('anol.attribution')
                     tooltipDelay: '@',
                     tooltipEnable: '@'
                 },
-                template: function(tElement, tAttrs) {
+                template: function (tElement, tAttrs) {
                     if (tAttrs.templateUrl) {
                         return '<div></div>';
                     }
-                    return template;
+                    return templateHTML;
                 },
-                link: function(scope, element, attrs) {
+                link: function (scope, element, attrs) {
                     if (attrs.templateUrl && attrs.templateUrl !== '') {
-                        $templateRequest(attrs.templateUrl).then(function(html){
-                            var template = angular.element(html);
+                        $templateRequest(attrs.templateUrl).then(function (html) {
+                            const template = angular.element(html);
                             element.html(template);
                             $compile(template)(scope);
                         });
