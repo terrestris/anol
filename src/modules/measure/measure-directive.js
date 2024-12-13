@@ -104,7 +104,7 @@ angular.module('anol.measure')
                 const modify = new Modify({
                     features: measureSource.getFeaturesCollection(),
                     condition: function (e) {
-                        return e.pointerEvent.buttons === 1;
+                        return e.originalEvent.buttons === 1;
                     }
                 });
                 modify.on('modifyend', function () {
@@ -143,7 +143,7 @@ angular.module('anol.measure')
                 const draw = new Draw({
                     type: 'Point',
                     condition: function (e) {
-                        return e.pointerEvent.buttons === 1;
+                        return e.originalEvent.buttons === 1;
                     },
                     style: new Style({})
                 });
