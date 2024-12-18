@@ -187,15 +187,24 @@ angular.module('anol.map')
             };
 
             MapService.prototype.zoomToGeom = async function (geometry) {
-                const map = this.getMap();
-                await $timeout();
-                map.once('postrender', () => {
-                    map.getView().fit(geometry, {
-                        maxZoom: 14
-                    });
-                });
-                map.render();
+                return this.fitWhenSizeReady(geometry, { maxZoom: 14 });
             };
+
+            MapService.prototype.fitWhenSizeReady = async function (extentOrGeometry, options = {}) {
+                const map = this.getMap();
+                const size = map.getSize();
+                if (size && size[0] > 0 && size[1] > 0) {
+                    map.getView().fit(extentOrGeometry, {
+                        ...options,
+                        size
+                    });
+                } else {
+                    await new Promise((resolve) => {
+                        map.once('change:size', resolve);
+                    });
+                    await this.fitWhenSizeReady(extentOrGeometry, options);
+                }
+            }
 
             return new MapService(_view, _cursorPointerConditions, _twoFingersPinchDrag, _twoFingersPinchDragText);
         }];
