@@ -11,7 +11,7 @@ import Modify from 'ol/interaction/Modify';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
-import { always, never, doubleClick } from 'ol/events/condition';
+import { never } from 'ol/events/condition';
 import { getSize } from 'ol/extent';
 
 angular.module('anol.print')
@@ -185,7 +185,7 @@ angular.module('anol.print')
       LayersService.addSystemLayer(new anol.layer.Layer(layerOptions), 0);
 
       class CursorPointerInteraction extends PointerInteraction {
-        constructor() {
+        constructor(options = {}) {
           super({
             handleMoveEvent: CursorPointerInteraction.prototype.handleMoveEvent
           });
@@ -221,7 +221,7 @@ angular.module('anol.print')
       }
 
       class DragPrintPageInteraction extends PointerInteraction {
-        constructor() {
+        constructor(options = {}) {
           super({
             handleDownEvent: DragPrintPageInteraction.prototype.handleDownEvent,
             handleDragEvent: DragPrintPageInteraction.prototype.handleDragEvent,

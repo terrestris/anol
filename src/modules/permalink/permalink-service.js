@@ -518,13 +518,11 @@ angular.module('anol.permalink')
                         }
 
                         if (mapParams.fit !== undefined) {
-                            var extent = transformExtent(
+                            const extent = transformExtent(
                                 /** @type {import('ol/extent').Extent} */ (mapParams.fit.extent),
                                 mapParams.fit.crs,
-                                self.view.getProjection().getCode());
-                            this.map.once('postrender', function () {
-                                self.view.fit(extent);
-                            });
+                                self.view.getProjection());
+                            MapService.fitWhenSizeReady(extent);
                         }
 
                         return Promise.all([
