@@ -12,6 +12,96 @@ angular.module('anol.map')
         var _addLayerHandlers = [];
         var _removeLayerHandlers = [];
         var _clusterDistance = 50;
+
+        const createLayer = (layerConf) => {
+            switch (layerConf.type) {
+                case 'wms':
+                    return new anol.layer.SingleTileWMS(layerConf);
+                case 'tiledwms':
+                    return new anol.layer.TiledWMS(layerConf);
+                case 'wmts':
+                    return new anol.layer.WMTS(layerConf);
+                case 'dynamic_geojson':
+                    return new anol.layer.DynamicGeoJSON(layerConf);
+                case 'static_geojson':
+                case 'digitize':
+                    return new anol.layer.StaticGeoJSON(layerConf);
+                case 'sensorthings':
+                    return new anol.layer.SensorThings(layerConf);
+                default:
+                    break;
+            }
+        };
+
+        const createGroup = (groupConf) => {
+            const groupOpts = {
+                layers: groupConf.layers.map(createLayer).filter(l => l !== undefined),
+                collapsed: true,
+                showGroup: groupConf.showGroup,
+                metadataUrl: groupConf.metadataUrl,
+                abstract: groupConf.abstract,
+                singleSelect: groupConf.singleSelect,
+                singleSelectGroup: groupConf.singleSelectGroup,
+                name: groupConf.name,
+                title: groupConf.title,
+                legend: groupConf.legend,
+                defaultVisibleLayers: groupConf.defaultVisibleLayers
+            };
+
+            if (groupConf.catalog) {
+                groupOpts.catalog = groupConf.catalog;
+            }
+
+            if (groupConf.catalogLayer) {
+                groupOpts.catalogLayer = groupConf.catalogLayer;
+            }
+
+            return new anol.layer.Group(groupOpts);
+        };
+
+        const createDrawLayer = (drawLayerConf) => {
+            const layerOpts = {
+                title: drawLayerConf.title,
+                name: drawLayerConf.name,
+                displayInLayerswitcher: false,
+                propertiesSchema: drawLayerConf.properties_schema,
+                propertiesSchemaFormOptions: drawLayerConf.properties_schema_form_options,
+                geomType: drawLayerConf.geom_type,
+                externalGraphicPrefix: drawLayerConf.externalGraphicPrefix,
+                editable: true,
+                saveable: true,
+                olLayer: {
+                    source: {
+                        dataProjection: 'EPSG:25832',
+                        url: drawLayerConf.url
+                    }
+                }
+            };
+
+            if (drawLayerConf.style) {
+                layerOpts.style = drawLayerConf.style;
+            }
+
+            return new anol.layer.StaticGeoJSON(layerOpts);
+        }
+
+        this.initBackgroundLayers = function (munimapBackgroundConfigs) {
+            const backgroundLayers = munimapBackgroundConfigs
+                .map(createLayer)
+                .filter(l => l !== undefined);
+            return backgroundLayers;
+        };
+
+        this.initOverlayLayers = function (munimapOverlayConfigs) {
+            const overlayLayers = munimapOverlayConfigs.map(createGroup);
+            return overlayLayers;
+        };
+
+        this.initDrawLayers = function (munimapDrawLayerConfigs) {
+            const drawLayers = munimapDrawLayerConfigs.map(createDrawLayer);
+            return drawLayers;
+        };
+
         /**
          * @ngdoc method
          * @name setLayers
