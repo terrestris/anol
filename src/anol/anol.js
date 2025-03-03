@@ -29,6 +29,7 @@ import StaticGeoJSON from './layer/staticgeojson.js';
 import DynamicGeoJSON from './layer/dynamicgeojson.js';
 import BBOXGeoJSON from './layer/bboxgeojson.js';
 import GMLLayer from './layer/gml.js';
+import SensorThings from './layer/sensorthings.js';
 
 import ContextMenu from './contextmenu/ContextMenu.js';
 import Control from './control.js';
@@ -50,7 +51,8 @@ export var layer = {
     DynamicGeoJSON: DynamicGeoJSON,
     BBOXGeoJSON: BBOXGeoJSON,
     GML: GMLLayer,
-    Layer: AnolBaseLayer
+    Layer: AnolBaseLayer,
+    SensorThings
 };
 
 export var control = {

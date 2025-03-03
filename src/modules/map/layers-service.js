@@ -13,6 +13,11 @@ angular.module('anol.map')
         var _removeLayerHandlers = [];
         var _clusterDistance = 50;
 
+        /**
+         * Create a layer from a munimap layer configuration.
+         * @param {Object} layerConf The munimap layer configuration.
+         * @returns {anol.layer.Layer} The created layer.
+         */
         const createLayer = (layerConf) => {
             switch (layerConf.type) {
                 case 'wms':
@@ -33,6 +38,11 @@ angular.module('anol.map')
             }
         };
 
+        /**
+         * Create a group from a munimap group configuration.
+         * @param {Object} groupConf The munimap group configuration.
+         * @returns {anol.layer.Group} The created group.
+         */
         const createGroup = (groupConf) => {
             const groupOpts = {
                 layers: groupConf.layers.map(createLayer).filter(l => l !== undefined),
@@ -59,6 +69,11 @@ angular.module('anol.map')
             return new anol.layer.Group(groupOpts);
         };
 
+        /**
+         * Create a draw layer from a munimap draw layer configuration.
+         * @param {Object} drawLayerConf The munimap draw layer configuration.
+         * @returns {anol.layer.StaticGeoJSON} The created draw layer.
+         */
         const createDrawLayer = (drawLayerConf) => {
             const layerOpts = {
                 title: drawLayerConf.title,
@@ -85,6 +100,11 @@ angular.module('anol.map')
             return new anol.layer.StaticGeoJSON(layerOpts);
         }
 
+        /**
+         * Initialize the background layers from the munimap background configurations.
+         * @param {Object[]} munimapBackgroundConfigs
+         * @returns The initialized background layers.
+         */
         this.initBackgroundLayers = function (munimapBackgroundConfigs) {
             const backgroundLayers = munimapBackgroundConfigs
                 .map(createLayer)
@@ -92,11 +112,21 @@ angular.module('anol.map')
             return backgroundLayers;
         };
 
+        /**
+         * Initialize the overlay layers from the munimap overlay configurations.
+         * @param {Object[]} munimapOverlayConfigs
+         * @returns The initialized overlay layers.
+         */
         this.initOverlayLayers = function (munimapOverlayConfigs) {
             const overlayLayers = munimapOverlayConfigs.map(createGroup);
             return overlayLayers;
         };
 
+        /**
+         * Initialize the draw layers from the munimap draw layer configurations.
+         * @param {Object[]} munimapDrawLayerConfigs The munimap draw layer configurations.
+         * @returns The initialized draw layers.
+         */
         this.initDrawLayers = function (munimapDrawLayerConfigs) {
             const drawLayers = munimapDrawLayerConfigs.map(createDrawLayer);
             return drawLayers;
@@ -546,6 +576,7 @@ angular.module('anol.map')
              * Add layer to map and execute postAddToMap function of layer
              */
             Layers.prototype._addLayer = function (layer, skipLayerIndex) {
+                window.map = this.map;
                 this.map.addLayer(layer.olLayer);
                 layer.map = this.map;
 
