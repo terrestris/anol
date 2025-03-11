@@ -33,4 +33,16 @@ angular.module('anol.featurepopup')
             };
             return new Popups();
         }];
-    }]);
+    }])
+
+ /**
+ * @ngdoc service
+ * @name anol.featurepopup.SharedSTAService
+ * @description: to share the STA feature between directives
+ */
+    .factory('SharedSTAService', function() {
+        var sharedData = {
+            value: null
+        };
+        return sharedData;
+    });

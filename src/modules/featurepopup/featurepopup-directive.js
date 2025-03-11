@@ -26,8 +26,8 @@ angular.module('anol.featurepopup')
      * @description
      * Shows a popup for selected feature
      */
-    .directive('anolFeaturePopup', ['$templateRequest', '$compile', '$window', '$timeout', '$olOn', 'MapService', 'LayersService', 'ControlsService', 'PopupsService',
-        function ($templateRequest, $compile, $window, $timeout, $olOn, MapService, LayersService, ControlsService, PopupsService) {
+    .directive('anolFeaturePopup', ['$templateRequest', '$compile', '$window', '$timeout', '$olOn', 'MapService', 'LayersService', 'ControlsService', 'PopupsService', 'SharedSTAService',
+        function ($templateRequest, $compile, $window, $timeout, $olOn, MapService, LayersService, ControlsService, PopupsService, SharedSTAService) {
             // TODO use for all css values
             const cssToFloat = function (v) {
                 return parseFloat(v.replace(/[^-\d.]/g, ''));
@@ -73,6 +73,8 @@ angular.module('anol.featurepopup')
                     const self = this;
                     let singleClickListenerKey = undefined;
                     PopupsService.register(scope);
+                    // access to the SharedSTAService
+                    scope.sharedData = SharedSTAService;
                     const multiselect = angular.isDefined(attrs.multiselect);
                     const clickPointSelect = angular.isDefined(attrs.clickPointSelect);
 
@@ -301,6 +303,7 @@ angular.module('anol.featurepopup')
                                 hitTolerance: 10
                             });
                             if (featureLayerList.length > 0) {
+                                scope.sharedData.value = featureLayerList;
                                 scope.coordinate = evt.coordinate;
                             } else {
                                 scope.coordinate = undefined;
