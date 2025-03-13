@@ -34,8 +34,8 @@ angular.module('anol.getfeatureinfo')
      * - **target** - {string} - Target for featureinfo result. ('_blank', '_popup', [element-id])
      */
     .directive('anolGetFeatureInfo', [
-        '$rootScope', '$templateRequest', '$http', '$window', '$q', '$compile', 'MapService', 'LayersService', 'ControlsService', 'CatalogService', 'SharedSTAService',
-        function ($rootScope, $templateRequest, $http, $window, $q, $compile, MapService, LayersService, ControlsService, CatalogService, SharedSTAService) {
+        '$rootScope', '$templateRequest', '$http', '$window', '$q', '$compile', 'MapService', 'LayersService', 'ControlsService', 'CatalogService',
+        function ($rootScope, $templateRequest, $http, $window, $q, $compile, MapService, LayersService, ControlsService, CatalogService) {
             return {
                 restrict: 'A',
                 scope: {
@@ -252,69 +252,6 @@ angular.module('anol.getfeatureinfo')
                             }
                         };
 
-                        const handleSTAFeatureinfoResponses = function (layers) {
-                            let divTargetCleared = false;
-                            let popupCoordinate;
-                            angular.forEach(layers, function (layer) {
-                                if (angular.isUndefined(layer)) {
-                                    return;
-                                }
-                                const featureInfoObject = SharedSTAService.value[0][0];
-                                const observationResult = featureInfoObject?.get('Observations')?.[0]?.result ?? '';
-                                const unitName = featureInfoObject?.get('unitOfMeasurement')?.name ?? '';
-                                const unitSymbol = featureInfoObject?.get('unitOfMeasurement')?.symbol ?? '-';
-                                const phenomenonTime = featureInfoObject?.get('Observations')?.[0]?.phenomenonTime ?? '--';
-                                const phenomenonTimeDate = phenomenonTime != '--' ? new Date(phenomenonTime).toLocaleDateString() + ' ' + new Date(phenomenonTime).toLocaleTimeString() : phenomenonTime;
-
-                                let iframe;
-                                if (layer.featureinfo.target === '_popup') {
-                                    iframe = $('<table class="featureinfo-table"> <tr> <th> Wert </th> <td>' +
-                                    observationResult + ' ' +
-                                    unitName + ' (' +
-                                    unitSymbol  + ')' +
-                                    '</td> </tr> <tr> <th style="padding-right:5px"> Zeitpunkt </th> <td>' +
-                                    phenomenonTimeDate+
-                                    '</td> </tr> </table>');
-                                }
-                                switch (layer.featureinfo.target) {
-                                    case '_blank':
-                                        $window.open(layer.url, '_blank');
-                                        break;
-                                    case '_popup':
-                                        iframe.css('width', layer.featureinfo.width || 300);
-                                        iframe.css('height', layer.featureinfo.height || 150);
-                                        scope.popupContentTemp.append(iframe);
-                                        popupCoordinate = SharedSTAService.value[0][0].getGeometry().getFlatCoordinates()
-                                        break;
-                                    default:
-                                        const temp = $('<div></div>');
-                                        const target = angular.element(layer.target);
-                                        if (divTargetCleared === false) {
-                                            target.empty();
-                                            divTargetCleared = true;
-                                        }
-                                        const content = angular.element(layer.response);
-                                        temp.append(content);
-                                        temp.find('meta').remove();
-                                        temp.find('link').remove();
-                                        temp.find('title').remove();
-                                        temp.find('script').remove();
-                                        target.append(temp.children());
-                                        if (angular.isFunction(scope.customTargetCallback)) {
-                                            scope.customTargetCallback();
-                                        }
-                                        break;
-                                }
-                            });
-
-                            scope.hideWaitingOverlay();
-                            scope.coordinate = popupCoordinate;
-                            return {
-                                'coordinate': popupCoordinate,
-                                'content': scope.popupContentTemp.children()
-                            }
-                        };
-
                         const createHtmlRequest = (layer, coordinate, viewResolution, view) => {
                             const requestParams = {
                                 'INFO_FORMAT': 'text/html'
@@ -422,20 +359,10 @@ angular.module('anol.getfeatureinfo')
                                     return createGmlRequest(layer, coordinate, viewResolution, view);
                                 });
 
-                            const staResponses = LayersService.flattedLayers()
-                                .filter(layer => {
-                                    return layer.getVisible()
-                                        && (layer.olLayer instanceof VectorLayer)
-                                        && layer.featureinfo
-                                        && layer.CLASS_NAME.includes('SensorThings')
-                                });
-
                             $q.all(htmlRequestPromises)
                                 .then(handleFeatureinfoResponses)
                                 .then(() => $q.all(gmlRequestPromises))
                                 .then(handleGMLFeatureinfoResponses)
-                                .then(() => $q.all(staResponses))
-                                .then(handleSTAFeatureinfoResponses)
                                 .then(() => {
                                     renderPopupContent();
                                 });

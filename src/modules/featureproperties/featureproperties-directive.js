@@ -1,4 +1,5 @@
 import './module.js';
+import _ from 'lodash';
 
 import templateHTML from './templates/featureproperties.html';
 
@@ -69,18 +70,10 @@ angular.module('anol.featureproperties')
                     scope.propertiesCollection = [];
 
                     const propertiesFromFeature = function (feature, layerName, displayProperties) {
-                        const properties = {};
-                        angular.forEach(feature.getProperties(), function (value, key) {
-                            if (
-                                angular.isDefined(value) &&
-                                value !== null &&
-                                $.inArray(key, displayProperties) > -1 &&
-                                value.length > 0
-                            ) {
-                                properties[key] = {
-                                    key: key,
-                                    value: value
-                                };
+                        const featureProperties = feature.getProperties();
+                        const properties = displayProperties.map((key) => {
+                            let value = _.get(featureProperties,key);
+                            if (value !== undefined && value !== null && value.toString().length > 0) {
                                 const translateKey = [scope.translationNamespace, layerName, key.toUpperCase()].join('.');
                                 const translateValue = [scope.translationNamespace, layerName, key, value].join('.');
                                 // this get never rejected cause of array usage
@@ -98,12 +91,12 @@ angular.module('anol.featureproperties')
                                         if (translatedValue === translateValue) {
                                             translatedValue = value;
                                         }
-                                        properties[key] = {
-                                            key: translatedKey,
-                                            value: translatedValue
-                                        };
+                                        key = translatedKey;
+                                        value = translatedValue;
                                     }
                                 );
+                                return { key: key.includes('.') ? key.split('.').pop() : key,
+                                         value: value };
                             }
                         });
                         return properties;
