@@ -34,4 +34,3 @@ angular.module('anol.featurepopup')
             return new Popups();
         }];
     }]);
-
