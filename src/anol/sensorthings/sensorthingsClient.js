@@ -7,12 +7,20 @@ class SensorThingsClient {
 
     createUrl() {
         const root = 'Datastreams';
-        const url = new URL(this.url);
-        if (!url.pathname.endsWith('/')) {
-            url.pathname += '/';
+        const isFullUrl = /^https?:\/\//.test(this.url);
+        let url;
+        if (isFullUrl) {
+            url = new URL(this.url);
+        } else {
+            url = new URL(this.url, 'file://');
+        }
+        if (url.pathname.endsWith('/')) {
+            url.pathname = url.pathname.slice(0, -1);
         }
 
-        url.pathname += `v${this.version}/${root}`;
+        if (!url.pathname.endsWith(`/v${this.version}/${root}`)) {
+            url.pathname += `/v${this.version}/${root}`;
+        }
 
         if (this.urlParameters.filter) {
             url.searchParams.set('$filter', this.urlParameters.filter);
@@ -26,7 +34,7 @@ class SensorThingsClient {
             url.searchParams.set('$expand', 'Thing/Location, Observations($orderby=phenomenonTime desc;$top=1)');
         }
 
-        return url.toString();
+        return isFullUrl ? url.toString() : url.toString().replace('file://', '');
     }
 
     async get() {
@@ -41,7 +49,7 @@ class SensorThingsClient {
     async sendRequest(url) {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Could  not fetch SensorThingsAPI data. Status: ${response.status}`);
         }
         return response.json();
     }

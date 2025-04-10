@@ -83,17 +83,21 @@ class SensorThings extends FeatureLayer {
 
         const vectorSource = this.olLayer.getSource();
 
-        const data = await client.get();
-        const featureCollection = client.datastreamToGeoJSON(data);
-        const features = vectorSource.getFormat()
-            .readFeatures(featureCollection, {
-                featureProjection: this.mapProjection
-            });
-        vectorSource.clear(true);
-        vectorSource.addFeatures(features);
-        this.watchVisibility();
-        this.subscribe();
-        return features;
+        let features;
+        try {
+            const data = await client.get();
+            const featureCollection = client.datastreamToGeoJSON(data);
+            features = vectorSource.getFormat()
+                .readFeatures(featureCollection, {
+                    featureProjection: this.mapProjection
+                });
+            vectorSource.clear(true);
+            vectorSource.addFeatures(features);
+        } finally {
+            this.watchVisibility();
+            this.subscribe();
+            return features;
+        }
     }
 
     _createSourceOptions(srcOptions) {
