@@ -71,9 +71,15 @@ angular.module('anol.featureproperties')
 
                     const propertiesFromFeature = function (feature, layerName, displayProperties) {
                         const featureProperties = feature.getProperties();
-                        const properties = displayProperties.map((key) => {
-                            let value = _.get(featureProperties,key);
+                        const properties = {};
+                        angular.forEach(displayProperties, function (key) {
+                            const value = _.get(featureProperties, key);
                             if (value !== undefined && value !== null && value.toString().length > 0) {
+                                const key_name = key.includes('.') ? key.split('.').pop() : key;
+                                properties[key_name] = {
+                                    key: key_name,
+                                    value: value
+                                };
                                 const translateKey = [scope.translationNamespace, layerName, key.toUpperCase()].join('.');
                                 const translateValue = [scope.translationNamespace, layerName, key, value].join('.');
                                 // this get never rejected cause of array usage
@@ -91,12 +97,12 @@ angular.module('anol.featureproperties')
                                         if (translatedValue === translateValue) {
                                             translatedValue = value;
                                         }
-                                        key = translatedKey;
-                                        value = translatedValue;
+                                        properties[key_name] = {
+                                            key: translatedKey,
+                                            value: translatedValue
+                                        };
                                     }
                                 );
-                                return { key: key.includes('.') ? key.split('.').pop() : key,
-                                         value: value };
                             }
                         });
                         return properties;
