@@ -31,7 +31,7 @@ class SensorThingsClient {
             url.searchParams.set('$expand', this.urlParameters.expand);
         } else {
             // Ensuring we will always get the location
-            url.searchParams.set('$expand', 'Thing/Location');
+            url.searchParams.set('$expand', 'Thing/Location, Observations($orderby=phenomenonTime desc;$top=1)');
         }
 
         return isFullUrl ? url.toString() : url.toString().replace('file://', '');

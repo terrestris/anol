@@ -1,4 +1,5 @@
 import './module.js';
+import _ from 'lodash';
 
 import templateHTML from './templates/featureproperties.html';
 
@@ -69,16 +70,14 @@ angular.module('anol.featureproperties')
                     scope.propertiesCollection = [];
 
                     const propertiesFromFeature = function (feature, layerName, displayProperties) {
+                        const featureProperties = feature.getProperties();
                         const properties = {};
-                        angular.forEach(feature.getProperties(), function (value, key) {
-                            if (
-                                angular.isDefined(value) &&
-                                value !== null &&
-                                $.inArray(key, displayProperties) > -1 &&
-                                value.length > 0
-                            ) {
-                                properties[key] = {
-                                    key: key,
+                        angular.forEach(displayProperties, function (key) {
+                            const value = _.get(featureProperties, key);
+                            if (value !== undefined && value !== null && value.toString().length > 0) {
+                                const key_name = key.includes('.') ? key.split('.').pop() : key;
+                                properties[key_name] = {
+                                    key: key_name,
                                     value: value
                                 };
                                 const translateKey = [scope.translationNamespace, layerName, key.toUpperCase()].join('.');
@@ -98,7 +97,7 @@ angular.module('anol.featureproperties')
                                         if (translatedValue === translateValue) {
                                             translatedValue = value;
                                         }
-                                        properties[key] = {
+                                        properties[key_name] = {
                                             key: translatedKey,
                                             value: translatedValue
                                         };
