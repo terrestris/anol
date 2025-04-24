@@ -1,5 +1,4 @@
 import './module.js';
-import _ from 'lodash';
 
 import templateHTML from './templates/featureproperties.html';
 
@@ -65,7 +64,7 @@ angular.module('anol.featureproperties')
                         });
                     }
                     scope.translationNamespace = angular.isDefined(scope.translationNamespace) ?
-                        scope.translationNamespace : 'featureproperties';
+                        scope.translationNamespace : 'anol.featureproperties';
 
                     scope.propertiesCollection = [];
 
@@ -73,15 +72,15 @@ angular.module('anol.featureproperties')
                         const featureProperties = feature.getProperties();
                         const properties = {};
                         angular.forEach(displayProperties, function (key) {
-                            const value = _.get(featureProperties, key);
+                            const value = featureProperties[key];
                             if (value !== undefined && value !== null && value.toString().length > 0) {
                                 const key_name = key.includes('.') ? key.split('.').pop() : key;
                                 properties[key_name] = {
                                     key: key_name,
                                     value: value
                                 };
-                                const translateKey = [scope.translationNamespace, layerName, key.toUpperCase()].join('.');
-                                const translateValue = [scope.translationNamespace, layerName, key, value].join('.');
+                                const translateKey = [scope.translationNamespace, layerName, key_name.toUpperCase()].join('.');
+                                const translateValue = [scope.translationNamespace, layerName, key_name, value].join('.');
                                 // this get never rejected cause of array usage
                                 // see https://github.com/angular-translate/angular-translate/issues/960
                                 $translate([
@@ -92,7 +91,7 @@ angular.module('anol.featureproperties')
                                         let translatedKey = translations[translateKey];
                                         let translatedValue = translations[translateValue];
                                         if (translatedKey === translateKey) {
-                                            translatedKey = key;
+                                            translatedKey = key_name.charAt(0).toUpperCase() + key_name.slice(1);
                                         }
                                         if (translatedValue === translateValue) {
                                             translatedValue = value;

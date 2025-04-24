@@ -166,13 +166,14 @@ angular.module('anol.featurepopup')
                         angular.forEach(featureLayerList, function (v) {
                             const feature = v[0];
                             const layer = v[1];
-                            let style = feature.getStyle();
-                            if (style === null) {
-                                style = layer.getStyle();
+                            // We use getStyleFunction instead of getStyle since this
+                            // also works for olFlatStyles.
+                            let style = feature.getStyleFunction() ?? layer.getStyleFunction();
+                            if (!style) {
+                                return;
                             }
-                            if (angular.isFunction(style)) {
-                                style = style(feature, scope.map.getView().getResolution())[0];
-                            }
+                            // TODO should we also check at more than just the first style?
+                            style = style(feature, scope.map.getView().getResolution())[0];
                             const image = style.getImage();
                             // only ol.Style.Icons (subclass of ol.Style.Image) have getSize function
                             if (image !== null && angular.isFunction(image.getSize)) {
