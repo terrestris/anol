@@ -89,6 +89,7 @@ class AnolBaseLayer {
         this.groupLayer = false;
         this.metadataUrl = options.metadataUrl || false;
         this.searchConfig = options.searchConfig || [];
+        // this.showConfig = false;
 
         if(this.displayInLayerswitcher === false) {
             this.permalink = false;
@@ -174,6 +175,29 @@ class AnolBaseLayer {
     offVisibleChange(func) {
         angular.element(this).off('anol.layer.visible:change', func);
     }
+
+    /* isConfigVisible() {
+        return this.showConfig;
+    }
+    setConfigVisible(visible) {
+        this.showConfig = visible;
+    } */
+    /**
+     * @param {number} value
+     */
+    transparency(value) {  // getterSetter
+        if (angular.isDefined(this.olLayer)) {
+            if (!value && value !== 0) {
+                return 1 - this.olLayer.getOpacity();
+            } else if (value < 0) {
+                value = 0;
+            } else if (value > 1) {
+                value = 1;
+            }
+            this.olLayer.setOpacity(1 - value);
+        }
+    }
+
     refresh() {
         if(this.olLayer instanceof BaseLayer) {
             this.olLayer.changed();

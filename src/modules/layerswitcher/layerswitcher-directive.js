@@ -166,7 +166,7 @@ angular.module('anol.layerswitcher')
                                     }
                                 });
                             }
-
+                            // group.hideTransparencySliders();
                             group.setVisible(!group.getVisible());
                         }
                     };
@@ -184,6 +184,10 @@ angular.module('anol.layerswitcher')
                             LayersService.removeOverlayLayer(layer);
                         }
                     };
+
+                    /* $scope.toggleConfig = function (layer) {
+                        layer.setConfigVisible(!layer.isConfigVisible());
+                    } */
                 }
             };
         }]);
