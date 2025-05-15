@@ -31,6 +31,8 @@ class Group {
         this.groupLayer = true;
         this.combinable = undefined;
         this.defaultVisibleLayers = options.defaultVisibleLayers || [];
+        this.showConfig = false;
+        this.opacity = 1;
 
         if (angular.isUndefined(this.layers)) {
             this.layers = [];
@@ -93,6 +95,32 @@ class Group {
     }
     offVisibleChange(func) {
         angular.element(this).off('anol.group.visible:change', func);
+    }
+
+    toggleConfig() {
+        this.showConfig = !this.showConfig;
+    }
+    /* hideTransparencySliders() {
+        $.each(this.layers, function(idx, layer) {
+            layer.setTransparencySliderVisible(false);
+        });
+    } */
+
+    transparency(value) { 
+        var self = this;
+
+        if (!value && value !== 0) {            
+            return 1 - self.opacity;
+        } else if (value < 0) {
+            value = 0;
+        } else if (value > 1) {
+            value = 1;
+        }
+        self.opacity = 1 - value;
+
+        $.each(self.layers, function(idx, layer) {
+            layer.transparency(value);
+        });
     }
 
     childrenAreCombinable() {
