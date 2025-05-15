@@ -5,6 +5,7 @@ import Select from 'ol/interaction/Select';
 import Geolocation from 'ol/Geolocation';
 
 import templateHTML from './templates/geolocation.html';
+import {containsCoordinate} from 'ol/extent';
 
 angular.module('anol.geolocation')
     /**
@@ -146,7 +147,7 @@ angular.module('anol.geolocation')
                         geolocation.setTracking(false);
                         const position = geolocation.getPosition();
                         const accuracyGeometry = geolocation.getAccuracyGeometry();
-                        const extent = view.getProperties().extent;
+                        const extent = view.calculateExtent();
                         if (!containsCoordinate(extent, position)) {
                             $translate('anol.geolocation.POSITION_OUT_OF_MAX_EXTENT').then(function (translation) {
                                 scope.$emit('anol.geolocation', {'message': translation, 'type': 'error'});
