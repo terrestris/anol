@@ -89,7 +89,7 @@ angular.module('anol.geolocation')
                     const changeCursorCondition = function (pixel) {
                         return MapService.getMap().hasFeatureAtPixel(pixel, {
                             layerFilter: function (layer) {
-                                return geolocationLayer === layer.get('anolLayer');
+                                return layer.get('anolLayers')?.includes(geolocationLayer);
                             }
                         });
                     };

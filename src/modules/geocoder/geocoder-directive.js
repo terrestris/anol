@@ -107,7 +107,7 @@ angular.module('anol.geocoder')
 
                     const changeCursorCondition = function (pixel) {
                         return MapService.getMap().hasFeatureAtPixel(pixel, function (layer) {
-                            return scope.markerLayer === layer.get('anolLayer');
+                            return layer.get('anolLayers')?.includes(scope.markerLayer);
                         });
                     };
 

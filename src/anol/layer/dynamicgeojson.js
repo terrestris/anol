@@ -61,15 +61,13 @@ class DynamicGeoJSON extends StaticGeoJSON {
             (this.clusterOptions === false || this.anolGroup === other.anolGroup);
     }
 
-    getCombinedSource(other) {
-        var anolLayers = this.olSource.get('anolLayers');
-        anolLayers.push(other);
-        this.olSource.set('anolLayers', anolLayers);
+    getCombinedLayer(other) {
+        this.olSource.get('anolLayers').push(other);
+        this.olLayer.get('anolLayers').push(other);
 
-        if(this.isClustered()) {
-            return this.olLayer.getSource();
-        }
-        return this.olSource;
+        other.setOlLayer(this.olLayer);
+
+        return this.olLayer;
     }
 
     setVisible(visible) {

@@ -126,11 +126,8 @@ angular.module('anol.map')
 
                 var interactionOptions = $.extend({}, defaultClusterOptions, this.clusterSelectOptions, {
                     layers: function(layer) {
-                        var anolLayer = layer.get('anolLayer');
-                        if(angular.isUndefined(anolLayer) || !anolLayer.isClustered()) {
-                            return false;
-                        }
-                        return self.clusterLayers.indexOf(anolLayer) > -1;
+                        var anolLayers = layer.get('anolLayers') ?? [];
+                        return anolLayers.some(l => l.isClustered() && self.clusterLayers.includes(l));
                     },
                     // for each revealed feature of selected cluster, this function is called
                     featureStyle: function(revealedFeature, resolution) {

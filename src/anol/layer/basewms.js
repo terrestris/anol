@@ -1,3 +1,5 @@
+import AnolBaseLayer from '../layer.js';
+
 /**
  * @ngdoc object
  * @name anol.layer.BaseWMS
@@ -9,9 +11,6 @@
  * @description
  * Inherits from {@link anol.layer.Layer anol.layer.Layer}.
  */
-
-import AnolBaseLayer from '../layer.js';
-
 class BaseWMS extends AnolBaseLayer {
     constructor(_options) {
         super(_options);
@@ -19,15 +18,15 @@ class BaseWMS extends AnolBaseLayer {
         this.OL_LAYER_CLASS = undefined;
         this.OL_SOURCE_CLASS = undefined;
 
-        if(angular.isUndefined(_options)) {
+        if (angular.isUndefined(_options)) {
             return;
         }
 
-        var defaults = {};
+        const defaults = {};
         this.options = $.extend(true, {}, defaults, _options);
 
         this.wmsSourceLayers = anol.helper.stringSplit(this.olSourceOptions.params.LAYERS, ',');
-        if(this.olLayerOptions.visible === false) {
+        if (this.olLayerOptions.visible === false) {
             this.olSourceOptions.params.LAYERS = '';
         }
         this.visible = this.olLayerOptions.visible !== false;
@@ -53,30 +52,31 @@ class BaseWMS extends AnolBaseLayer {
             angular.isUndefined(this.options.opacity) && angular.isUndefined(other.options.opacity);
     }
 
-    getCombinedSource(other) {
+    getCombinedLayer (other) {
         var olSource = this.olLayer.getSource();
-        if(other.olLayerOptions.visible !== false) {
+        if (other.olLayerOptions.visible !== false) {
             var params = olSource.getParams();
             var layers = anol.helper.stringSplit(params.LAYERS, ',');
             layers = layers.concat(other.wmsSourceLayers);
             params.LAYERS = layers.join(',');
             olSource.updateParams(params);
         }
-        var anolLayers = olSource.get('anolLayers');
-        anolLayers.push(other);
-        olSource.set('anolLayers', anolLayers);
-        return olSource;
+        olSource.get('anolLayers').push(other);
+        this.olLayer.get('anolLayers').push(other);
+        other.setOlLayer(this.olLayer)
+        return this.olLayer;
     }
 
     removeOlLayer() {
-        if(this.combined) {
+        if (this.combined) {
             var olSource = this.olLayer.getSource();
             var anolLayers = olSource.get('anolLayers');
             var idx = anolLayers.indexOf(this);
-            if(idx > -1) {
+            if (idx > -1) {
                 anolLayers.splice(idx, 1);
             }
             olSource.set('anolLayers', anolLayers);
+            this.olLayer.set('anolLayers', anolLayers.slice(0));
 
             // update layer params
             var layerParams = [];
@@ -91,7 +91,7 @@ class BaseWMS extends AnolBaseLayer {
         }
     }
     getVisible() {
-        if(angular.isUndefined(this.olLayer)) {
+        if (this.combined) {
             return this.visible;
         }
         return this.olLayer.getVisible();
@@ -99,7 +99,7 @@ class BaseWMS extends AnolBaseLayer {
     reOrderLayerParams(layers) {
         var olSource = this.olLayer.getSource();
         var layerParams = [];
-        angular.forEach(layers, function(layer) {
+        angular.forEach(layers, function (layer) {
             if (layer.getVisible()) {
                 layerParams.push(layer.name);
             }
@@ -109,33 +109,27 @@ class BaseWMS extends AnolBaseLayer {
         olSource.updateParams(params);
     }
     setVisible(visible) {
-        if (visible == this.getVisible()) {
+        if (visible === this.getVisible()) {
             return;
         }
-        var insertLayerIdx = 0;
-        var source = this.olLayer.getSource();
-        var self = this;
-        $.each(source.get('anolLayers'), function(idx, layer) {
-            if(layer === self) {
-                return false;
-            }
-            if(layer.getVisible()) {
-                insertLayerIdx += layer.wmsSourceLayers.length;
-            }
-        });
-        var params = source.getParams();
-        var layers = anol.helper.stringSplit(params.LAYERS, ',');
-        layers = layers.reverse();
-        if(!visible) {
+
+        const insertLayerIdx = this.olLayer.get('anolLayers')
+            .filter(l => l !== this && l.getVisible())
+            .reduce((prev, next) => prev + next.wmsSourceLayers.length, 0);
+
+        const source = this.olLayer.getSource();
+        const params = source.getParams();
+
+        let layers = anol.helper.stringSplit(params.LAYERS, ',').toReversed();
+        if (!visible) {
             layers = anol.helper.excludeList(layers, this.wmsSourceLayers);
         } else {
             layers = anol.helper.concat(layers, this.wmsSourceLayers, insertLayerIdx);
         }
-        params.LAYERS = layers.reverse().join(',');
+        params.LAYERS = layers.toReversed().join(',');
         source.updateParams(params);
         this.visible = visible;
-        super.setVisible(visible);
-        // super.setVisible(layers.length > 0);
+        super.setVisible(layers.length > 0);
     }
     getLegendGraphicUrl() {
         var requestParams = {
@@ -146,19 +140,19 @@ class BaseWMS extends AnolBaseLayer {
             FORMAT: 'image/png',
             LAYER: this.wmsSourceLayers.join(',')
         };
-        if(angular.isDefined(this.legend.version)) {
+        if (angular.isDefined(this.legend.version)) {
             requestParams.VERSION = this.legend.version;
         }
-        if(angular.isDefined(this.legend.sldVersion)) {
+        if (angular.isDefined(this.legend.sldVersion)) {
             requestParams.SLD_VERSION = this.legend.sldVersion;
         }
-        if(angular.isDefined(this.legend.format)) {
+        if (angular.isDefined(this.legend.format)) {
             requestParams.FORMAT = this.legend.format;
         }
         var url = this.olLayer.getSource().getUrl();
-        if(url.indexOf('?') === -1) {
+        if (url.indexOf('?') === -1) {
             url += '?';
-        } else if(url.lastIndexOf('&') !== url.length - 1) {
+        } else if (url.lastIndexOf('&') !== url.length - 1) {
             url += '&';
         }
 
