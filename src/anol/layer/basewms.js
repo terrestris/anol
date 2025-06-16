@@ -79,19 +79,14 @@ class BaseWMS extends AnolBaseLayer {
             this.olLayer.set('anolLayers', anolLayers.slice(0));
 
             // update layer params
-            var layerParams = [];
-            angular.forEach(anolLayers, function(layer) {
-                if (layer.getVisible()) {
-                    layerParams.push(layer.name);
-                }
-            })
-            var params = olSource.getParams();
-            params.LAYERS = layerParams.reverse().join(',');
+            const layerParams = anolLayers.filter(l => l.getVisible()).map(l => l.name);
+            const params = olSource.getParams();
+            params.LAYERS = layerParams.toReversed().join(',');
             olSource.updateParams(params);
         }
     }
     getVisible() {
-        if (this.combined) {
+        if (this.combined || angular.isUndefined(this.olLayer)) {
             return this.visible;
         }
         return this.olLayer.getVisible();
@@ -120,16 +115,16 @@ class BaseWMS extends AnolBaseLayer {
         const source = this.olLayer.getSource();
         const params = source.getParams();
 
-        let layers = anol.helper.stringSplit(params.LAYERS, ',').toReversed();
+        let visibleWmsLayers = anol.helper.stringSplit(params.LAYERS, ',').toReversed();
         if (!visible) {
-            layers = anol.helper.excludeList(layers, this.wmsSourceLayers);
+            visibleWmsLayers = anol.helper.excludeList(visibleWmsLayers, this.wmsSourceLayers);
         } else {
-            layers = anol.helper.concat(layers, this.wmsSourceLayers, insertLayerIdx);
+            visibleWmsLayers = anol.helper.concat(visibleWmsLayers, this.wmsSourceLayers, insertLayerIdx);
         }
-        params.LAYERS = layers.toReversed().join(',');
+        params.LAYERS = visibleWmsLayers.toReversed().join(',');
         source.updateParams(params);
         this.visible = visible;
-        super.setVisible(layers.length > 0);
+        super.setVisible(visibleWmsLayers.length > 0);
     }
     getLegendGraphicUrl() {
         var requestParams = {

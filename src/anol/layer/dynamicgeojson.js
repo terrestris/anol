@@ -47,6 +47,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
         delete _options.olLayer.source;
         this.olLayerOptions = _options.olLayer;
         this.olLayer = undefined;
+        this.visible = this.olLayerOptions.visible !== false;
     }
 
     setOlLayer(olLayer) {
@@ -70,8 +71,20 @@ class DynamicGeoJSON extends StaticGeoJSON {
         return this.olLayer;
     }
 
+    getVisible() {
+        if (this.combined) {
+            return this.visible;
+        }
+        return super.getVisible();
+    }
+
     setVisible(visible) {
-        super.setVisible(visible);
+        this.visible = visible;
+        if (this.combined) {
+            super.setVisible(this.olLayer.get('anolLayers').some(l => l.getVisible()));
+        } else {
+            super.setVisible(visible);
+        }
         this.olSource.refresh();
     }
 
@@ -87,12 +100,13 @@ class DynamicGeoJSON extends StaticGeoJSON {
         srcOptions.strategy = bboxStrategy;
 
         srcOptions.loader = function(extent, resolution, projection) {
-            var additionalParameters = {};
-            angular.forEach(self.olSource.get('anolLayers'), function(layer) {
-                if(layer.getVisible()) {
-                    additionalParameters = anol.helper.mergeObjects(additionalParameters, layer.additionalRequestParameters);
-                }
-            });
+            const additionalParameters = this.olLayer.get('anolLayers')
+                .filter(l => l.getVisible())
+                .reduce((params, layer) =>
+                    anol.helper.mergeObjects({ ...params }, layer.additionalRequestParameters),
+                    {}
+                );
+
             self.loader(
                 srcOptions.url,
                 extent,
