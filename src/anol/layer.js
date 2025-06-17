@@ -131,10 +131,9 @@ class AnolBaseLayer {
     isClustered() {
         return false;
     }
-    getCombinedSource() {
+    getCombinedLayer() {
         return undefined;
     }
-    removeFromCombinedSource() {}
     hasGroup() {
         if(angular.isDefined(this.anolGroup)) {
             return true;

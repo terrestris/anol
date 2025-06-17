@@ -275,7 +275,7 @@ angular.module('anol.featurepopup')
                                     return;
                                 }
 
-                                const anolLayer = layer.get('anolLayer');
+                                const anolLayer = layer.get('anolLayers')[0];
 
                                 if (multiselect !== true) {
                                     if (angular.isUndefined(scope.layer) && angular.isUndefined(scope.feature)) {
