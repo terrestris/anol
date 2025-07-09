@@ -93,15 +93,11 @@ angular.module('anol.print')
 
                             // TODO load from PrintPageService
                             scope.measureLayers = ['lineMeasureLayer', 'areaMeasureLayer'];
-                            let measure_feature_collection = {};
 
                             angular.forEach(scope.measureLayers, function (layername) {
-                                const featureLayer = LayersService.getSystemLayerByName(layername);
-                                const geojsonFormat = new GeoJSON();
-                                if (featureLayer && featureLayer.olLayer.getSource().getFeatures().length !== 0) {
-                                    measure_feature_collection = geojsonFormat.writeFeaturesObject(
-                                        featureLayer.olLayer.getSource().getFeatures()
-                                    );
+                                const measureLayer = LayersService.getSystemLayerByName(layername);
+                                if (measureLayer) {
+                                    layers.push(measureLayer)
                                 }
                             });
 
@@ -109,7 +105,6 @@ angular.module('anol.print')
                                     bbox: PrintPageService.getBounds(),
                                     projection: MapService.getMap().getView().getProjection().getCode(),
                                     layers: layers,
-                                    measure_feature_collection: measure_feature_collection,
                                     templateValues: angular.copy(scope.printAttributes)
                                 }
                             );

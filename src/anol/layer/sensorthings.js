@@ -4,6 +4,7 @@ import { all } from 'ol/loadingstrategy';
 
 import SensorThingsClient from '../sensorthings/sensorthingsClient';
 
+// TODO support clustering
 class SensorThings extends FeatureLayer {
     constructor(_options) {
         super(_options);
@@ -105,6 +106,13 @@ class SensorThings extends FeatureLayer {
         srcOptions.loader = this.createLoader();
         srcOptions.format = new GeoJSON();
         return super._createSourceOptions(srcOptions);
+    }
+
+    setStyle(olLayer) {
+        if (!this.style) {
+            return;
+        }
+        olLayer.setStyle(this.style);
     }
 }
 

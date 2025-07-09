@@ -1,3 +1,13 @@
+import {
+    isString,
+    isNumber,
+    isBoolean,
+    isNull,
+    isArray,
+    isPlainObject,
+    isEmpty
+} from 'lodash';
+
 class SensorThingsClient {
     constructor(opts) {
         this.url = opts.url;
@@ -77,7 +87,7 @@ class SensorThingsClient {
             const feature = {
                 type: 'Feature',
                 properties: {
-                    ...observation
+                    ...this.flattenObject(observation)
                 },
                 geometry: thing.Locations[0].location,
             };
@@ -88,6 +98,32 @@ class SensorThingsClient {
             type: 'FeatureCollection',
             features
         };
+    }
+
+    // credits to https://stackoverflow.com/a/58314822
+    flattenObject(o, prefix = '', result = {}, keepNull = true) {
+        if (isString(o) || isNumber(o) || isBoolean(o) || (keepNull && isNull(o))) {
+            result[prefix] = o;
+            return result;
+        }
+
+        if (isArray(o) || isPlainObject(o)) {
+            for (let i in o) {
+            let pref = prefix;
+            if (isArray(o)) {
+                pref = pref + `.${i}`;
+            } else {
+                if (isEmpty(prefix)) {
+                    pref = i;
+                } else {
+                    pref = prefix + '.' + i;
+                }
+            }
+            this.flattenObject(o[i], pref, result, keepNull);
+            }
+            return result;
+        }
+        return result;
     }
 }
 
