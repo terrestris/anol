@@ -124,7 +124,7 @@ class BaseWMS extends AnolBaseLayer {
         params.LAYERS = visibleWmsLayers.toReversed().join(',');
         source.updateParams(params);
         this.visible = visible;
-        super.setVisible(visibleWmsLayers.length > 0);
+        super.setVisible(visible);
     }
     getLegendGraphicUrl() {
         var requestParams = {

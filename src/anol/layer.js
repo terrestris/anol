@@ -147,10 +147,13 @@ class AnolBaseLayer {
         return this.olLayer.getVisible();
     }
     setVisible(visible)  {
+        const self = this;
         if (visible && this.hasGroup()) {
             if (this.anolGroup.singleSelect) {
                 $.each(this.anolGroup.layers, function(idx, layer) {
-                    if (layer.getVisible()) {
+                    // Only set other layers invisible, not the one we want to have visible.
+                    // Otherwise the WMS param for that layer will be removed.
+                    if (layer.getVisible() && layer !== self) {
                         layer.setVisible(false); // layer.setVisible will update WMS params
                     }
                 });
