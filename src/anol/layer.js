@@ -159,7 +159,13 @@ class AnolBaseLayer {
                 });
             }
         }
-        this.olLayer.setVisible(visible);
+        // For combined layers, visibility depends on at least
+        // one other layer in combination being visible.
+        let olLayerVisible = visible;
+        if (this.combined) {
+            olLayerVisible = this.anolGroup.layers.some(l => l.getVisible());
+        }
+        this.olLayer.setVisible(olLayerVisible);
         angular.element(this).triggerHandler('anol.layer.visible:change', [this]);
     }
     onVisibleChange(func, context) {
