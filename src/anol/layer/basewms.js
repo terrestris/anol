@@ -108,9 +108,18 @@ class BaseWMS extends AnolBaseLayer {
             return;
         }
 
-        const insertLayerIdx = this.olLayer.get('anolLayers')
-            .filter(l => l !== this && l.getVisible())
-            .reduce((prev, next) => prev + next.wmsSourceLayers.length, 0);
+        // We have to place the activated layer at the
+        // position in the params.LAYERS string, according
+        // to the layer's position in the group.
+        const anolLayers = this.olLayer.get('anolLayers');
+        const selfIdx = anolLayers.indexOf(this);
+        let insertLayerIdx = 0;
+        for (let i = 0; i < selfIdx; i++) {
+            const l = anolLayers[i];
+            if (l.getVisible()) {
+                insertLayerIdx += l.wmsSourceLayers.length;
+            }
+        }
 
         const source = this.olLayer.getSource();
         const params = source.getParams();
