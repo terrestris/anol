@@ -46,7 +46,7 @@ const helper = {
         return r;
     },
     /**
-     * Inserts content of array by into array a starting at position at.
+     * Inserts content of array b into array a starting at position at.
      * When at is undefined, append b to a
      */
     concat(a, b, at) {
