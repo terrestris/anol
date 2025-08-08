@@ -71,37 +71,43 @@ angular.module('anol.featureproperties')
                     const propertiesFromFeature = function (feature, layerName, displayProperties) {
                         const featureProperties = feature.getProperties();
                         const properties = {};
-                        angular.forEach(displayProperties, function (key) {
+                        angular.forEach(displayProperties, function (keyOrPair) {
+                            const isKey = typeof keyOrPair === 'string';
+                            const key = isKey ? keyOrPair : keyOrPair.key;
                             const value = featureProperties[key];
                             if (value !== undefined && value !== null && value.toString().length > 0) {
-                                const key_name = key.includes('.') ? key.split('.').pop() : key;
-                                properties[key_name] = {
+                                const key_name = isKey ? key : keyOrPair.label;
+                                properties[key] = {
                                     key: key_name,
                                     value: value
                                 };
-                                const translateKey = [scope.translationNamespace, layerName, key_name.toUpperCase()].join('.');
-                                const translateValue = [scope.translationNamespace, layerName, key_name, value].join('.');
-                                // this get never rejected cause of array usage
-                                // see https://github.com/angular-translate/angular-translate/issues/960
-                                $translate([
-                                    translateKey,
-                                    translateValue
-                                ]).then(
-                                    function (translations) {
-                                        let translatedKey = translations[translateKey];
-                                        let translatedValue = translations[translateValue];
-                                        if (translatedKey === translateKey) {
-                                            translatedKey = key_name.charAt(0).toUpperCase() + key_name.slice(1);
+                                // We only try to translate if we have a simple key.
+                                // If we have a pair, the translation is already provided.
+                                if (isKey) {
+                                    const translateKey = [scope.translationNamespace, layerName, key_name.toUpperCase()].join('.');
+                                    const translateValue = [scope.translationNamespace, layerName, key_name, value].join('.');
+                                    // this get never rejected cause of array usage
+                                    // see https://github.com/angular-translate/angular-translate/issues/960
+                                    $translate([
+                                        translateKey,
+                                        translateValue
+                                    ]).then(
+                                        function (translations) {
+                                            let translatedKey = translations[translateKey];
+                                            let translatedValue = translations[translateValue];
+                                            if (translatedKey === translateKey) {
+                                                translatedKey = key_name.charAt(0).toUpperCase() + key_name.slice(1);
+                                            }
+                                            if (translatedValue === translateValue) {
+                                                translatedValue = value;
+                                            }
+                                            properties[key] = {
+                                                key: translatedKey,
+                                                value: translatedValue
+                                            };
                                         }
-                                        if (translatedValue === translateValue) {
-                                            translatedValue = value;
-                                        }
-                                        properties[key_name] = {
-                                            key: translatedKey,
-                                            value: translatedValue
-                                        };
-                                    }
-                                );
+                                    );
+                                }
                             }
                         });
                         return properties;
