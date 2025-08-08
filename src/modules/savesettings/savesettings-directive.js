@@ -53,7 +53,7 @@ angular.module('anol.savesettings')
                         // load project name to overwrite
                         if (angular.isUndefined(name) || scope.id) {
                             angular.forEach(scope.projectSettings, function (value) {
-                                if (value.id === scope.id) {
+                                if (value.id === parseInt(scope.id, 10)) {
                                     name = value.name;
                                 }
                             });
