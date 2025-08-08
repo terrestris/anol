@@ -1,3 +1,12 @@
-<div ng-if="propertiesCollection.length > 0" ng-repeat="properties in propertiesCollection">
-    <div ng-repeat="(key, value) in properties">{{ value.key }}: <url-or-text value="value.value"></url-or-text></div>
+<div class="anol-feature-properties-wrapper" ng-style="style">
+    <div ng-if="propertiesCollection.length > 0" ng-repeat="properties in propertiesCollection">
+        <table class="anol-feature-properties-table">
+            <tr ng-repeat="(key, value) in properties">
+                <td class="anol-feature-properties-table-key-col">{{ value.key }}:</td>
+                <td>
+                    <url-or-text value="value.value"></url-or-text>
+                </td>
+            </tr>
+        </table>
+    </div>
 </div>

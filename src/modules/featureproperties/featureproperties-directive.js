@@ -137,6 +137,17 @@ angular.module('anol.featureproperties')
                             if (!angular.isObject(layer.featureinfo) || features.length === 0) {
                                 return;
                             }
+
+                            scope.style = {};
+                            const hasWidth = layer.featureinfo.width !== undefined && layer.featureinfo.width !== null;
+                            if (hasWidth) {
+                                scope.style.width = layer.featureinfo.width + 'px';
+                            }
+                            const hasHeight = layer.featureinfo.height !== undefined && layer.featureinfo.height !== null;
+                            if (hasHeight) {
+                                scope.style.height = layer.featureinfo.height + 'px';
+                            }
+
                             const featureCount = layer.featureinfo.featureCount ?? 1;
                             for (let i = 0; i < featureCount; i++) {
                                 const feature = features[i];
