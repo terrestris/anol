@@ -100,7 +100,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
         srcOptions.strategy = bboxStrategy;
 
         srcOptions.loader = function(extent, resolution, projection) {
-            const additionalParameters = this.olLayer.get('anolLayers')
+            const additionalParameters = self.olLayer.get('anolLayers')
                 .filter(l => l.getVisible())
                 .reduce((params, layer) =>
                     anol.helper.mergeObjects({ ...params }, layer.additionalRequestParameters),
