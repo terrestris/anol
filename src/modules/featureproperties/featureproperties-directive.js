@@ -137,12 +137,14 @@ angular.module('anol.featureproperties')
                             if (!angular.isObject(layer.featureinfo) || features.length === 0) {
                                 return;
                             }
-                            angular.forEach(features, function (feature) {
+                            const featureCount = layer.featureinfo.featureCount ?? 1;
+                            for (let i = 0; i < featureCount; i++) {
+                                const feature = features[i];
                                 const properties = propertiesFromFeature(feature, layer.name, layer.featureinfo.properties);
                                 if (!angular.equals(properties, {})) {
                                     propertiesCollection.push(properties);
                                 }
-                            });
+                            }
                         });
                         scope.propertiesCollection = propertiesCollection;
                         if (FeaturePopupController !== null && scope.propertiesCollection.length === 0) {
