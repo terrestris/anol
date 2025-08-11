@@ -71,19 +71,21 @@ angular.module('anol.featureproperties')
                     const propertiesFromFeature = function (feature, layerName, displayProperties) {
                         const featureProperties = feature.getProperties();
                         const properties = {};
-                        angular.forEach(displayProperties, function (keyOrPair) {
-                            const isKey = typeof keyOrPair === 'string';
-                            const key = isKey ? keyOrPair : keyOrPair.key;
-                            const value = featureProperties[key];
+                        angular.forEach(displayProperties, function (displayProp) {
+                            const isPropString = typeof displayProp === 'string';
+                            const key = isPropString ? displayProp : displayProp.key;
+                            const value = !isPropString && displayProp.format === 'date' && featureProperties[key]
+                                ? (new Date(Date.parse(featureProperties[key]))).toLocaleString()
+                                : featureProperties[key];
                             if (value !== undefined && value !== null && value.toString().length > 0) {
-                                const key_name = isKey ? key : keyOrPair.label;
+                                const key_name = isPropString ? key : (displayProp.label ?? key);
                                 properties[key] = {
                                     key: key_name,
                                     value: value
                                 };
                                 // We only try to translate if we have a simple key.
                                 // If we have a pair, the translation is already provided.
-                                if (isKey) {
+                                if (isPropString) {
                                     const translateKey = [scope.translationNamespace, layerName, key_name.toUpperCase()].join('.');
                                     const translateValue = [scope.translationNamespace, layerName, key_name, value].join('.');
                                     // this get never rejected cause of array usage
