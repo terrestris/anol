@@ -89,9 +89,10 @@ class AnolBaseLayer {
         this.groupLayer = false;
         this.metadataUrl = options.metadataUrl || false;
         this.searchConfig = options.searchConfig || [];
-        // this.showConfig = false;
-        this.overallOpacity = options.opacity || 1;
-        this.userDefinedOpacity = undefined;
+        // opacity set in layer configuration files
+        this.configuredOpacity = options.opacity || 1;
+        // opacity set by user via ui
+        this.userDefinedOpacity = 1;
 
         if(this.displayInLayerswitcher === false) {
             this.permalink = false;
@@ -178,12 +179,6 @@ class AnolBaseLayer {
         angular.element(this).off('anol.layer.visible:change', func);
     }
 
-    /* isConfigVisible() {
-        return this.showConfig;
-    }
-    setConfigVisible(visible) {
-        this.showConfig = visible;
-    } */
     /**
      * @param {number} value
      */
@@ -197,7 +192,24 @@ class AnolBaseLayer {
                 value = 1;
             }
             this.userDefinedOpacity = 1 - value;
-            this.olLayer.setOpacity(this.userDefinedOpacity * this.overallOpacity);
+            this.olLayer.setOpacity(this.userDefinedOpacity * this.configuredOpacity);
+        }
+    }
+
+    getOpacity() {
+
+    }
+
+    setUserDefinedOpacity(userDefinedOpacity) {
+        if (angular.isDefined(this.olLayer)) {
+            let value = userDefinedOpacity;
+            if (userDefinedOpacity < 0) {
+                value = 0;
+            } else if (userDefinedOpacity > 1) {
+                value = 1;
+            }
+            this.userDefinedOpacity = value;
+            this.olLayer.setOpacity(this.userDefinedOpacity * this.configuredOpacity);
         }
     }
 
