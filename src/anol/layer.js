@@ -90,6 +90,8 @@ class AnolBaseLayer {
         this.metadataUrl = options.metadataUrl || false;
         this.searchConfig = options.searchConfig || [];
         // this.showConfig = false;
+        this.overallOpacity = options.opacity || 1;
+        this.userDefinedOpacity = undefined;
 
         if(this.displayInLayerswitcher === false) {
             this.permalink = false;
@@ -194,7 +196,8 @@ class AnolBaseLayer {
             } else if (value > 1) {
                 value = 1;
             }
-            this.olLayer.setOpacity(1 - value);
+            this.userDefinedOpacity = 1 - value;
+            this.olLayer.setOpacity(this.userDefinedOpacity * this.overallOpacity);
         }
     }
 
