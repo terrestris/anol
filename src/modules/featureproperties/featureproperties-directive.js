@@ -153,6 +153,9 @@ angular.module('anol.featureproperties')
                             const featureCount = layer.featureinfo.featureCount ?? 1;
                             for (let i = 0; i < featureCount; i++) {
                                 const feature = features[i];
+                                if (!feature) {
+                                    return;
+                                }
                                 const properties = propertiesFromFeature(feature, layer.name, layer.featureinfo.properties);
                                 if (!angular.equals(properties, {})) {
                                     propertiesCollection.push(properties);
