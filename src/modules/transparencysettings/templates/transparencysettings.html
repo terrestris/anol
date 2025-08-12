@@ -1,0 +1,21 @@
+<div>
+    <i title="Transparenz einstellen" ng-click="toggleShowDialog()"
+       class="toggle-layer-conf glyphicon glyphicon-adjust pointer {{ showDialog ? 'active' : '' }}">
+    </i>
+    <dialog ng-if="showDialog" class="layer-conf slide-top" ng-blur="toggleShowDialog()">
+        <header>
+            {{ group.title }}
+            <button title="Schließen" class="glyphicon glyphicon-remove pointer"
+                    ng-click="toggleShowDialog()"></button>
+        </header>
+        <div class="transparency-slider">
+            <!-- TODO: adjust expression with filters-->
+            <label for="transparency-slider">
+                Transparenz: {{ (transparency() * 100).toFixed(0) }}%
+            </label>
+            <!-- TODO: group.transparency should be in scope in directive-->
+            <input id="transparency-slider" type="range" min="0" max="1" step="0.01"
+                   ng-model="group.transparency" ng-model-options="{getterSetter: true}"/>
+        </div>
+    </dialog>
+</div>
