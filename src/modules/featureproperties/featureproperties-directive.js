@@ -97,10 +97,12 @@ angular.module('anol.featureproperties')
                                         function (translations) {
                                             let translatedKey = translations[translateKey];
                                             let translatedValue = translations[translateValue];
-                                            if (translatedKey === translateKey) {
+                                            // Fallback, if no translation for translateKey was found
+                                            if (translatedKey.trim() === translateKey.trim()) {
                                                 translatedKey = key_name.charAt(0).toUpperCase() + key_name.slice(1);
                                             }
-                                            if (translatedValue === translateValue) {
+                                            // Fallback, if no translation for translateValue was found
+                                            if (translatedValue.trim() === translateValue.trim()) {
                                                 translatedValue = value;
                                             }
                                             properties[key] = {
