@@ -15,7 +15,8 @@ angular.module('anol.transparencysettings')
                     return templateHTML;
                 },
                 scope: {
-                    group: '='
+                    group: '=',
+                    title: '@'
                 },
                 link: function (scope, element, attrs) {
 
@@ -33,9 +34,12 @@ angular.module('anol.transparencysettings')
                         scope.showDialog = !scope.showDialog;
                     }
 
-                    scope.transparency = function () {
-                        // TODO: work with new functions
-                        return scope.group.transparency();
+                    scope.transparency = function (transparencyValue) {
+                        if (!transparencyValue && transparencyValue !== 0) {
+                            return 1 - scope.group.getUserDefinedOpacity();
+                        } else {
+                            scope.group.setUserDefinedOpacity(1 - transparencyValue);
+                        }
                     }
                 }
             };
