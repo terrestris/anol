@@ -110,21 +110,8 @@ class Group {
         });
     }
 
-    transparency(value) { 
-        var self = this;
-
-        if (!value && value !== 0) {            
-            return 1 - self.userDefinedOpacity;
-        } else if (value < 0) {
-            value = 0;
-        } else if (value > 1) {
-            value = 1;
-        }
-        self.userDefinedOpacity = 1 - value;
-
-        $.each(self.layers, function(idx, layer) {
-            layer.transparency(value);
-        });
+    getUserDefinedOpacity() {
+        return this.userDefinedOpacity;
     }
 
     childrenAreCombinable() {

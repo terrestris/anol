@@ -179,25 +179,17 @@ class AnolBaseLayer {
         angular.element(this).off('anol.layer.visible:change', func);
     }
 
-    /**
-     * @param {number} value
-     */
-    transparency(value) {  // getterSetter
-        if (angular.isDefined(this.olLayer)) {
-            if (!value && value !== 0) {
-                return 1 - this.olLayer.getOpacity();
-            } else if (value < 0) {
-                value = 0;
-            } else if (value > 1) {
-                value = 1;
-            }
-            this.userDefinedOpacity = 1 - value;
-            this.olLayer.setOpacity(this.userDefinedOpacity * this.configuredOpacity);
-        }
+    getConfiguredOpacity() {
+        return this.configuredOpacity;
     }
 
-    getOpacity() {
+    getUserDefinedOpacity() {
+        debugger;
+        return this.userDefinedOpacity;
+    }
 
+    getLayerOpacity() {
+        return this.userDefinedOpacity * this.configuredOpacity;
     }
 
     setUserDefinedOpacity(userDefinedOpacity) {

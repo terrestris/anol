@@ -4,18 +4,17 @@
     </i>
     <dialog ng-if="showDialog" class="layer-conf slide-top" ng-blur="toggleShowDialog()">
         <header>
-            {{ group.title }}
+            {{ title }}
             <button title="Schließen" class="glyphicon glyphicon-remove pointer"
-                    ng-click="toggleShowDialog()"></button>
+                    ng-click="toggleShowDialog()" style="margin-left: auto;">
+            </button>
         </header>
         <div class="transparency-slider">
-            <!-- TODO: adjust expression with filters-->
             <label for="transparency-slider">
-                Transparenz: {{ (transparency() * 100).toFixed(0) }}%
+                Transparenz: {{ transparency() * 100 | number:0 }}%
             </label>
-            <!-- TODO: group.transparency should be in scope in directive-->
             <input id="transparency-slider" type="range" min="0" max="1" step="0.01"
-                   ng-model="group.transparency" ng-model-options="{getterSetter: true}"/>
+                   ng-model="transparency" ng-model-options="{getterSetter: true}"/>
         </div>
     </dialog>
 </div>
