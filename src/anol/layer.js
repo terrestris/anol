@@ -162,8 +162,6 @@ class AnolBaseLayer {
         // For combined layers, visibility depends on at least
         // one other layer in combination being visible.
         let olLayerVisible = visible;
-        // Top-level layers might be combined while not being
-        // in a group.
         if (this.combined && this.hasGroup()) {
             olLayerVisible = this.anolGroup.layers.some(l => l.getVisible());
         }
