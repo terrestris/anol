@@ -59,7 +59,7 @@ class DynamicGeoJSON extends StaticGeoJSON {
         return AnolBaseLayer.prototype.isCombinable.call(this, other) &&
             this.olSourceOptions.url === other.olSourceOptions.url &&
             this.olSourceOptions.featureProjection === other.olSourceOptions.featureProjection &&
-            (this.clusterOptions === false || this.anolGroup === other.anolGroup);
+            (this.clusterOptions === false || (this.hasGroup() && this.anolGroup === other.anolGroup));
     }
 
     getCombinedLayer(other) {
