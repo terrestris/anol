@@ -26,9 +26,7 @@ import Style from 'ol/style/Style';
 import Text from 'ol/style/Text';
 import Stroke from 'ol/style/Stroke';
 import {containsCoordinate} from 'ol/extent';
-
 import GeoJSON from 'ol/format/GeoJSON';
-import AnolBaseLayer from "../layer";
 
 class DynamicGeoJSON extends StaticGeoJSON {
 
@@ -55,20 +53,12 @@ class DynamicGeoJSON extends StaticGeoJSON {
         this.olSource = this.isClustered() ? this.unclusteredSource : olLayer.getSource();
     }
 
-    isCombinable(other) {
-        return AnolBaseLayer.prototype.isCombinable.call(this, other) &&
-            this.olSourceOptions.url === other.olSourceOptions.url &&
-            this.olSourceOptions.featureProjection === other.olSourceOptions.featureProjection &&
-            (this.clusterOptions === false || (this.hasGroup() && this.anolGroup === other.anolGroup));
+    isCombinable() {
+        return false;
     }
 
-    getCombinedLayer(other) {
-        this.olSource.get('anolLayers').push(other);
-        this.olLayer.get('anolLayers').push(other);
-
-        other.setOlLayer(this.olLayer);
-
-        return this.olLayer;
+    getCombinedLayer() {
+        return undefined;
     }
 
     getVisible() {
