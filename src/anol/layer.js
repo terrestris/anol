@@ -184,7 +184,6 @@ class AnolBaseLayer {
     }
 
     getUserDefinedOpacity() {
-        debugger;
         return this.userDefinedOpacity;
     }
 
