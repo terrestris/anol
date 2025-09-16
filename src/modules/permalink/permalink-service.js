@@ -34,6 +34,7 @@ import Group from "../../anol/layer/group";
  * @property {string[]} groupOrder
  * @property {string[]} sidebar
  * @property {'open'|'closed'} sidebarStatus
+ * @property {Object} opacities
  */
 
 angular.module('anol.permalink')
@@ -62,6 +63,7 @@ angular.module('anol.permalink')
             const groupOrder = getArrayParam('groupOrder', params);
             const sidebar = getArrayParam('sidebar', params);
             const sidebarStatus = getStringParam('sidebarStatus', params);
+            const opacities = getObjectParam('opacities', params);
 
             /**
              * @type {Partial<PermalinkParameters>}
@@ -74,7 +76,8 @@ angular.module('anol.permalink')
                 catalogGroups,
                 geocode: /** @type {PermalinkGeocodeParameters} */ (geocode),
                 groupOrder,
-                sidebar
+                sidebar,
+                opacities
             }
 
             if (mapParams !== undefined) {
@@ -212,7 +215,7 @@ angular.module('anol.permalink')
                  * @requires anol.map.LayersService
                  *
                  * @description
-                 * Looks for a `map`-parameter in current url and move map to location specified in
+                 * Looks for a `map`-parameter in current url and move map to the specified location
                  *
                  * Updates browser-url with current zoom and location when map moved
                  */
@@ -499,9 +502,9 @@ angular.module('anol.permalink')
                     /**
                      * Apply params from url to application.
                      * @param {Partial<PermalinkParameters>} mapParams
-                     * @return {Promise<void[]>}
+                     * @return {Promise<void>}
                      */
-                    applyPermalinkParameters(mapParams) {
+                    async applyPermalinkParameters(mapParams) {
                         var self = this;
                         if (mapParams.center !== undefined && mapParams.crs !== undefined) {
                             var center = transform(mapParams.center, mapParams.crs, self.view.getProjection().getCode());
@@ -525,11 +528,23 @@ angular.module('anol.permalink')
                             MapService.fitWhenSizeReady(extent);
                         }
 
-                        return Promise.all([
+                        await Promise.all([
                             this.applyCatalogParameters(mapParams),
                             this.applyGeocodeParameters(mapParams),
                             this.applySidebarParameters(mapParams)
                         ]);
+
+                        if (mapParams.opacities !== undefined) {
+                            for (let layerName in mapParams.opacities) {
+                                const o = mapParams.opacities[layerName];
+                                const layer = LayersService.overlayLayers.find(l => l.name === layerName);
+                                if (layer) {
+                                    layer.setUserDefinedOpacity(o);
+                                } else {
+                                    console.error(`layer with name ${layerName} not found. could not apply opacity.`)
+                                }
+                            }
+                        }
                     }
 
                     /**
@@ -642,9 +657,16 @@ angular.module('anol.permalink')
                     getParameters() {
                         const sidebarStatus = $rootScope.sidebar.open ? 'open' : 'closed';
                         const sidebar = $rootScope.sidebar.openItems;
-                        const groupOrder = /** @type {import('../../anol/layer.js').default[]} */ (LayersService.overlayLayers)
+                        const groupOrder = (/** @type {import('../../anol/layer.js').default[]} */ (LayersService.overlayLayers))
                             .map(l => l.name)
                             .filter(l => l);
+                        const opacities = {};
+                        for (const layer of /** @type {import('../../anol/layer.js').default[]} */ (LayersService.overlayLayers)) {
+                            const o = layer.getUserDefinedOpacity();
+                            if (o !== 1) {
+                                opacities[layer.name] = o;
+                            }
+                        }
 
                         return {
                             zoom: this.zoom,
@@ -653,9 +675,10 @@ angular.module('anol.permalink')
                             layers: this.visibleLayers.map(l => l.name),
                             catalogLayers: this.catalogLayers.map(l => l.name),
                             catalogGroups: this.catalogGroups.map(l => l.name),
-                            groupOrder: groupOrder,
-                            sidebar: sidebar,
-                            sidebarStatus: sidebarStatus
+                            groupOrder,
+                            sidebar,
+                            sidebarStatus,
+                            opacities
                         };
                     }
 
