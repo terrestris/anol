@@ -128,6 +128,11 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'SERVICE_UNAVAILABLE': 'Service unavailable',
                     'SAVING_FAILED': 'Could not save changes.'
                 },
+                'transparencySettings': {
+                    'SET_TRANSPARENCY': 'Set transparency',
+                    'CLOSE': 'Close',
+                    'TRANSPARENCY_LABEL': 'Transparency'
+                },
                 'zoom': {
                     'TOOLTIP_ZOOM_IN': 'Zoom in',
                     'TOOLTIP_ZOOM_OUT': 'Zoom out'
@@ -180,6 +185,11 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'DASHDOT': 'Gestrichelt und gepunktet',
                     'LONGDASH': 'Lang gestrichelt',
                     'LONGDASHDOT': 'Lang gestrichelt und gepunktet'
+                },
+                'transparencySettings': {
+                    'SET_TRANSPARENCY': 'Transparenz einstellen',
+                    'CLOSE': 'Schließen',
+                    'TRANSPARENCY_LABEL': 'Transparenz'
                 },
                 'zoom': {
                     'TOOLTIP_ZOOM_IN': 'Hineinzoomen',

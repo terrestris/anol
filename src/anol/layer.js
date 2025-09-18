@@ -89,6 +89,10 @@ class AnolBaseLayer {
         this.groupLayer = false;
         this.metadataUrl = options.metadataUrl || false;
         this.searchConfig = options.searchConfig || [];
+        // opacity set in layer configuration files
+        this.configuredOpacity = options.opacity || 1;
+        // opacity set by user via ui
+        this.userDefinedOpacity = 1;
 
         if(this.displayInLayerswitcher === false) {
             this.permalink = false;
@@ -174,6 +178,32 @@ class AnolBaseLayer {
     offVisibleChange(func) {
         angular.element(this).off('anol.layer.visible:change', func);
     }
+
+    getConfiguredOpacity() {
+        return this.configuredOpacity;
+    }
+
+    getUserDefinedOpacity() {
+        return this.userDefinedOpacity;
+    }
+
+    getLayerOpacity() {
+        return this.userDefinedOpacity * this.configuredOpacity;
+    }
+
+    setUserDefinedOpacity(userDefinedOpacity) {
+        if (angular.isDefined(this.olLayer)) {
+            let value = userDefinedOpacity;
+            if (userDefinedOpacity < 0) {
+                value = 0;
+            } else if (userDefinedOpacity > 1) {
+                value = 1;
+            }
+            this.userDefinedOpacity = value;
+            this.olLayer.setOpacity(this.userDefinedOpacity * this.configuredOpacity);
+        }
+    }
+
     refresh() {
         if(this.olLayer instanceof BaseLayer) {
             this.olLayer.changed();

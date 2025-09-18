@@ -31,6 +31,7 @@ class Group {
         this.groupLayer = true;
         this.combinable = undefined;
         this.defaultVisibleLayers = options.defaultVisibleLayers || [];
+        this.userDefinedOpacity = 1;
 
         if (angular.isUndefined(this.layers)) {
             this.layers = [];
@@ -93,6 +94,24 @@ class Group {
     }
     offVisibleChange(func) {
         angular.element(this).off('anol.group.visible:change', func);
+    }
+
+    setUserDefinedOpacity(userDefinedOpacity) {
+        let value = userDefinedOpacity;
+        if (userDefinedOpacity < 0) {
+            value = 0;
+        } else if (userDefinedOpacity > 1) {
+            value = 1;
+        }
+        this.userDefinedOpacity = value;
+
+        $.each(this.layers, function(idx, layer) {
+            layer.setUserDefinedOpacity(value);
+        });
+    }
+
+    getUserDefinedOpacity() {
+        return this.userDefinedOpacity;
     }
 
     childrenAreCombinable() {

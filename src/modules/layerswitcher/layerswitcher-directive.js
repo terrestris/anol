@@ -166,7 +166,6 @@ angular.module('anol.layerswitcher')
                                     }
                                 });
                             }
-
                             group.setVisible(!group.getVisible());
                         }
                     };
