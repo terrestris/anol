@@ -3,6 +3,7 @@ import { anol } from '../../anol/anol.js';
 angular.module('anol.transparencysettings', [])
     .service('TransparencyDialogService', function() {
         let activeDialog = null;
+        let dialogCounter = 0;
 
         return {
           openDialog: function(dialogId) {
@@ -22,6 +23,10 @@ angular.module('anol.transparencysettings', [])
           },
           isOpen: function(dialogId) {
             return activeDialog === dialogId;
+          },
+          getNextDialogId: function() {
+            dialogCounter += 1;
+            return 'dialog-' + dialogCounter;
           }
         };
       });

@@ -28,7 +28,7 @@ angular.module('anol.transparencysettings')
                         });
                     }
 
-                    scope.dialogId = attrs.dialogId || 'dialog-' + Math.random().toString(36).substr(2, 9);
+                    scope.dialogId = attrs.dialogId || TransparencyDialogService.getNextDialogId();
 
                     scope.toggleShowDialog = function () {
                         TransparencyDialogService.toggleDialog(scope.dialogId);
