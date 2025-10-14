@@ -6,27 +6,22 @@ angular.module('anol.transparencysettings', [])
         let dialogCounter = 0;
 
         return {
-          openDialog: function(dialogId) {
-            activeDialog = dialogId;
+          openDialog: function(data) {
+            activeDialog = data;
+            dialogCounter++;
+            return dialogCounter;
           },
-          closeDialog: function(dialogId) {
-            if (activeDialog === dialogId) {
-              activeDialog = null;
-            }
+          closeDialog: function() {
+            activeDialog = null;
           },
-          toggleDialog: function(dialogId) {
-            if (activeDialog === dialogId) {
-              activeDialog = null;
-            } else {
-              activeDialog = dialogId;
-            }
+          isActiveDialog: function(id) {
+            return activeDialog !== null && id === dialogCounter;
           },
-          isOpen: function(dialogId) {
-            return activeDialog === dialogId;
+          isOpen: function() {
+            return activeDialog !== null;
           },
-          getNextDialogId: function() {
-            dialogCounter += 1;
-            return 'dialog-' + dialogCounter;
+          getActiveDialog: function() {
+            return activeDialog;
           }
         };
       });

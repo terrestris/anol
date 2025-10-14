@@ -1,0 +1,21 @@
+<dialog id="transparency-dialog" class="transparency-dialog slide-top" ng-style="dialogStyle">
+    <div class="transparency-slider-header" style="display: flex; align-items: baseline; justify-content: space-between;">
+        <label for="transparency-slider">
+            {{ 'anol.transparencySettings.TRANSPARENCY_LABEL' | translate }}: {{ transparency() * 100 | number:0 }}%
+        </label>
+        <button title="{{ 'anol.transparencySettings.CLOSE' | translate }}" ng-click="closeDialog()"
+            class="close-btn glyphicon glyphicon-remove pointer">
+        </button>
+    </div>
+    <div class="transparency-slider">
+        <input
+               id="transparency-slider"
+               type="range"
+               min="0"
+               max="1"
+               step="0.01"
+               ng-model="transparency"
+               ng-model-options="{getterSetter: true}"
+        />
+    </div>
+</dialog>
