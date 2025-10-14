@@ -320,6 +320,9 @@ angular.module('anol.legend')
                         if (angular.isUndefined(layer.getLegendGraphicUrl)) {
                             return;
                         }
+                        if (layer.legend.type === 'link') {
+                            return;
+                        }
                         const legendImage = $('<img>');
                         legendImage.addClass('anol-legend-item-image');
                         legendImage.attr('src', layer.getLegendGraphicUrl());
