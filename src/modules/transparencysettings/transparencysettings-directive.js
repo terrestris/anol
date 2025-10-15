@@ -15,8 +15,7 @@ angular.module('anol.transparencysettings')
                     return templateHTML;
                 },
                 scope: {
-                    group: '=',
-                    title: '@'
+                    group: '='
                 },
                 link: function (scope, element, attrs) {
 
@@ -28,29 +27,24 @@ angular.module('anol.transparencysettings')
                         });
                     }
 
-                    scope.dialogId = attrs.dialogId || TransparencyDialogService.getNextDialogId();
+                    const dialogId = TransparencyDialogService.createDialogId();
 
-                    scope.toggleShowDialog = function () {
-                        TransparencyDialogService.toggleDialog(scope.dialogId);
-                    }
-
-                    scope.isDialogOpen = function () {
-                        return TransparencyDialogService.isOpen(scope.dialogId);
-                    };
-
-                    scope.transparency = function (transparencyValue) {
-                        if (!transparencyValue && transparencyValue !== 0) {
-                            return 1 - scope.group.getUserDefinedOpacity();
-                        } else {
-                            scope.group.setUserDefinedOpacity(1 - transparencyValue);
-                        }
+                    scope.openDialog = function () {
+                        const triggerEl = element.find('.toggle-layer-conf')[0];
+                        const boundingRect = triggerEl.getBoundingClientRect();
+                        TransparencyDialogService.openDialog(dialogId, {
+                            group: scope.group,
+                            boundingRect: boundingRect
+                        });
                     };
 
                     function handleOutsideDialogClick(event) {
-                        if (scope.isDialogOpen() && !element[0].contains(event.target)) {
-                            scope.$apply(function() {
-                                TransparencyDialogService.closeDialog(scope.dialogId);
-                            });
+                        const dialogEl = $document.find('#transparency-dialog')[0];
+                        const clickedDialog = dialogEl?.contains(event.target);
+                        const clickedSettings = element[0]?.contains(event.target);
+                        if (TransparencyDialogService.isActiveDialog(dialogId) && !clickedSettings && !clickedDialog) {
+                            TransparencyDialogService.closeDialog();
+                            scope.$apply();
                         }
                     }
 
