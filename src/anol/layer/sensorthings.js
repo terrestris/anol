@@ -108,11 +108,24 @@ class SensorThings extends FeatureLayer {
         return super._createSourceOptions(srcOptions);
     }
 
+    injectExternalGraphicPrefix(style) {
+        if (!style) {
+            return;
+        }
+        if (Array.isArray(style)) {
+            style.forEach((s) => this.injectExternalGraphicPrefix(s.style), this);
+        } else if (style['icon-src']) {
+            style['icon-src'] = this.externalGraphicPrefix + style['icon-src'];
+        }
+    }
+
     setStyle(olLayer) {
         if (!this.style) {
             return;
         }
-        olLayer.setStyle(this.style);
+        const styleClone = structuredClone(this.style);
+        this.injectExternalGraphicPrefix(styleClone);
+        olLayer.setStyle(styleClone);
     }
 }
 
