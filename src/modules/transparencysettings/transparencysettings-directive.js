@@ -27,10 +27,12 @@ angular.module('anol.transparencysettings')
                         });
                     }
 
+                    const dialogId = TransparencyDialogService.createDialogId();
+
                     scope.openDialog = function () {
                         const triggerEl = element.find('.toggle-layer-conf')[0];
                         const boundingRect = triggerEl.getBoundingClientRect();
-                        scope.dialogId = TransparencyDialogService.openDialog({
+                        TransparencyDialogService.openDialog(dialogId, {
                             group: scope.group,
                             boundingRect: boundingRect
                         });
@@ -40,9 +42,8 @@ angular.module('anol.transparencysettings')
                         const dialogEl = $document.find('#transparency-dialog')[0];
                         const clickedDialog = dialogEl?.contains(event.target);
                         const clickedSettings = element[0]?.contains(event.target);
-                        if (TransparencyDialogService.isActiveDialog(scope.dialogId) && !clickedSettings && !clickedDialog) {
+                        if (TransparencyDialogService.isActiveDialog(dialogId) && !clickedSettings && !clickedDialog) {
                             TransparencyDialogService.closeDialog();
-                            scope.dialogId = null;
                             scope.$apply();
                         }
                     }

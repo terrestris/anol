@@ -1,27 +1,30 @@
 import { anol } from '../../anol/anol.js';
 
 angular.module('anol.transparencysettings', [])
-    .service('TransparencyDialogService', function() {
-        let activeDialog = null;
-        let dialogCounter = 0;
+    .factory('TransparencyDialogService', ['$window', function($window) {
+        let activeDialogData = null;
+        let activeDialogId = null;
 
         return {
-          openDialog: function(data) {
-            activeDialog = data;
-            dialogCounter++;
-            return dialogCounter;
+          openDialog: function(id, data) {
+            activeDialogData = data;
+            activeDialogId = id;
           },
           closeDialog: function() {
-            activeDialog = null;
+            activeDialogData = null;
+            activeDialogId = null;
           },
           isActiveDialog: function(id) {
-            return activeDialog !== null && id === dialogCounter;
+            return activeDialogData !== null && id === activeDialogId;
           },
           isOpen: function() {
-            return activeDialog !== null;
+            return activeDialogId !== null;
           },
-          getActiveDialog: function() {
-            return activeDialog;
+          getActiveDialogData: function() {
+            return activeDialogData;
+          },
+          createDialogId: function() {
+            return $window.crypto.randomUUID();
           }
         };
-      });
+      }]);

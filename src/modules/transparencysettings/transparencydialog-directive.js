@@ -36,11 +36,11 @@ angular.module('anol.transparencysettings')
                         };
                     };
 
-                    scope.activeDialog = TransparencyDialogService.getActiveDialog();
+                    scope.activeDialog = TransparencyDialogService.getActiveDialogData();
                     updateDialogPosition();
 
                     scope.$watch(function() {
-                        return TransparencyDialogService.getActiveDialog();
+                        return TransparencyDialogService.getActiveDialogData();
                     }, function(newVal) {
                         scope.activeDialog = newVal;
                         updateDialogPosition();
