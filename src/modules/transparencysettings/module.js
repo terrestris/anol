@@ -1,7 +1,9 @@
 import { anol } from '../../anol/anol.js';
 
 angular.module('anol.transparencysettings', [])
-    .factory('TransparencyDialogService', ['$window', function($window) {
+    .service('TransparencyDialogService', function() {
+        let dialogCounter = 0;
+
         let activeDialogData = null;
         let activeDialogId = null;
 
@@ -24,7 +26,8 @@ angular.module('anol.transparencysettings', [])
             return activeDialogData;
           },
           createDialogId: function() {
-            return $window.crypto.randomUUID();
+            dialogCounter += 1;
+            return dialogCounter;
           }
         };
-      }]);
+      });
