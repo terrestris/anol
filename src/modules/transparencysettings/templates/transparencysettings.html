@@ -1,5 +1,7 @@
 <div>
     <button title="{{ 'anol.transparencySettings.SET_TRANSPARENCY' | translate }}" ng-click="openDialog()"
-        class="toggle-layer-conf glyphicon glyphicon-adjust pointer">
+        class="toggle-layer-conf glyphicon glyphicon-adjust pointer"
+        ng-style="{'color': (group.getUserDefinedOpacity() < 1 ? '#337ab7' : 'inherit')}"
+    >
     </button>
 </div>
