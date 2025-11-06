@@ -56,19 +56,26 @@ angular.module('anol.transparencysettings')
                         }
                     };
 
+                    const sidebarElement = document.querySelector('.side-bar');
+                    const sidebarIsFullscreen = sidebarElement && sidebarElement.offsetWidth >= window.innerWidth;
+
                     const onSliderMove = function () {
-                        $rootScope.sidebar = {
-                            ...$rootScope.sidebar,
-                            open: false
-                        };
-                        $rootScope.$apply();
+                        if (sidebarIsFullscreen) {
+                            $rootScope.sidebar = {
+                                ...$rootScope.sidebar,
+                                open: false
+                            };
+                            $rootScope.$apply();
+                        }
                     };
                     const onSliderMoveEnd = function () {
-                        $rootScope.sidebar = {
-                            ...$rootScope.sidebar,
-                            open: true
-                        };
-                        $rootScope.$apply();
+                        if (sidebarIsFullscreen) {
+                            $rootScope.sidebar = {
+                                ...$rootScope.sidebar,
+                                open: true
+                            };
+                            $rootScope.$apply();
+                        }
                     };
 
                     const slider = element.find('#transparency-slider');
