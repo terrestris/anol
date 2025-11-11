@@ -74,8 +74,9 @@ angular.module('anol.getfeatureinfo')
                             $rootScope.$digest();
                         };
 
-                        scope.addLayerToMap = function (layerName) {
-                            CatalogService.addToMap(layerName, true);
+                        scope.addLayerToMap = async function (layerName) {
+                            await CatalogService.addToMap(layerName, true);
+                            $rootScope.$digest();
                         };
 
                         if (angular.isDefined(scope.waitingMarkerSrc)) {

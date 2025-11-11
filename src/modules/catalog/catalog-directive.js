@@ -58,8 +58,9 @@ angular.module('anol.catalog')
                         CatalogService.setVariant(scope.variant);
                     };
 
-                    scope.addToMap = function (layer) {
-                        CatalogService.addToMap(layer.name, true);
+                    scope.addToMap = async function (layer) {
+                        await CatalogService.addToMap(layer.name, true);
+                        $rootScope.$digest();
                     };
                     scope.addGroupToMap = async function (group) {
                         await CatalogService.addGroupToMap(group.name, true);
