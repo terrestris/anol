@@ -326,6 +326,7 @@ angular.module('anol.legend')
                         const legendImage = $('<img>');
                         legendImage.addClass('anol-legend-item-image');
                         legendImage.attr('src', layer.getLegendGraphicUrl());
+                        legendImage.attr('loading', 'lazy');
                         legendImages.append(legendImage);
 
                         // Display in element with given id
