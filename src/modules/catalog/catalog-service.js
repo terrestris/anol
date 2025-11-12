@@ -385,53 +385,48 @@ angular.module('anol.catalog')
          * @description
          * Adds a catalog layer to map
          */
-        CatalogService.prototype.addToMap = function(layerName, visible) {
-            return new Promise((resolve, reject) => {
-                var self = this;
-                if(self.addedLayersName.indexOf(layerName) !== -1 ) {
-                    return;
-                }
-                var alreadyAddedLayer = LayersService.layerByName(layerName);
-                if (alreadyAddedLayer) {
-                    // Even if the layer was already added,
-                    // we want to update the visibility of that layer.
-                    alreadyAddedLayer.setVisible(visible);
-                    return;
-                }
+        CatalogService.prototype.addToMap = async function(layerName, visible) {
+            var self = this;
+            if(self.addedLayersName.indexOf(layerName) !== -1 ) {
+                return;
+            }
+            var alreadyAddedLayer = LayersService.layerByName(layerName);
+            if (alreadyAddedLayer) {
+                // Even if the layer was already added,
+                // we want to update the visibility of that layer.
+                alreadyAddedLayer.setVisible(visible);
+                return;
+            }
 
-                self.addWaiting();
-                var loadUrl = this.loadUrl + '/layer/' + layerName;
-                $http.get(loadUrl).then(
-                    function(response) {
-                        angular.forEach(response.data.layers, function(clayer) {
-                            var anolLayer = undefined;
-                            if (clayer['type'] == 'wms') {
-                                anolLayer = new anol.layer.SingleTileWMS(clayer)
-                            } else if (clayer['type'] == 'tiledwms') {
-                                anolLayer = new anol.layer.TiledWMS(clayer)
-                            } else if (clayer['type'] == 'wmts') {
-                                anolLayer = new anol.layer.WMTS(clayer)
-                            } else if (clayer['type'] == 'dynamic_geojson') {
-                                anolLayer = new anol.layer.DynamicGeoJSON(clayer)
-                            } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
-                                anolLayer = new anol.layer.StaticGeoJSON(clayer)
-                            }
-                            var added = LayersService.addOverlayLayer(anolLayer, 0);
-                            if(anolLayer instanceof anol.layer.DynamicGeoJSON && added === true) {
-                                anolLayer.refresh();
-                            }
-                            self.addedLayersName.push(layerName);
-                            self.addedLayers.push(anolLayer);
-                            anolLayer.olLayer.setZIndex(LayersService.zIndex + self.addedLayers.length + self.addedGroupsLength)
-                            anolLayer.setVisible(visible);
-                        });
-                        self.removeWaiting();
-                        resolve();
-                    },
-                    reject
-                )
-            })
+            self.addWaiting();
+            const response = await new Promise((resolve, reject) => {
+                var loadUrl = self.loadUrl + '/layer/' + layerName;
+                $http.get(loadUrl).then(resolve, reject);
+            });
 
+            angular.forEach(response.data.layers, function(clayer) {
+                var anolLayer = undefined;
+                if (clayer['type'] == 'wms') {
+                    anolLayer = new anol.layer.SingleTileWMS(clayer)
+                } else if (clayer['type'] == 'tiledwms') {
+                    anolLayer = new anol.layer.TiledWMS(clayer)
+                } else if (clayer['type'] == 'wmts') {
+                    anolLayer = new anol.layer.WMTS(clayer)
+                } else if (clayer['type'] == 'dynamic_geojson') {
+                    anolLayer = new anol.layer.DynamicGeoJSON(clayer)
+                } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
+                    anolLayer = new anol.layer.StaticGeoJSON(clayer)
+                }
+                var added = LayersService.addOverlayLayer(anolLayer, 0);
+                if(anolLayer instanceof anol.layer.DynamicGeoJSON && added === true) {
+                    anolLayer.refresh();
+                }
+                self.addedLayersName.push(layerName);
+                self.addedLayers.push(anolLayer);
+                anolLayer.olLayer.setZIndex(LayersService.zIndex + self.addedLayers.length + self.addedGroupsLength)
+                anolLayer.setVisible(visible);
+            });
+            self.removeWaiting();
         };
 
         /**
