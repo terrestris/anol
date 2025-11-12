@@ -615,13 +615,11 @@ angular.module('anol.permalink')
                                 }
                             }
 
-                            for (const layerName of available) {
+                            await Promise.all(available.map(layerName => {
                                 const visible = mapParams.layers &&
                                     mapParams.layers.indexOf(layerName) > -1;
-                                CatalogService.addToMap(layerName, visible);
-                            }
-
-                            await $timeout();
+                                return CatalogService.addToMap(layerName, visible);
+                            }));
 
                             for (const layer of toRemove) {
                                 CatalogService.removeFromMap(layer);
