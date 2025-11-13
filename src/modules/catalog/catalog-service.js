@@ -302,15 +302,17 @@ angular.module('anol.catalog')
                     .map(cLayer => {
                         cLayer.olLayer.visible = false;
                         if (cLayer['type'] === 'wms') {
-                            return new anol.layer.SingleTileWMS(cLayer)
+                            return new anol.layer.SingleTileWMS(cLayer);
                         } else if (cLayer['type'] === 'tiledwms') {
-                            return new anol.layer.TiledWMS(cLayer)
+                            return new anol.layer.TiledWMS(cLayer);
                         } else if (cLayer['type'] === 'wmts') {
-                            return new anol.layer.WMTS(cLayer)
+                            return new anol.layer.WMTS(cLayer);
                         } else if (cLayer['type'] === 'dynamic_geojson') {
-                            return new anol.layer.DynamicGeoJSON(cLayer)
+                            return new anol.layer.DynamicGeoJSON(cLayer);
                         } else if (cLayer['type'] === 'static_geojson' || cLayer['type'] === 'digitize') {
-                            return new anol.layer.StaticGeoJSON(cLayer)
+                            return new anol.layer.StaticGeoJSON(cLayer);
+                        } else if (cLayer['type'] === 'sensorthings') {
+                            return new anol.layer.SensorThings(cLayer);
                         } else {
                             console.error(`Unknown layer type '${cLayer['type']}'`, cLayer);
                         }
@@ -407,15 +409,17 @@ angular.module('anol.catalog')
             angular.forEach(response.data.layers, function(clayer) {
                 var anolLayer = undefined;
                 if (clayer['type'] == 'wms') {
-                    anolLayer = new anol.layer.SingleTileWMS(clayer)
+                    anolLayer = new anol.layer.SingleTileWMS(clayer);
                 } else if (clayer['type'] == 'tiledwms') {
-                    anolLayer = new anol.layer.TiledWMS(clayer)
+                    anolLayer = new anol.layer.TiledWMS(clayer);
                 } else if (clayer['type'] == 'wmts') {
-                    anolLayer = new anol.layer.WMTS(clayer)
+                    anolLayer = new anol.layer.WMTS(clayer);
                 } else if (clayer['type'] == 'dynamic_geojson') {
-                    anolLayer = new anol.layer.DynamicGeoJSON(clayer)
+                    anolLayer = new anol.layer.DynamicGeoJSON(clayer);
                 } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
                     anolLayer = new anol.layer.StaticGeoJSON(clayer)
+                } else if (cLayer['type'] === 'sensorthings') {
+                    anolLayer = new anol.layer.SensorThings(cLayer);
                 }
                 var added = LayersService.addOverlayLayer(anolLayer, 0);
                 if(anolLayer instanceof anol.layer.DynamicGeoJSON && added === true) {
