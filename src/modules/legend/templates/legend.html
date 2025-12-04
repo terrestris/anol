@@ -1,5 +1,5 @@
 <div class="anol-legend-container">
-    <div class="anol-legend-items">
+    <div class="anol-legend-items" ng-if="rendered">
         <div ng-repeat="layer in legendLayers">
             <!-- Layer with Groups -->
             <strong ng-show="layer.group.getVisible()">{{ layer.group.title }}</strong>
