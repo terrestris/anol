@@ -84,6 +84,12 @@ angular.module('anol.legend')
                     post: function (scope, element, attrs) {
                         scope.legendLayers = [];
                         scope.visibleLayerNames = [];
+                        scope.rendered = scope.$root.sidebar.openItems.includes('legend');
+                        scope.$root.$watch('sidebar.openItems', function (newVal, oldVal) {
+                            if (newVal.includes('legend')) {
+                                scope.rendered = true;
+                            }
+                        });
 
                         function addLegendLayer(layer) {
                             if (angular.isUndefined(layer)) {
@@ -326,7 +332,6 @@ angular.module('anol.legend')
                         const legendImage = $('<img>');
                         legendImage.addClass('anol-legend-item-image');
                         legendImage.attr('src', layer.getLegendGraphicUrl());
-                        legendImage.attr('loading', 'lazy');
                         legendImages.append(legendImage);
 
                         // Display in element with given id
