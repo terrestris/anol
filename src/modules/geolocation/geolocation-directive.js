@@ -147,7 +147,7 @@ angular.module('anol.geolocation')
                         geolocation.setTracking(false);
                         const position = geolocation.getPosition();
                         const accuracyGeometry = geolocation.getAccuracyGeometry();
-                        const extent = view.calculateExtent();
+                        const extent = view.get('extent');
                         if (!containsCoordinate(extent, position)) {
                             $translate('anol.geolocation.POSITION_OUT_OF_MAX_EXTENT').then(function (translation) {
                                 scope.$emit('anol.geolocation', {'message': translation, 'type': 'error'});
