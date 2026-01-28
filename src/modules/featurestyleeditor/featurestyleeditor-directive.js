@@ -105,7 +105,9 @@ angular.module('anol.featurestyleeditor')
                                             style[key] = value;
                                         }
                                         if (layerStyle[key] === value) {
-                                            delete style[key];
+                                            // we cannot delete the key yet, because we need to overwrite the value
+                                            // in the featureStyle later, afterwards we can delete
+                                            style[key] = undefined;
                                         }
                                     });
                                     if (feature.get('isText')) {
@@ -113,6 +115,13 @@ angular.module('anol.featurestyleeditor')
                                     }
                                     const featureStyle = feature.get('style') || {};
                                     const combinedStyle = angular.extend({}, featureStyle, style);
+                                    for (const key of Object.keys(combinedStyle)) {
+                                      if (combinedStyle[key] === undefined) {
+                                        // cleaning up undefined values after overwriting to make the feature use the
+                                        // layer defaults
+                                        delete combinedStyle[key];
+                                      }
+                                    }
                                     if (angular.equals(combinedStyle, {})) {
                                         feature.unset('style');
                                     } else {
