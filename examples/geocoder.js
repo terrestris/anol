@@ -1,4 +1,4 @@
-require('angular');
+import 'angular';
 import View from 'ol/View';
 
 angular.module('example', ['anol', 'anol.map', 'anol.featurepopup', 'anol.zoom', 'anol.geocoder', 'anol.urlmarkers'])

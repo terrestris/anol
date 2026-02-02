@@ -1,4 +1,4 @@
-require('angular');
+import 'angular';
 
 import View from 'ol/View';
 import GeoJSON from 'ol/format/GeoJSON.js'
