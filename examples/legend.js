@@ -1,4 +1,4 @@
-require('angular');
+import 'angular';
 
 import View from 'ol/View';
 import Point from 'ol/geom/Point';
