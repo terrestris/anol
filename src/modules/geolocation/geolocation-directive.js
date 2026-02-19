@@ -157,11 +157,12 @@ angular.module('anol.geolocation')
                         if (scope.showPosition) {
                             addGeolocationFeatures(accuracyGeometry, position);
                         }
-                        view.setCenter(position);
-                        view.fit(accuracyGeometry.getExtent(), MapService.getMap().getSize());
-                        if (angular.isDefined(scope.zoom) && parseInt(scope.zoom) < view.getZoom()) {
-                            view.setZoom(parseInt(scope.zoom));
-                        }
+                        view.fit(accuracyGeometry.getExtent(), {
+                            size: MapService.getMap().getSize(),
+                            padding: [10, 10, 10, 10],
+                            duration: 500,
+                            maxZoom: (angular.isDefined(scope.zoom) && parseInt(scope.zoom) < view.getZoom()) ? parseInt(scope.zoom) : undefined
+                        });
                     });
 
                     scope.locate = function () {
