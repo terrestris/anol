@@ -100,11 +100,7 @@ angular.module('anol.layerswitcher')
                             LayersService.reorderGroupLayers();
                         }
                     };
-                    $scope.sortableLayer = {
-                        'update': function () {
-                            LayersService.reorderOverlayLayers();
-                        }
-                    };
+
                     $scope.isGroup = function (toTest) {
                         return toTest instanceof anol.layer.Group;
                     };
