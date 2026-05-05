@@ -22,7 +22,7 @@ angular.module('anol.map')
             _controls = controls;
         };
 
-        this.$get = ['ClusterSelectService', function(ClusterSelectService) {
+        this.$get = ['ClusterSelectService', '$rootScope', function(ClusterSelectService, $rootScope) {
         /**
          * @ngdoc service
          * @name anol.map.ControlsService
@@ -32,6 +32,7 @@ angular.module('anol.map')
          */
             var Controls = function(controls) {
                 var self = this;
+                self.$rootScope = $rootScope;
                 self.olControls = [];
                 self.controls = [];
                 self.menus = [];
@@ -75,6 +76,7 @@ angular.module('anol.map')
                 angular.forEach(self.olControls, function(control) {
                     self.map.addControl(control);
                 });
+                self.$rootScope.$broadcast('anol.controls.registered');
             };
             /**
          * @ngdoc method
