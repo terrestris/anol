@@ -41,8 +41,12 @@ angular.module('anol.layerswitcher')
                     }
                 });
 
+                var onContextMenu = function(e) { e.preventDefault(); };
+                element[0].addEventListener('contextmenu', onContextMenu);
+
                 scope.$on('$destroy', function () {
                     sortable.destroy();
+                    element[0].removeEventListener('contextmenu', onContextMenu);
                 });
             }
         };
