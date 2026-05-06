@@ -1,5 +1,5 @@
-require('angular');
-require('angular-translate');
+import 'angular';
+import 'angular-translate';
 
 import View from 'ol/View';
 import GeoJSON from 'ol/format/GeoJSON.js'

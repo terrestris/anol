@@ -1,4 +1,4 @@
-require('angular');
+import 'angular';
 
 import View from 'ol/View';
 import Style from 'ol/style/Style';
