@@ -1,4 +1,5 @@
 import './module.js';
+import './sortable-directive.js';
 
 import templateHTML from './templates/layerswitcher.html';
 
@@ -95,21 +96,11 @@ angular.module('anol.layerswitcher')
                 },
                 controller: function ($scope, $element, $attrs) {
                     $scope.sortableGroups = {
-                        'delay': 100,
-                        'update': function (e, ui) {
-                            $timeout(function () {
-                                LayersService.reorderGroupLayers();
-                            });
+                        'update': function () {
+                            LayersService.reorderGroupLayers();
                         }
                     };
-                    $scope.sortableLayer = {
-                        'delay': 100,
-                        'update': function (e, ui) {
-                            $timeout(function () {
-                                LayersService.reorderOverlayLayers();
-                            });
-                        }
-                    };
+
                     $scope.isGroup = function (toTest) {
                         return toTest instanceof anol.layer.Group;
                     };
