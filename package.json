@@ -29,6 +29,7 @@
     "ol-contextmenu": "^5.5.0",
     "ol-ext": "^4.0.24",
     "proj4": "^2.4.4",
+    "sortablejs": "^1.15.7",
     "voca": "^1.4.0"
   },
   "scripts": {
