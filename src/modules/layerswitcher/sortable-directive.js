@@ -20,15 +20,6 @@ angular.module('anol.layerswitcher')
 
                         if (oldIndex === newIndex) return;
 
-                        // Revert the DOM change SortableJS made so Angular's
-                        // ng-repeat can re-render cleanly from the updated model.
-                        var parent = evt.from;
-                        if (oldIndex < newIndex) {
-                            parent.insertBefore(evt.item, parent.children[oldIndex]);
-                        } else {
-                            parent.insertBefore(evt.item, parent.children[oldIndex + 1] || null);
-                        }
-
                         $timeout(function () {
                             var items = ngModel.$modelValue;
                             var item = items.splice(oldIndex, 1)[0];
