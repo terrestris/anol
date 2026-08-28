@@ -1,0 +1,110 @@
+<dialog id="timeseries-dialog" class="timeseries-dialog slide-top" ng-style="dialogStyle">
+    <div class="timeseries-header">
+        <span class="timeseries-title">{{ activeDialog.layer.title }}</span>
+        <button title="{{ 'anol.timeseries.CLOSE' | translate }}" ng-click="closeDialog()"
+                class="close-btn glyphicon glyphicon-remove pointer">
+        </button>
+    </div>
+
+    <div class="timeseries-section" ng-if="hasTimeSeries">
+        <div class="timeseries-section-title">
+            {{ 'anol.timeseries.TIME' | translate }}
+            <span class="timeseries-hint">{{ 'anol.timeseries.UTC_HINT' | translate }}</span>
+        </div>
+
+        <button type="button" class="btn btn-default btn-sm timeseries-latest"
+                ng-class="{'active': latest}" ng-click="setLatest()">
+            <span class="glyphicon glyphicon-fast-forward"></span>
+            {{ 'anol.timeseries.LATEST_VALUE' | translate }}
+        </button>
+
+        <div class="timeseries-time-controls">
+            <!-- start / instant -->
+            <div class="timeseries-instant">
+                <span class="timeseries-instant-label" ng-if="mode === 'range'">
+                    {{ 'anol.timeseries.FROM' | translate }}
+                </span>
+
+                <select ng-if="showYearSelect" class="form-control timeseries-select"
+                        ng-model="start.year" ng-change="applyTime()"
+                        ng-options="year as year for year in yearOptions">
+                </select>
+
+                <div ng-if="!showYearSelect" uib-datepicker ng-model="start.date"
+                     ng-change="applyTime()"
+                     datepicker-mode="datepickerMode"
+                     datepicker-options="datepickerOptions">
+                </div>
+
+                <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
+                    <select class="form-control timeseries-select" ng-model="start.hour"
+                            ng-change="applyTime()"
+                            ng-options="h as (h | leadingZero) disable when !slotHasData(start, 'hour', h) for h in hourOptions">
+                    </select>
+                    <span ng-if="minuteOptions">:</span>
+                    <select ng-if="minuteOptions" class="form-control timeseries-select"
+                            ng-model="start.minute" ng-change="applyTime()"
+                            ng-options="m as (m | leadingZero) disable when !slotHasData(start, 'minute', m) for m in minuteOptions">
+                    </select>
+                    <span ng-if="secondOptions">:</span>
+                    <select ng-if="secondOptions" class="form-control timeseries-select"
+                            ng-model="start.second" ng-change="applyTime()"
+                            ng-options="s as (s | leadingZero) disable when !slotHasData(start, 'second', s) for s in secondOptions">
+                    </select>
+                </div>
+            </div>
+
+            <!-- end, range mode only -->
+            <div class="timeseries-instant" ng-if="mode === 'range'">
+                <span class="timeseries-instant-label">
+                    {{ 'anol.timeseries.TO' | translate }}
+                </span>
+
+                <select ng-if="showYearSelect" class="form-control timeseries-select"
+                        ng-model="end.year" ng-change="applyTime()"
+                        ng-options="year as year for year in yearOptions">
+                </select>
+
+                <div ng-if="!showYearSelect" uib-datepicker ng-model="end.date"
+                     ng-change="applyTime()"
+                     datepicker-mode="datepickerMode"
+                     datepicker-options="datepickerOptions">
+                </div>
+
+                <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
+                    <select class="form-control timeseries-select" ng-model="end.hour"
+                            ng-change="applyTime()"
+                            ng-options="h as (h | leadingZero) disable when !slotHasData(end, 'hour', h) for h in hourOptions">
+                    </select>
+                    <span ng-if="minuteOptions">:</span>
+                    <select ng-if="minuteOptions" class="form-control timeseries-select"
+                            ng-model="end.minute" ng-change="applyTime()"
+                            ng-options="m as (m | leadingZero) disable when !slotHasData(end, 'minute', m) for m in minuteOptions">
+                    </select>
+                    <span ng-if="secondOptions">:</span>
+                    <select ng-if="secondOptions" class="form-control timeseries-select"
+                            ng-model="end.second" ng-change="applyTime()"
+                            ng-options="s as (s | leadingZero) disable when !slotHasData(end, 'second', s) for s in secondOptions">
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="timeseries-section" ng-if="hasViewportFilter">
+        <div class="timeseries-section-title">{{ 'anol.timeseries.SELECTABLE_TIMES' | translate }}</div>
+        <label class="timeseries-radio">
+            <input type="radio" name="viewportMode" value="off"
+                   ng-model="viewport.mode" ng-change="applyViewport()"/>
+            {{ 'anol.timeseries.ALL_AVAILABLE' | translate }}
+        </label>
+        <label class="timeseries-radio">
+            <input type="radio" name="viewportMode" value="viewport"
+                   ng-model="viewport.mode" ng-change="applyViewport()"/>
+            {{ 'anol.timeseries.VIEWPORT_AVAILABLE' | translate }}
+        </label>
+        <div class="timeseries-warning" ng-if="noSensorsInView">
+            {{ 'anol.timeseries.NO_SENSORS_IN_VIEW' | translate }}
+        </div>
+    </div>
+</dialog>

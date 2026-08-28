@@ -133,6 +133,20 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'CLOSE': 'Close',
                     'TRANSPARENCY_LABEL': 'Transparency'
                 },
+                'timeseries': {
+                    'SET_TIME': 'Select time',
+                    'CLOSE': 'Close',
+                    'TIME': 'Time',
+                    'SELECTABLE_TIMES': 'Selectable times',
+                    'UTC_HINT': '(UTC)',
+                    'LATEST_VALUE': 'Latest value',
+                    'FROM': 'From',
+                    'TO': 'To',
+                    'CALENDAR_WEEK': 'CW',
+                    'ALL_AVAILABLE': 'All available',
+                    'VIEWPORT_AVAILABLE': 'Only available in map extent',
+                    'NO_SENSORS_IN_VIEW': 'No sensors in the current map extent - offering all available times.'
+                },
                 'zoom': {
                     'TOOLTIP_ZOOM_IN': 'Zoom in',
                     'TOOLTIP_ZOOM_OUT': 'Zoom out'
@@ -190,6 +204,20 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'SET_TRANSPARENCY': 'Transparenz einstellen',
                     'CLOSE': 'Schließen',
                     'TRANSPARENCY_LABEL': 'Transparenz'
+                },
+                'timeseries': {
+                    'SET_TIME': 'Zeitpunkt wählen',
+                    'CLOSE': 'Schließen',
+                    'TIME': 'Zeit',
+                    'SELECTABLE_TIMES': 'Auswählbare Zeiten',
+                    'UTC_HINT': '(UTC)',
+                    'LATEST_VALUE': 'Aktuellster Wert',
+                    'FROM': 'Von',
+                    'TO': 'Bis',
+                    'CALENDAR_WEEK': 'KW',
+                    'ALL_AVAILABLE': 'Alle verfügbaren',
+                    'VIEWPORT_AVAILABLE': 'Nur im Kartenausschnitt verfügbare',
+                    'NO_SENSORS_IN_VIEW': 'Keine Sensoren im Kartenausschnitt - es werden alle verfügbaren Zeiten angeboten.'
                 },
                 'zoom': {
                     'TOOLTIP_ZOOM_IN': 'Hineinzoomen',

@@ -167,6 +167,24 @@ angular.module('anol.layerswitcher')
                         }
                         return false;
                     };
+                    /**
+                     * A singleSelect group shows one filter line below its
+                     * header rather than one per child, because only one child
+                     * is ever visible.
+                     *
+                     * @return {anol.layer.Layer|undefined}
+                     */
+                    $scope.filterLayerForGroup = function (group) {
+                        if (angular.isUndefined(group) || group.singleSelect !== true ||
+                            angular.isUndefined(group.layers)) {
+                            return undefined;
+                        }
+                        return group.layers.find(function (layer) {
+                            return layer.getVisible() &&
+                                (layer.hasTimeSeries() || layer.hasViewportFilter());
+                        });
+                    };
+
                     $scope.removeLayer = function (layer) {
                         if (layer.catalogLayer || layer.catalog) {
                             CatalogService.removeFromMap(layer);
