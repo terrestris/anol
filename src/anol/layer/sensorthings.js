@@ -75,7 +75,9 @@ class SensorThings extends FeatureLayer {
                 filter: undefined,
                 expand: undefined
             },
-            refreshInterval: 5
+            // A minute is already faster than any realistic time series
+            // publishes; a layer that needs more says so in its config.
+            refreshInterval: 60
         };
         this.urlParameters = $.extend(true, {}, DEFAULT_OPTS.urlParameters, _options.olLayer.source.urlParameters);
         this.url = _options.olLayer.source.url;
@@ -259,7 +261,7 @@ class SensorThings extends FeatureLayer {
             // requesting new data. Our approach clears old
             // features after new data is loaded, which should address
             // for a smoother feeling.
-            sensorThingsInst.loadData();
+            sensorThingsInst.loadData(true);
         }, this.refreshInterval);
     }
 
@@ -286,7 +288,34 @@ class SensorThings extends FeatureLayer {
         });
     }
 
-    async loadData() {
+    /**
+     * Update the drawn features in place from a refresh that carried no
+     * geometry. A datastream that has since disappeared leaves its feature
+     * alone rather than removing it - the next full load settles that.
+     *
+     * @param {import('ol/source/Vector').default} vectorSource
+     * @param {Map<string, Object>} byId
+     * @return {import('ol/Feature').default[]}
+     */
+    mergeProperties(vectorSource, byId) {
+        const features = vectorSource.getFeatures();
+        for (const feature of features) {
+            const properties = byId.get(String(feature.get('@iot.id')));
+            if (properties) {
+                // merges over the existing keys; the geometry is held
+                // separately and is not among them
+                feature.setProperties(properties);
+            }
+        }
+        // styles read observation values, so the layer has to redraw
+        vectorSource.changed();
+        return features;
+    }
+
+    /**
+     * @param {boolean} [refresh] a polling refresh rather than a fresh load
+     */
+    async loadData(refresh = false) {
         const client = new SensorThingsClient({
             url: this.url,
             urlParameters: this.urlParameters
@@ -295,23 +324,31 @@ class SensorThings extends FeatureLayer {
 
         const vectorSource = this.olLayer.getSource();
 
+        // Geometry is only worth fetching when there is nothing drawn yet: the
+        // sensors do not move, and it is the bulk of the response.
+        const withLocations = !refresh || vectorSource.getFeatures().length === 0;
+
         this.loadToken += 1;
         const token = this.loadToken;
 
         let features;
         try {
-            const data = await client.get();
+            const data = await client.get(withLocations);
             if (token !== this.loadToken) {
                 // A newer request started while this one was in flight
                 return features;
             }
-            const featureCollection = client.datastreamToGeoJSON(data);
-            features = vectorSource.getFormat()
-                .readFeatures(featureCollection, {
-                    featureProjection: this.mapProjection
-                });
-            vectorSource.clear(true);
-            vectorSource.addFeatures(features);
+            if (withLocations) {
+                const featureCollection = client.datastreamToGeoJSON(data);
+                features = vectorSource.getFormat()
+                    .readFeatures(featureCollection, {
+                        featureProjection: this.mapProjection
+                    });
+                vectorSource.clear(true);
+                vectorSource.addFeatures(features);
+            } else {
+                features = this.mergeProperties(vectorSource, client.datastreamProperties(data));
+            }
             this.displayedTime = newestObservationTime(features);
             this.datastreams = readDatastreams(features);
         } finally {

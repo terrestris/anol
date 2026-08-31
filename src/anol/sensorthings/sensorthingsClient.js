@@ -13,6 +13,57 @@ import { toStaTimestamp } from '../../modules/timeseries/time.js';
 const TIME_PLACEHOLDER_PATTERN = /\{time(Start|End|Filter)\}/;
 
 /**
+ * Split an `$expand` on its top-level commas, ignoring those nested inside the
+ * parenthesised options of a term.
+ *
+ * @param {string} expand
+ * @return {string[]}
+ */
+function splitExpandTerms(expand) {
+    const terms = [];
+    let depth = 0;
+    let current = '';
+    for (const char of expand) {
+        if (char === '(') depth += 1;
+        else if (char === ')') depth -= 1;
+        if (char === ',' && depth === 0) {
+            terms.push(current);
+            current = '';
+            continue;
+        }
+        current += char;
+    }
+    terms.push(current);
+    return terms.filter(term => term.trim() !== '');
+}
+
+/**
+ * Drop the terms that pull location geometry, keeping everything else a config
+ * asked for - a refresh still needs `Observations`, and may need `Sensor` or
+ * anything else feature info addresses.
+ *
+ * @param {string} expand
+ * @return {string}
+ */
+function stripLocationExpand(expand) {
+    return splitExpandTerms(expand)
+        .filter(term => !/^\s*Thing\/Locations\b/i.test(term))
+        .join(',');
+}
+
+/**
+ * The location to draw a datastream at.
+ *
+ * @param {Array<{location?: Object}>} locations
+ * @return {Object|undefined}
+ */
+function pickLocation(locations) {
+    const geometries = locations.map(entry => entry && entry.location).filter(Boolean);
+    const point = geometries.find(geometry => geometry.type === 'Point' || geometry.type === 'MultiPoint');
+    return point || geometries[0];
+}
+
+/**
  * Whether the configured url parameters carry at least one time placeholder.
  * A `timeSeries` layer without one would show a picker that silently does
  * nothing, so the layer warns about it at construction time.
@@ -108,7 +159,12 @@ class SensorThingsClient {
         return isFullUrl ? url.toString() : url.toString().replace('file://', '');
     }
 
-    createUrl() {
+    /**
+     * @param {boolean} [withLocations] pass `false` for a refresh - so a poll that only wants the newest readings leaves
+     * it out and the layer merges the values into the drawn features.
+     * @return {string}
+     */
+    createUrl(withLocations = true) {
         const {url, isFullUrl} = this.collectionUrl('Datastreams');
 
         const filter = this.resolvePlaceholders(this.urlParameters.filter);
@@ -116,22 +172,44 @@ class SensorThingsClient {
             url.searchParams.set('$filter', filter);
         }
 
-        const configuredExpand = this.resolvePlaceholders(this.urlParameters.expand);
-        if (configuredExpand) {
-            // If users provide custom expand, they have to ensure
-            // that the location is included
-            url.searchParams.set('$expand', configuredExpand);
-        } else {
+        // If users provide custom expand, they have to ensure
+        // that the location is included
+        let expand = this.resolvePlaceholders(this.urlParameters.expand);
+        if (!expand) {
             // Ensuring we will always get the location
-            url.searchParams.set('$expand',
-                `Thing/Locations, Observations(${this.resolvePlaceholders('{timeFilter}')}$orderby=phenomenonTime desc;$top=1)`);
+            expand = `Thing/Locations, Observations(${this.resolvePlaceholders('{timeFilter}')}$orderby=phenomenonTime desc;$top=1)`;
+        }
+        if (!withLocations) {
+            expand = stripLocationExpand(expand);
+        }
+        if (expand) {
+            url.searchParams.set('$expand', expand);
         }
 
         return isFullUrl ? url.toString() : url.toString().replace('file://', '');
     }
 
-    async get() {
-        const url = this.createUrl();
+    /**
+     * The datastreams' properties keyed by `@iot.id`, for merging a refresh
+     * into the drawn features without touching their geometry.
+     *
+     * @param {Object} data
+     * @return {Map<string, Object>}
+     */
+    datastreamProperties(data) {
+        const byId = new Map();
+        for (const datastream of data.value) {
+            const id = datastream['@iot.id'];
+            if (id === undefined || id === null) {
+                continue;
+            }
+            byId.set(String(id), this.flattenObject(datastream));
+        }
+        return byId;
+    }
+
+    async get(withLocations = true) {
+        const url = this.createUrl(withLocations);
         let data = await this.sendRequest(url);
         if (data['@iot.nextLink']) {
             data = await this.resolveNextLink(data['@iot.nextLink'], data);
@@ -172,7 +250,7 @@ class SensorThingsClient {
                 properties: {
                     ...this.flattenObject(observation)
                 },
-                geometry: thing.Locations[0].location,
+                geometry: pickLocation(thing.Locations || []),
             };
             return feature;
         });
