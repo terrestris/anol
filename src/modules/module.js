@@ -134,7 +134,8 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'TRANSPARENCY_LABEL': 'Transparency'
                 },
                 'timeseries': {
-                    'SET_TIME': 'Select time',
+                    'SET_TIME_LIVE': 'Select time - continuously showing the latest value',
+                    'SET_TIME_FIXED': 'Select time - fixed selection, no updates',
                     'CLOSE': 'Close',
                     'TIME': 'Time',
                     'SELECTABLE_TIMES': 'Selectable times',
@@ -206,7 +207,8 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'TRANSPARENCY_LABEL': 'Transparenz'
                 },
                 'timeseries': {
-                    'SET_TIME': 'Zeitpunkt wählen',
+                    'SET_TIME_LIVE': 'Zeitpunkt wählen - zeigt laufend den aktuellsten Wert',
+                    'SET_TIME_FIXED': 'Zeitpunkt wählen - feste Auswahl, keine Aktualisierung',
                     'CLOSE': 'Schließen',
                     'TIME': 'Zeit',
                     'SELECTABLE_TIMES': 'Auswählbare Zeiten',

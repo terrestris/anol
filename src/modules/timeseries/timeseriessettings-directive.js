@@ -104,7 +104,11 @@ angular.module('anol.timeseries')
                         }
                     }
 
-                    scope.timeIsDefault = function () {
+                    /**
+                     * No window picked means the untimed query, which is also
+                     * the only state the layer keeps polling in.
+                     */
+                    scope.isLatest = function () {
                         return !scope.layer || !scope.layer.hasTimeSeries() ||
                             scope.layer.getTime() === undefined;
                     };
