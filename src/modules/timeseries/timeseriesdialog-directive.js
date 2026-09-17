@@ -58,14 +58,30 @@ angular.module('anol.timeseries')
                     }
 
                     /**
-                     * Dropped below the layer entry. 
+                     * Dropped below the layer entry, or raised above it when
+                     * the entry sits in the lower half of the viewport. Either
+                     * way the dialog is capped to the room on that side and
+                     * scrolls inside, so a tall picker never leaves the screen.
                      */
+                    const EDGE_MARGIN = 10;
                     const updateDialogPosition = function () {
                         if (!scope.activeDialog) {
                             return;
                         }
+                        const rect = scope.activeDialog.boundingRect;
+                        const viewportHeight = window.innerHeight;
+                        if (rect.bottom > viewportHeight / 2) {
+                            scope.dialogStyle = {
+                                // the stylesheet pins top: 0
+                                top: 'auto',
+                                bottom: `${viewportHeight - rect.top + 2}px`,
+                                maxHeight: `${rect.top - 2 - EDGE_MARGIN}px`
+                            };
+                            return;
+                        }
                         scope.dialogStyle = {
-                            top: `${scope.activeDialog.boundingRect.bottom + 2}px`
+                            top: `${rect.bottom + 2}px`,
+                            maxHeight: `${viewportHeight - rect.bottom - 2 - EDGE_MARGIN}px`
                         };
                     };
 

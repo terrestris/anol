@@ -92,13 +92,23 @@
     </div>
 
     <div class="timeseries-section" ng-if="hasViewportFilter">
-        <div class="timeseries-section-title">{{ 'anol.timeseries.SELECTABLE_TIMES' | translate }}</div>
-        <label class="timeseries-radio">
+        <!-- collapsed by default: the radios are rarely touched, and the
+             calendar above needs the room more -->
+        <button type="button" class="timeseries-section-toggle pointer"
+                ng-click="viewportOptionsOpen = !viewportOptionsOpen">
+            <span class="glyphicon"
+                  ng-class="viewportOptionsOpen ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'"></span>
+            {{ 'anol.timeseries.SELECTABLE_TIMES' | translate }}
+            <span class="timeseries-hint" ng-if="!viewportOptionsOpen">
+                {{ (viewport.mode === 'viewport' ? 'anol.timeseries.VIEWPORT_SHORT' : 'anol.timeseries.ALL_SHORT') | translate }}
+            </span>
+        </button>
+        <label class="timeseries-radio" ng-if="viewportOptionsOpen">
             <input type="radio" name="viewportMode" value="off"
                    ng-model="viewport.mode" ng-change="applyViewport()"/>
             {{ 'anol.timeseries.ALL_AVAILABLE' | translate }}
         </label>
-        <label class="timeseries-radio">
+        <label class="timeseries-radio" ng-if="viewportOptionsOpen">
             <input type="radio" name="viewportMode" value="viewport"
                    ng-model="viewport.mode" ng-change="applyViewport()"/>
             {{ 'anol.timeseries.VIEWPORT_AVAILABLE' | translate }}

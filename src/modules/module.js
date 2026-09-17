@@ -146,6 +146,8 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'CALENDAR_WEEK': 'CW',
                     'ALL_AVAILABLE': 'All available',
                     'VIEWPORT_AVAILABLE': 'Only available in map extent',
+                    'ALL_SHORT': 'all',
+                    'VIEWPORT_SHORT': 'map extent',
                     'NO_SENSORS_IN_VIEW': 'No sensors in the current map extent - offering all available times.'
                 },
                 'zoom': {
@@ -219,6 +221,8 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'CALENDAR_WEEK': 'KW',
                     'ALL_AVAILABLE': 'Alle verfügbaren',
                     'VIEWPORT_AVAILABLE': 'Nur im Kartenausschnitt verfügbare',
+                    'ALL_SHORT': 'alle',
+                    'VIEWPORT_SHORT': 'Kartenausschnitt',
                     'NO_SENSORS_IN_VIEW': 'Keine Sensoren im Kartenausschnitt - es werden alle verfügbaren Zeiten angeboten.'
                 },
                 'zoom': {
