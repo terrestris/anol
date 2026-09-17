@@ -312,3 +312,46 @@ export function resolveConfiguredTime(value, now = new Date()) {
     }
     return parsed;
 }
+
+/**
+ * Resolve a configured `default` into the window to query.
+ *
+ * A single value is floored to its bucket. `start/end` - each side anything
+ * resolveConfiguredTime() accepts, e.g. `-7d/now` or `-2d/-1d` - spans from
+ * the start's bucket through the bucket the end falls into; an end sitting
+ * exactly on a bucket boundary is exclusive, so `…/2026-09-01T00:00Z` stops
+ * at midnight rather than reaching into September. `latest` cannot be one
+ * side of a range. ISO timestamps carry no `/`, so the split is unambiguous.
+ *
+ * @param {string|undefined} value
+ * @param {Duration} granularity
+ * @param {Date} [now]
+ * @return {TimeWindow|undefined} `undefined` for `latest`
+ */
+export function resolveConfiguredWindow(value, granularity, now = new Date()) {
+    if (value === undefined) {
+        return undefined;
+    }
+    const parts = String(value).split('/');
+    if (parts.length === 1) {
+        const instant = resolveConfiguredTime(value, now);
+        return instant === undefined ? undefined : timeWindow(instant, granularity);
+    }
+    if (parts.length !== 2) {
+        throw new Error(`Invalid time series range "${value}". Expected "start/end".`);
+    }
+    const start = resolveConfiguredTime(parts[0], now);
+    const end = resolveConfiguredTime(parts[1], now);
+    if (start === undefined || end === undefined) {
+        throw new Error(`Invalid time series range "${value}". "latest" cannot be one side of a range.`);
+    }
+    const endBucket = timeWindow(end, granularity);
+    const window = {
+        start: timeWindow(start, granularity).start,
+        end: endBucket.start.getTime() === end.getTime() ? end : endBucket.end
+    };
+    if (window.end <= window.start) {
+        throw new Error(`Invalid time series range "${value}". The end must be after the start.`);
+    }
+    return window;
+}

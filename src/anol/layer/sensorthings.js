@@ -5,7 +5,7 @@ import { all } from 'ol/loadingstrategy';
 import { intersects as extentsIntersect } from 'ol/extent';
 
 import SensorThingsClient, { hasTimePlaceholder } from '../sensorthings/sensorthingsClient';
-import { timeWindow, resolveConfiguredTime, parseInterval } from '../../modules/timeseries/time.js';
+import { resolveConfiguredWindow, parseInterval } from '../../modules/timeseries/time.js';
 
 /**
  * Where each drawn datastream is and how far its data reaches.
@@ -116,10 +116,11 @@ class SensorThings extends FeatureLayer {
                     'placeholder, so the time picker will have no effect.');
             }
             try {
-                const instant = resolveConfiguredTime(this.timeSeries.default);
-                if (instant !== undefined) {
-                    this.time = timeWindow(instant, this.getGranularity());
+                const configured = this.timeSeries.default;
+                if (this.getTimeSeriesMode() !== 'range' && String(configured).includes('/')) {
+                    throw new Error(`timeSeries.default "${configured}" is a range, but the mode is instant.`);
                 }
+                this.time = resolveConfiguredWindow(configured, this.getGranularity());
             } catch (error) {
                 console.error(`Layer "${this.name}": ${error.message}`);
             }
