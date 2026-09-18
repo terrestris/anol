@@ -4,6 +4,43 @@ import './availability.js';
 import templateHTML from './templates/timeseriesdialog.html';
 import { timeWindow, needsTimeOfDay, resolveConfiguredTime } from './time.js';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Ready-made ranges, each reaching to the present. `sinceDays` counts back
+ * from now, `days` back from today's midnight - so "today" is 0 and
+ * "yesterday" is 1 with an end at midnight.
+ */
+const PRESETS = [
+    {label: 'anol.timeseries.PRESET_LAST_24H', sinceDays: 1, subDayOnly: true},
+    {label: 'anol.timeseries.PRESET_TODAY', days: 0},
+    {label: 'anol.timeseries.PRESET_YESTERDAY', days: 1, endsAtMidnight: true},
+    {label: 'anol.timeseries.PRESET_LAST_7D', sinceDays: 7}
+];
+
+/**
+ * The window a preset stands for, on the layer's buckets.
+ *
+ * @param {Object} preset an entry of PRESETS
+ * @param {Duration} granularity
+ * @param {Date} [now]
+ * @return {TimeWindow}
+ */
+function presetWindow(preset, granularity, now = new Date()) {
+    const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    if (preset.sinceDays !== undefined) {
+        return {
+            start: timeWindow(new Date(now.getTime() - preset.sinceDays * DAY_MS), granularity).start,
+            end: timeWindow(now, granularity).end
+        };
+    }
+    const start = new Date(midnight - preset.days * DAY_MS);
+    const end = preset.endsAtMidnight
+        ? new Date(midnight - (preset.days - 1) * DAY_MS)
+        : timeWindow(now, granularity).end;
+    return {start: timeWindow(start, granularity).start, end};
+}
+
 /**
  * Selectable values for a unit that is stepped by `count` within a parent of
  * `size` values, e.g. minutes 0/10/20/30/40/50 for `PT10M`.
@@ -111,6 +148,16 @@ angular.module('anol.timeseries')
                         scope.showYearSelect = granularity.unit === 'year';
                         scope.showWeeks = granularity.unit === 'week';
                         scope.gridMinMode = granularity.unit === 'month' ? 'month' : 'day';
+
+                        // day-sized presets are meaningless on weekly or
+                        // coarser buckets, and "24 h" on daily ones
+                        if (scope.showTimeOfDay) {
+                            scope.presets = PRESETS;
+                        } else if (granularity.unit === 'day') {
+                            scope.presets = PRESETS.filter(preset => !preset.subDayOnly);
+                        } else {
+                            scope.presets = [];
+                        }
 
                         applyBounds();
 
@@ -449,6 +496,36 @@ angular.module('anol.timeseries')
                         // request to finish rather than competing with it for
                         // the browser's connections.
                         $q.when(reload).finally(refreshAvailability);
+                    };
+
+                    /**
+                     * A preset is offered only while data lies within it, so
+                     * a service whose newest reading is a month old shows
+                     * none of them rather than four buttons to an empty map.
+                     */
+                    scope.presetHasData = function (preset) {
+                        const window = presetWindow(preset, scope.granularity);
+                        return (scope.minDate === undefined || window.end > scope.minDate) &&
+                            (scope.maxDate === undefined || window.start < scope.maxDate);
+                    };
+
+                    scope.presetIsActive = function (preset) {
+                        const current = scope.activeDialog.layer.getTime();
+                        if (current === undefined) {
+                            return false;
+                        }
+                        const window = presetWindow(preset, scope.granularity);
+                        return current.start.getTime() === window.start.getTime() &&
+                            current.end.getTime() === window.end.getTime();
+                    };
+
+                    scope.applyPreset = function (preset) {
+                        const window = presetWindow(preset, scope.granularity);
+                        scope.start = splitInstant(window.start);
+                        scope.end = splitInstant(new Date(window.end.getTime() - 1));
+                        scope.browse = scope.start.date;
+                        scope.pickingEnd = false;
+                        scope.applyTime();
                     };
 
                     /**

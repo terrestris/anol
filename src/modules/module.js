@@ -152,6 +152,10 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'NEXT': 'Next',
                     'ZOOM_OUT': 'Change period',
                     'PICK_END': 'Now pick the end of the range.',
+                    'PRESET_LAST_24H': 'Last 24 h',
+                    'PRESET_TODAY': 'Today',
+                    'PRESET_YESTERDAY': 'Yesterday',
+                    'PRESET_LAST_7D': 'Last 7 days',
                     'NO_SENSORS_IN_VIEW': 'No sensors in the current map extent - offering all available times.'
                 },
                 'zoom': {
@@ -231,6 +235,10 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'NEXT': 'Vor',
                     'ZOOM_OUT': 'Zeitraum wechseln',
                     'PICK_END': 'Jetzt das Ende des Bereichs wählen.',
+                    'PRESET_LAST_24H': 'Letzte 24 h',
+                    'PRESET_TODAY': 'Heute',
+                    'PRESET_YESTERDAY': 'Gestern',
+                    'PRESET_LAST_7D': 'Letzte 7 Tage',
                     'NO_SENSORS_IN_VIEW': 'Keine Sensoren im Kartenausschnitt - es werden alle verfügbaren Zeiten angeboten.'
                 },
                 'zoom': {

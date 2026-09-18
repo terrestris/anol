@@ -12,11 +12,19 @@
             <span class="timeseries-hint">{{ 'anol.timeseries.UTC_HINT' | translate }}</span>
         </div>
 
-        <button type="button" class="btn btn-default btn-sm timeseries-latest"
-                ng-class="{'active': latest}" ng-click="setLatest()">
-            <span class="glyphicon glyphicon-fast-forward"></span>
-            {{ 'anol.timeseries.LATEST_VALUE' | translate }}
-        </button>
+        <div class="timeseries-presets">
+            <button type="button" class="btn btn-default btn-sm timeseries-latest"
+                    ng-class="{'active': latest}" ng-click="setLatest()">
+                <span class="glyphicon glyphicon-fast-forward"></span>
+                {{ 'anol.timeseries.LATEST_VALUE' | translate }}
+            </button>
+            <!-- ranges people ask for most; hidden while no data lies in them -->
+            <button type="button" class="btn btn-default btn-sm" ng-if="mode === 'range'"
+                    ng-repeat="preset in presets" ng-show="presetHasData(preset)"
+                    ng-class="{'active': presetIsActive(preset)}" ng-click="applyPreset(preset)">
+                {{ preset.label | translate }}
+            </button>
+        </div>
 
         <div class="timeseries-time-controls">
             <!-- one calendar for both ends: a range is picked with two clicks
