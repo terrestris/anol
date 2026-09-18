@@ -109,24 +109,10 @@ angular.module('anol.timeseries')
                         scope.mode = layer.getTimeSeriesMode();
                         scope.showTimeOfDay = needsTimeOfDay(granularity.unit);
                         scope.showYearSelect = granularity.unit === 'year';
+                        scope.showWeeks = granularity.unit === 'week';
+                        scope.gridMinMode = granularity.unit === 'month' ? 'month' : 'day';
 
-                        // Bounds must exist before datepickerOptions is built:
-                        // uib-datepicker only starts watching minDate/maxDate
-                        // if they are set at that point, so later updates to an
-                        // initially empty pair are ignored.
                         applyBounds();
-
-                        scope.datepickerMode = granularity.unit === 'month' ? 'month' : 'day';
-                        scope.datepickerOptions = {
-                            showWeeks: granularity.unit === 'week',
-                            minMode: granularity.unit === 'month' ? 'month' : 'day',
-                            minDate: scope.minDate,
-                            maxDate: scope.maxDate,
-                            dateDisabled: scope.dateDisabled,
-                            ngModelOptions: {
-                                timezone: 'UTC'
-                            }
-                        };
 
                         if (granularity.unit === 'second') {
                             scope.hourOptions = steppedOptions(24, 1);
@@ -153,6 +139,8 @@ angular.module('anol.timeseries')
                         const end = window ? new Date(window.end.getTime() - 1) : (displayed || new Date());
                         scope.start = splitInstant(start);
                         scope.end = splitInstant(end);
+                        scope.browse = scope.start.date;
+                        scope.pickingEnd = false;
                     };
 
                     /**
@@ -160,7 +148,6 @@ angular.module('anol.timeseries')
                      */
                     const splitInstant = function (date) {
                         return {
-                            // uib-datepicker with timezone UTC reads the UTC fields
                             date: new Date(date.getTime()),
                             hour: date.getUTCHours(),
                             minute: date.getUTCMinutes(),
@@ -222,10 +209,6 @@ angular.module('anol.timeseries')
                         scope.minDate = min;
                         scope.maxDate = max;
                         scope.yearOptions = buildYearOptions(min, max);
-                        if (scope.datepickerOptions) {
-                            scope.datepickerOptions.minDate = min;
-                            scope.datepickerOptions.maxDate = max;
-                        }
                     };
 
                     /**
@@ -243,7 +226,7 @@ angular.module('anol.timeseries')
                         }
                         const extent = scopeExtent();
                         const ids = layer.getDatastreamIds(extent);
-                        const shown = scope.start.date || new Date();
+                        const shown = scope.browse || scope.start.date || new Date();
 
                         AvailabilityService.daysWithData(layer, shown.getUTCFullYear(), shown.getUTCMonth(), ids)
                             .then(function (days) {
@@ -255,7 +238,7 @@ angular.module('anol.timeseries')
                         if (!scope.showTimeOfDay) {
                             return;
                         }
-                        const days = [shown];
+                        const days = [scope.start.date];
                         if (scope.mode === 'range' && scope.end.date) {
                             days.push(scope.end.date);
                         }
@@ -293,19 +276,55 @@ angular.module('anol.timeseries')
                     }
 
                     /**
-                     * uib-datepicker calls this for every cell it renders.
-                     * Unknown availability must read as "selectable", or the
-                     * whole calendar greys out until the counts arrive.
+                     * The grid asks this for every day it renders. Unknown
+                     * availability must read as "selectable", or the whole
+                     * calendar greys out until the counts arrive.
                      */
-                    scope.dateDisabled = function (params) {
-                        if (params.mode !== 'day' || scope.availableDays === undefined) {
-                            return false;
+                    scope.dayIsAvailable = function (day) {
+                        if (scope.availableDays === undefined) {
+                            return true;
                         }
-                        const date = params.date;
-                        if (`${date.getUTCFullYear()}-${date.getUTCMonth()}` !== scope.availableMonth) {
-                            return false;
+                        if (`${day.getUTCFullYear()}-${day.getUTCMonth()}` !== scope.availableMonth) {
+                            return true;
                         }
-                        return !scope.availableDays.has(date.getUTCDate());
+                        return scope.availableDays.has(day.getUTCDate());
+                    };
+
+                    /**
+                     * Paging to another month re-runs the availability lookup
+                     * for it.
+                     */
+                    scope.onBrowse = function (month) {
+                        scope.browse = month;
+                        refreshAvailability();
+                    };
+
+                    /**
+                     * A day picked in the grid. A range takes two clicks - the
+                     * first sets the start and clears the end, the second sets
+                     * the end - and only then reloads, so the map never shows
+                     * a half-picked range. A second click before the first
+                     * swaps the two rather than producing an empty result.
+                     */
+                    scope.onSelect = function (day) {
+                        if (scope.mode !== 'range') {
+                            scope.start.date = day;
+                            scope.applyTime();
+                            return;
+                        }
+                        if (!scope.pickingEnd) {
+                            scope.start.date = day;
+                            scope.end.date = undefined;
+                            scope.pickingEnd = true;
+                            return;
+                        }
+                        scope.end.date = day;
+                        scope.pickingEnd = false;
+                        if (day < scope.start.date) {
+                            scope.end.date = scope.start.date;
+                            scope.start.date = day;
+                        }
+                        scope.applyTime();
                     };
 
                     /**
@@ -380,6 +399,11 @@ angular.module('anol.timeseries')
 
                     scope.applyTime = function () {
                         const layer = scope.activeDialog.layer;
+                        if (scope.mode === 'range' && !scope.showYearSelect && !scope.end.date) {
+                            // the hour selects fire this too, and a range with
+                            // its end still to be picked is not ready to query
+                            return;
+                        }
                         scope.latest = false;
 
                         const startWindow = timeWindow(joinInstant(scope.start), scope.granularity);
@@ -420,7 +444,9 @@ angular.module('anol.timeseries')
                             if (displayed !== undefined) {
                                 scope.start = splitInstant(displayed);
                                 scope.end = splitInstant(displayed);
+                                scope.browse = scope.start.date;
                             }
+                            scope.pickingEnd = false;
                             scope.$applyAsync();
                         });
                     };

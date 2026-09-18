@@ -148,6 +148,10 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'VIEWPORT_AVAILABLE': 'Only available in map extent',
                     'ALL_SHORT': 'all',
                     'VIEWPORT_SHORT': 'map extent',
+                    'PREVIOUS': 'Previous',
+                    'NEXT': 'Next',
+                    'ZOOM_OUT': 'Change period',
+                    'PICK_END': 'Now pick the end of the range.',
                     'NO_SENSORS_IN_VIEW': 'No sensors in the current map extent - offering all available times.'
                 },
                 'zoom': {
@@ -223,6 +227,10 @@ angular.module('anol', ['ui.bootstrap', 'pascalprecht.translate', 'ngSanitize'])
                     'VIEWPORT_AVAILABLE': 'Nur im Kartenausschnitt verfügbare',
                     'ALL_SHORT': 'alle',
                     'VIEWPORT_SHORT': 'Kartenausschnitt',
+                    'PREVIOUS': 'Zurück',
+                    'NEXT': 'Vor',
+                    'ZOOM_OUT': 'Zeitraum wechseln',
+                    'PICK_END': 'Jetzt das Ende des Bereichs wählen.',
                     'NO_SENSORS_IN_VIEW': 'Keine Sensoren im Kartenausschnitt - es werden alle verfügbaren Zeiten angeboten.'
                 },
                 'zoom': {

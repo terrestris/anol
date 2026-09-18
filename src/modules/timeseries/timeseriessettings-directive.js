@@ -123,10 +123,10 @@ angular.module('anol.timeseries')
                         : undefined;
 
                     function handleOutsideDialogClick(event) {
-                        // uib-datepicker rebuilds its day grid when the model
-                        // changes, so by the time this runs the clicked button
+                        // Picking a month or year in the grid replaces its
+                        // cells, so by the time this runs the clicked button
                         // has been detached and contains() would report it as
-                        // an outside click, closing the dialog on every pick.
+                        // an outside click, closing the dialog.
                         if (event.target instanceof Node && !event.target.isConnected) {
                             return;
                         }

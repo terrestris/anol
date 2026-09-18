@@ -19,8 +19,21 @@
         </button>
 
         <div class="timeseries-time-controls">
+            <!-- one calendar for both ends: a range is picked with two clicks
+                 and shaded in between -->
+            <div ng-if="!showYearSelect" anol-month-grid
+                 value="start.date" range-end="mode === 'range' ? end.date : undefined" browse="browse"
+                 min-date="minDate" max-date="maxDate"
+                 min-mode="{{ gridMinMode }}" show-weeks="showWeeks"
+                 is-available="dayIsAvailable(day)"
+                 on-select="onSelect(day)" on-browse="onBrowse(month)">
+            </div>
+            <div class="timeseries-hint" ng-if="pickingEnd">
+                {{ 'anol.timeseries.PICK_END' | translate }}
+            </div>
+
             <!-- start / instant -->
-            <div class="timeseries-instant">
+            <div class="timeseries-instant" ng-if="showYearSelect || showTimeOfDay">
                 <span class="timeseries-instant-label" ng-if="mode === 'range'">
                     {{ 'anol.timeseries.FROM' | translate }}
                 </span>
@@ -29,12 +42,6 @@
                         ng-model="start.year" ng-change="applyTime()"
                         ng-options="year as year for year in yearOptions">
                 </select>
-
-                <div ng-if="!showYearSelect" uib-datepicker ng-model="start.date"
-                     ng-change="applyTime()"
-                     datepicker-mode="datepickerMode"
-                     datepicker-options="datepickerOptions">
-                </div>
 
                 <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
                     <select class="form-control timeseries-select" ng-model="start.hour"
@@ -54,8 +61,8 @@
                 </div>
             </div>
 
-            <!-- end, range mode only -->
-            <div class="timeseries-instant" ng-if="mode === 'range'">
+            <!-- end, range mode only; the time selects wait for the end day -->
+            <div class="timeseries-instant" ng-if="mode === 'range' && (showYearSelect || showTimeOfDay)">
                 <span class="timeseries-instant-label">
                     {{ 'anol.timeseries.TO' | translate }}
                 </span>
@@ -65,25 +72,19 @@
                         ng-options="year as year for year in yearOptions">
                 </select>
 
-                <div ng-if="!showYearSelect" uib-datepicker ng-model="end.date"
-                     ng-change="applyTime()"
-                     datepicker-mode="datepickerMode"
-                     datepicker-options="datepickerOptions">
-                </div>
-
                 <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
                     <select class="form-control timeseries-select" ng-model="end.hour"
-                            ng-change="applyTime()"
+                            ng-change="applyTime()" ng-disabled="pickingEnd"
                             ng-options="h as (h | leadingZero) disable when !slotHasData(end, 'hour', h) for h in hourOptions">
                     </select>
                     <span ng-if="minuteOptions">:</span>
                     <select ng-if="minuteOptions" class="form-control timeseries-select"
-                            ng-model="end.minute" ng-change="applyTime()"
+                            ng-model="end.minute" ng-change="applyTime()" ng-disabled="pickingEnd"
                             ng-options="m as (m | leadingZero) disable when !slotHasData(end, 'minute', m) for m in minuteOptions">
                     </select>
                     <span ng-if="secondOptions">:</span>
                     <select ng-if="secondOptions" class="form-control timeseries-select"
-                            ng-model="end.second" ng-change="applyTime()"
+                            ng-model="end.second" ng-change="applyTime()" ng-disabled="pickingEnd"
                             ng-options="s as (s | leadingZero) disable when !slotHasData(end, 'second', s) for s in secondOptions">
                     </select>
                 </div>
