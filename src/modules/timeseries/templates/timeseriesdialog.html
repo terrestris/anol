@@ -32,8 +32,9 @@
                 {{ 'anol.timeseries.PICK_END' | translate }}
             </div>
 
-            <!-- start / instant -->
-            <div class="timeseries-instant" ng-if="showYearSelect || showTimeOfDay">
+            <!-- start / instant. The units finer than the granularity are
+                 static text, so a lone hour select reads as 12:00, not 12. -->
+            <div class="timeseries-instant" ng-if="showYearSelect || showTimeOfDay || mode === 'range'">
                 <span class="timeseries-instant-label" ng-if="mode === 'range'">
                     {{ 'anol.timeseries.FROM' | translate }}
                 </span>
@@ -42,6 +43,10 @@
                         ng-model="start.year" ng-change="applyTime()"
                         ng-options="year as year for year in yearOptions">
                 </select>
+
+                <span class="timeseries-date" ng-if="mode === 'range' && !showYearSelect">
+                    {{ start.date | timeSeriesDate:granularity }}
+                </span>
 
                 <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
                     <select class="form-control timeseries-select" ng-model="start.hour"
@@ -58,11 +63,13 @@
                             ng-model="start.second" ng-change="applyTime()"
                             ng-options="s as (s | leadingZero) disable when !slotHasData(start, 'second', s) for s in secondOptions">
                     </select>
+                    <span ng-if="startSuffix">{{ startSuffix }}</span>
                 </div>
             </div>
 
-            <!-- end, range mode only; the time selects wait for the end day -->
-            <div class="timeseries-instant" ng-if="mode === 'range' && (showYearSelect || showTimeOfDay)">
+            <!-- end, range mode only. Its selects show the last unit of each
+                 bucket, so with PT3H the bucket starting at 15 reads 17:59. -->
+            <div class="timeseries-instant" ng-if="mode === 'range'">
                 <span class="timeseries-instant-label">
                     {{ 'anol.timeseries.TO' | translate }}
                 </span>
@@ -72,21 +79,26 @@
                         ng-options="year as year for year in yearOptions">
                 </select>
 
+                <span class="timeseries-date" ng-if="!showYearSelect">
+                    {{ end.date ? (end.date | timeSeriesDate:granularity) : '–' }}
+                </span>
+
                 <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
                     <select class="form-control timeseries-select" ng-model="end.hour"
                             ng-change="applyTime()" ng-disabled="pickingEnd"
-                            ng-options="h as (h | leadingZero) disable when !slotHasData(end, 'hour', h) for h in hourOptions">
+                            ng-options="h as endLabel('hour', h) disable when !slotHasData(end, 'hour', h) for h in hourOptions">
                     </select>
                     <span ng-if="minuteOptions">:</span>
                     <select ng-if="minuteOptions" class="form-control timeseries-select"
                             ng-model="end.minute" ng-change="applyTime()" ng-disabled="pickingEnd"
-                            ng-options="m as (m | leadingZero) disable when !slotHasData(end, 'minute', m) for m in minuteOptions">
+                            ng-options="m as endLabel('minute', m) disable when !slotHasData(end, 'minute', m) for m in minuteOptions">
                     </select>
                     <span ng-if="secondOptions">:</span>
                     <select ng-if="secondOptions" class="form-control timeseries-select"
                             ng-model="end.second" ng-change="applyTime()" ng-disabled="pickingEnd"
-                            ng-options="s as (s | leadingZero) disable when !slotHasData(end, 'second', s) for s in secondOptions">
+                            ng-options="s as endLabel('second', s) disable when !slotHasData(end, 'second', s) for s in secondOptions">
                     </select>
+                    <span ng-if="endSuffix">{{ endSuffix }}</span>
                 </div>
             </div>
         </div>

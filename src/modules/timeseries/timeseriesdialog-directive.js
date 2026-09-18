@@ -114,6 +114,11 @@ angular.module('anol.timeseries')
 
                         applyBounds();
 
+                        // A lone hour select would read as "12" rather than
+                        // a time, so the minutes follow as static text: :00
+                        // after the start, :59 after the end.
+                        scope.startSuffix = '';
+                        scope.endSuffix = '';
                         if (granularity.unit === 'second') {
                             scope.hourOptions = steppedOptions(24, 1);
                             scope.minuteOptions = steppedOptions(60, 1);
@@ -126,6 +131,8 @@ angular.module('anol.timeseries')
                             scope.hourOptions = steppedOptions(24, granularity.count);
                             scope.minuteOptions = undefined;
                             scope.secondOptions = undefined;
+                            scope.startSuffix = ':00';
+                            scope.endSuffix = ':59';
                         }
 
                         const window = layer.getTime();
@@ -360,6 +367,22 @@ angular.module('anol.timeseries')
                             field === 'second' ? value : (parts.second || 0)
                         ));
                         return known.buckets.has(timeWindow(instant, scope.granularity).start.getTime());
+                    };
+
+                    /**
+                     * Label of an option in the end row's selects. The option's
+                     * value stays the bucket start, which is what the query
+                     * needs; the label shows the last unit the bucket covers,
+                     * so with PT3H the bucket starting at 15 reads 17.
+                     *
+                     * @param {'hour'|'minute'|'second'} field
+                     * @param {number} value
+                     * @return {string}
+                     */
+                    scope.endLabel = function (field, value) {
+                        const {unit, count} = scope.granularity;
+                        const last = field === unit ? value + count - 1 : value;
+                        return String(last).padStart(2, '0');
                     };
 
                     /** Availability per day, keyed by dayKey(). */

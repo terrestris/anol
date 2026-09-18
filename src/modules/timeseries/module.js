@@ -10,6 +10,28 @@ angular.module('anol.timeseries', [])
     })
 
     /**
+     * The day (or week, or month) an instant falls into, at the resolution a
+     * granularity's calendar offers. The time of day is left to the selects
+     * next to it. UTC, like everything in this module.
+     */
+    .filter('timeSeriesDate', ['$filter', function($filter) {
+        return function(date, granularity) {
+            if (!date) {
+                return '';
+            }
+            switch (granularity && granularity.unit) {
+                case 'week':
+                    return $filter('translate')('anol.timeseries.CALENDAR_WEEK') + ' ' +
+                        $filter('date')(date, 'ww/yyyy', 'UTC');
+                case 'month':
+                    return $filter('date')(date, 'MMMM yyyy', 'UTC');
+                default:
+                    return $filter('date')(date, 'EEE, dd.MM.yyyy', 'UTC');
+            }
+        };
+    }])
+
+    /**
      * Singleton dialog bookkeeping, mirroring TransparencyDialogService.
      */
     .service('TimeSeriesDialogService', function() {
