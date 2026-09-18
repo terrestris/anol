@@ -4,7 +4,7 @@ import { all } from 'ol/loadingstrategy';
 
 import { intersects as extentsIntersect } from 'ol/extent';
 
-import SensorThingsClient, { hasTimePlaceholder } from '../sensorthings/sensorthingsClient';
+import SensorThingsClient, { hasTimePlaceholder, AGGREGATES } from '../sensorthings/sensorthingsClient';
 import { resolveConfiguredWindow, parseInterval } from '../../modules/timeseries/time.js';
 
 /**
@@ -108,8 +108,23 @@ class SensorThings extends FeatureLayer {
         this.datastreams = [];
         /** Guards against a slow response overwriting a newer one. */
         this.loadToken = 0;
+        /**
+         * Aggregates written as `Observations.<name>` on every feature, from
+         * `timeSeries.aggregate` - a single name or a list.
+         * @type {string[]}
+         */
+        this.aggregate = [];
 
         if (this.hasTimeSeries()) {
+            const configured = this.timeSeries.aggregate;
+            const names = configured === undefined ? [] : [].concat(configured);
+            const unknown = names.filter(name => AGGREGATES[name] === undefined);
+            if (unknown.length > 0) {
+                console.error(`Layer "${this.name}": unknown timeSeries.aggregate ` +
+                    `${unknown.map(name => `"${name}"`).join(', ')}. ` +
+                    `Expected ${Object.keys(AGGREGATES).join(', ')}.`);
+            }
+            this.aggregate = names.filter(name => AGGREGATES[name] !== undefined);
             if (!hasTimePlaceholder(this.urlParameters)) {
                 console.warn(`Layer "${this.name}" declares timeSeries but neither its source ` +
                     'filter nor its expand contains a {timeFilter}, {timeStart} or {timeEnd} ' +
@@ -319,7 +334,8 @@ class SensorThings extends FeatureLayer {
     async loadData(refresh = false) {
         const client = new SensorThingsClient({
             url: this.url,
-            urlParameters: this.urlParameters
+            urlParameters: this.urlParameters,
+            aggregate: this.aggregate
         });
         client.setTime(this.time);
 

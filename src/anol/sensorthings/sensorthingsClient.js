@@ -13,6 +13,46 @@ import { toStaTimestamp } from '../../modules/timeseries/time.js';
 const TIME_PLACEHOLDER_PATTERN = /\{time(Start|End|Filter)\}/;
 
 /**
+ * The aggregates a `timeSeries.aggregate` config may ask for, each reducing
+ * the numeric results of one datastream's expanded observations.
+ */
+export const AGGREGATES = {
+    count: values => values.length,
+    sum: values => values.reduce((total, value) => total + value, 0),
+    mean: values => values.reduce((total, value) => total + value, 0) / values.length,
+    min: values => Math.min(...values),
+    max: values => Math.max(...values)
+};
+
+/**
+ * Reduce a datastream's observations into `Observations.<name>` properties,
+ * so a style or popup can read `Observations.sum` next to the per-reading
+ * `Observations.0.result` the flattening produces.
+ *
+ * Non-numeric results are skipped. With none left, only `count` is written
+ * (as 0) - the other keys stay absent so `['has', ...]` reads as "no data",
+ * the same way a missing `Observations.0.result` does.
+ *
+ * @param {Object} datastream one entry of the service's `value` array
+ * @param {string[]} names keys of AGGREGATES
+ * @return {Object}
+ */
+export function aggregateObservations(datastream, names) {
+    const observations = Array.isArray(datastream.Observations) ? datastream.Observations : [];
+    const values = observations
+        .map(observation => observation.result)
+        .filter(result => typeof result === 'number' && !isNaN(result));
+    const result = {};
+    for (const name of names) {
+        if (values.length === 0 && name !== 'count') {
+            continue;
+        }
+        result[`Observations.${name}`] = AGGREGATES[name](values);
+    }
+    return result;
+}
+
+/**
  * Split an `$expand` on its top-level commas, ignoring those nested inside the
  * parenthesised options of a term.
  *
@@ -81,6 +121,8 @@ class SensorThingsClient {
         this.url = opts.url;
         this.urlParameters = opts.urlParameters;
         this.version = '1.1';
+        /** @type {string[]} keys of AGGREGATES to compute per datastream */
+        this.aggregate = opts.aggregate || [];
 
         /**
          * Selected time window, or `undefined` for "latest" - in which case the
@@ -203,9 +245,34 @@ class SensorThingsClient {
             if (id === undefined || id === null) {
                 continue;
             }
-            byId.set(String(id), this.flattenObject(datastream));
+            byId.set(String(id), this.datastreamToProperties(datastream));
         }
         return byId;
+    }
+
+    /**
+     * The feature properties of one datastream: its flattened tree plus the
+     * configured aggregates. Both load paths go through here, so a polling
+     * refresh carries the same keys as the initial load.
+     *
+     * A datastream whose expanded observations were cut off by `$top` (the
+     * server says so with a nextLink) would aggregate over a partial range,
+     * which is worth a warning rather than a quietly low number.
+     *
+     * @param {Object} datastream
+     * @return {Object}
+     */
+    datastreamToProperties(datastream) {
+        const properties = this.flattenObject(datastream);
+        if (this.aggregate.length === 0) {
+            return properties;
+        }
+        if (datastream['Observations@iot.nextLink'] !== undefined) {
+            console.warn(`Datastream ${datastream['@iot.id']} "${datastream.name}": the observations ` +
+                'were truncated by $top, so the aggregates cover only part of the selected range. ' +
+                'Raise $top in the layer\'s expand.');
+        }
+        return Object.assign(properties, aggregateObservations(datastream, this.aggregate));
     }
 
     async get(withLocations = true) {
@@ -247,9 +314,7 @@ class SensorThingsClient {
             const thing = observation.Thing;
             const feature = {
                 type: 'Feature',
-                properties: {
-                    ...this.flattenObject(observation)
-                },
+                properties: this.datastreamToProperties(observation),
                 geometry: pickLocation(thing.Locations || []),
             };
             return feature;
