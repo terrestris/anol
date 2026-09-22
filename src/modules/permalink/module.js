@@ -6,5 +6,6 @@
  */
 
 import '../../anol/anol.js';
+import '../timeseries/module.js';
 
-angular.module('anol.permalink', ['anol.map']);
+angular.module('anol.permalink', ['anol.map', 'anol.timeseries']);

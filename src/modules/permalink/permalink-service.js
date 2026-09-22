@@ -1,6 +1,7 @@
 import './module.js';
 import {transform, transformExtent} from 'ol/proj';
-import {getArrayParam, getObjectParam, getStringParam} from "./util";
+import {getArrayParam, getObjectParam, getStringParam, stringifyObject} from "./util";
+import {toCompactIso, fromCompactIso, timeWindow} from "../timeseries/time.js";
 import Group from "../../anol/layer/group";
 
 /**
@@ -35,6 +36,8 @@ import Group from "../../anol/layer/group";
  * @property {string[]} sidebar
  * @property {'open'|'closed'} sidebarStatus
  * @property {Object} opacities
+ * @property {Record<string, string>} [times] compact ISO per layer name, `start/end` for range layers
+ * @property {string[]} [viewportFilter] names of layers restricted to the map extent
  */
 
 angular.module('anol.permalink')
@@ -64,6 +67,8 @@ angular.module('anol.permalink')
             const sidebar = getArrayParam('sidebar', params);
             const sidebarStatus = getStringParam('sidebarStatus', params);
             const opacities = getObjectParam('opacities', params);
+            const times = getObjectParam('times', params);
+            const viewportFilter = getArrayParam('viewportFilter', params);
 
             /**
              * @type {Partial<PermalinkParameters>}
@@ -77,7 +82,9 @@ angular.module('anol.permalink')
                 geocode: /** @type {PermalinkGeocodeParameters} */ (geocode),
                 groupOrder,
                 sidebar,
-                opacities
+                opacities,
+                times,
+                viewportFilter
             }
 
             if (mapParams !== undefined) {
@@ -137,7 +144,7 @@ angular.module('anol.permalink')
             _precision = precision;
         };
 
-        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService',
+        this.$get = ['$rootScope', '$q', '$location', '$timeout', 'MapService', 'LayersService', 'CatalogService', 'ReadyService', 'GeocoderService', 'TimeSeriesService',
             /**
              * @param {import('../../anol/rootScope').AnolRootScope} $rootScope
              * @param {import('angular').IQService} $q
@@ -148,9 +155,10 @@ angular.module('anol.permalink')
              * @param {any} CatalogService
              * @param {any} ReadyService
              * @param {any} GeocoderService
+             * @param {any} TimeSeriesService
              * @return {Permalink}
              */
-            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService) {
+            function ($rootScope, $q, $location, $timeout, MapService, LayersService, CatalogService, ReadyService, GeocoderService, TimeSeriesService) {
 
                 /**
                  * @template T
@@ -496,6 +504,24 @@ angular.module('anol.permalink')
                             $location.search('sidebar', parameters.sidebar.join(','))
                         }
 
+                        if (angular.isDefined(parameters.opacities) && Object.keys(parameters.opacities).length > 0) {
+                            $location.search('opacities', stringifyObject(parameters.opacities));
+                        } else {
+                            $location.search('opacities', null);
+                        }
+
+                        if (angular.isDefined(parameters.times) && Object.keys(parameters.times).length > 0) {
+                            $location.search('times', stringifyObject(parameters.times));
+                        } else {
+                            $location.search('times', null);
+                        }
+
+                        if (angular.isDefined(parameters.viewportFilter) && parameters.viewportFilter.length > 0) {
+                            $location.search('viewportFilter', parameters.viewportFilter.join(','));
+                        } else {
+                            $location.search('viewportFilter', null);
+                        }
+
                         $location.replace();
                     }
 
@@ -536,13 +562,64 @@ angular.module('anol.permalink')
 
                         if (mapParams.opacities !== undefined) {
                             for (let layerName in mapParams.opacities) {
-                                const o = mapParams.opacities[layerName];
+                                const o = parseFloat(mapParams.opacities[layerName]);
                                 const layer = LayersService.overlayLayers.find(l => l.name === layerName);
                                 if (layer) {
                                     layer.setUserDefinedOpacity(o);
                                 } else {
                                     console.error(`layer with name ${layerName} not found. could not apply opacity.`)
                                 }
+                            }
+                        }
+
+                        this.applyFilterParameters(mapParams);
+                    }
+
+                    /**
+                     * Time and viewport filters, applied last on purpose: the
+                     * viewport filter needs the restored map extent, otherwise
+                     * its first request goes out against the default one and is
+                     * immediately superseded.
+                     *
+                     * @param {Partial<PermalinkParameters>} mapParams
+                     */
+                    applyFilterParameters(mapParams) {
+                        const layerByName = name => LayersService.flattedLayers().find(l => l.name === name);
+
+                        if (mapParams.times !== undefined) {
+                            for (const layerName in mapParams.times) {
+                                const layer = layerByName(layerName);
+                                if (layer === undefined || !layer.hasTimeSeries()) {
+                                    console.error(`layer with name ${layerName} has no time series. could not apply time.`);
+                                    continue;
+                                }
+                                const [startPart, endPart] = mapParams.times[layerName].split('/');
+                                const start = fromCompactIso(startPart);
+                                if (start === undefined) {
+                                    console.error(`could not parse time "${mapParams.times[layerName]}" for layer ${layerName}.`);
+                                    continue;
+                                }
+                                const startWindow = timeWindow(start, layer.getGranularity());
+                                if (endPart === undefined) {
+                                    layer.setTime(startWindow);
+                                } else {
+                                    const end = fromCompactIso(endPart);
+                                    layer.setTime({
+                                        start: startWindow.start,
+                                        end: end === undefined ? startWindow.end : end
+                                    });
+                                }
+                            }
+                        }
+
+                        if (mapParams.viewportFilter !== undefined) {
+                            for (const layerName of mapParams.viewportFilter) {
+                                const layer = layerByName(layerName);
+                                if (layer === undefined || !layer.hasViewportFilter()) {
+                                    console.error(`layer with name ${layerName} has no viewport filter. could not apply it.`);
+                                    continue;
+                                }
+                                TimeSeriesService.setViewportFilter(layer, true);
                             }
                         }
                     }
@@ -650,6 +727,12 @@ angular.module('anol.permalink')
                     }
 
                     /**
+                     * Two consumers: generatePermalink() encodes this into the
+                     * url, and SaveSettingsService.save() stores it verbatim as
+                     * the `map` half of a saved project setting. Anything added
+                     * here is therefore persisted by both, as long as
+                     * applyPermalinkParameters() reads it back.
+                     *
                      * @return {PermalinkParameters}
                      */
                     getParameters() {
@@ -666,6 +749,22 @@ angular.module('anol.permalink')
                             }
                         }
 
+                        const times = {};
+                        const viewportFilter = [];
+                        for (const layer of LayersService.flattedLayers()) {
+                            if (layer.hasTimeSeries()) {
+                                const window = layer.getTime();
+                                if (window !== undefined) {
+                                    times[layer.name] = layer.getTimeSeriesMode() === 'range'
+                                        ? `${toCompactIso(window.start)}/${toCompactIso(window.end)}`
+                                        : toCompactIso(window.start);
+                                }
+                            }
+                            if (layer.hasViewportFilter() && layer.getViewportFilter()) {
+                                viewportFilter.push(layer.name);
+                            }
+                        }
+
                         return {
                             zoom: this.zoom,
                             center: [this.lon ?? 0, this.lat ?? 0],
@@ -676,7 +775,9 @@ angular.module('anol.permalink')
                             groupOrder,
                             sidebar,
                             sidebarStatus,
-                            opacities
+                            opacities,
+                            times,
+                            viewportFilter
                         };
                     }
 

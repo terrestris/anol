@@ -418,8 +418,8 @@ angular.module('anol.catalog')
                     anolLayer = new anol.layer.DynamicGeoJSON(clayer);
                 } else if (clayer['type'] == 'static_geojson' || clayer['type'] == 'digitize') {
                     anolLayer = new anol.layer.StaticGeoJSON(clayer)
-                } else if (cLayer['type'] === 'sensorthings') {
-                    anolLayer = new anol.layer.SensorThings(cLayer);
+                } else if (clayer['type'] === 'sensorthings') {
+                    anolLayer = new anol.layer.SensorThings(clayer);
                 }
                 var added = LayersService.addOverlayLayer(anolLayer, 0);
                 if(anolLayer instanceof anol.layer.DynamicGeoJSON && added === true) {
