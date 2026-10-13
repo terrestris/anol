@@ -100,7 +100,13 @@ angular.module('anol.scale')
                         scope.updateScale = function () {
                             if (scope.scale > 0) {
                                 const resolution = calculateResolutionFromScale(scope.view, scope.scale);
-                                scope.view.setResolution(resolution)
+                                // Bypass the view's zoom-level snapping so a typed scale
+                                // yields an exact (possibly fractional) resolution. 
+                                // Side effect: Afterwards all zoom controls (+/- buttons, 
+                                // mousewheel, 2-finger-pinch, keyboard input, ...) will 
+                                // reach fractional zoom levels.
+                                scope.view.setConstrainResolution(false);
+                                scope.view.setResolution(resolution);
                             }
                         }
                         scope.view.on('change:resolution', function () {
