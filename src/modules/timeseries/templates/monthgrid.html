@@ -1,0 +1,44 @@
+<div class="month-grid">
+    <div class="month-grid-header">
+        <button type="button" class="month-grid-nav" ng-click="step(-1)"
+                title="{{ 'anol.timeseries.PREVIOUS' | translate }}">‹</button>
+        <button type="button" class="month-grid-title" ng-click="zoomOut()"
+                ng-disabled="mode === 'year'"
+                title="{{ mode === 'year' ? '' : ('anol.timeseries.ZOOM_OUT' | translate) }}">
+            {{ title }}
+        </button>
+        <button type="button" class="month-grid-nav" ng-click="step(1)"
+                title="{{ 'anol.timeseries.NEXT' | translate }}">›</button>
+    </div>
+
+    <div ng-if="mode === 'day'">
+        <div class="month-grid-row month-grid-weekdays">
+            <span class="month-grid-week" ng-if="showWeeks"></span>
+            <span ng-repeat="name in weekdays track by $index">{{ name }}</span>
+        </div>
+        <div class="month-grid-row" ng-repeat="week in weeks track by week.start">
+            <span class="month-grid-week" ng-if="showWeeks">{{ week.number }}</span>
+            <button type="button" class="month-grid-cell" ng-repeat="cell in week.days track by cell.time"
+                    ng-class="{'outside': cell.outside, 'selected': isSelected(cell), 'in-range': inRange(cell)}"
+                    ng-disabled="isDisabled(cell)" ng-click="pick(cell)">
+                {{ cell.label }}
+            </button>
+        </div>
+    </div>
+
+    <div class="month-grid-wide" ng-if="mode === 'month'">
+        <button type="button" class="month-grid-cell" ng-repeat="cell in months track by cell.time"
+                ng-class="{'selected': isSelected(cell), 'in-range': inRange(cell)}"
+                ng-disabled="isDisabled(cell)" ng-click="pick(cell)">
+            {{ cell.label }}
+        </button>
+    </div>
+
+    <div class="month-grid-wide" ng-if="mode === 'year'">
+        <button type="button" class="month-grid-cell" ng-repeat="cell in years track by cell.time"
+                ng-class="{'outside': cell.outside, 'selected': isSelected(cell), 'in-range': inRange(cell)}"
+                ng-disabled="isDisabled(cell)" ng-click="pick(cell)">
+            {{ cell.label }}
+        </button>
+    </div>
+</div>

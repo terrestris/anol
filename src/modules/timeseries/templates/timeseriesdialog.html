@@ -1,0 +1,141 @@
+<dialog id="timeseries-dialog" class="timeseries-dialog slide-top" ng-style="dialogStyle">
+    <div class="timeseries-header">
+        <span class="timeseries-title">{{ activeDialog.layer.title }}</span>
+        <button title="{{ 'anol.timeseries.CLOSE' | translate }}" ng-click="closeDialog()"
+                class="close-btn glyphicon glyphicon-remove pointer">
+        </button>
+    </div>
+
+    <div class="timeseries-section" ng-if="hasTimeSeries">
+        <div class="timeseries-section-title">
+            {{ 'anol.timeseries.TIME' | translate }}
+            <span class="timeseries-hint">{{ 'anol.timeseries.UTC_HINT' | translate }}</span>
+        </div>
+
+        <div class="timeseries-presets">
+            <button type="button" class="btn btn-default btn-sm timeseries-latest"
+                    ng-class="{'active': latest}" ng-click="setLatest()">
+                <span class="glyphicon glyphicon-fast-forward"></span>
+                {{ 'anol.timeseries.LATEST_VALUE' | translate }}
+            </button>
+            <!-- ranges people ask for most; hidden while no data lies in them -->
+            <button type="button" class="btn btn-default btn-sm" ng-if="mode === 'range'"
+                    ng-repeat="preset in presets" ng-show="presetHasData(preset)"
+                    ng-class="{'active': presetIsActive(preset)}" ng-click="applyPreset(preset)">
+                {{ preset.label | translate }}
+            </button>
+        </div>
+
+        <div class="timeseries-time-controls">
+            <!-- one calendar for both ends: a range is picked with two clicks
+                 and shaded in between -->
+            <div ng-if="!showYearSelect" anol-month-grid
+                 value="start.date" range-end="mode === 'range' ? end.date : undefined" browse="browse"
+                 min-date="minDate" max-date="maxDate"
+                 min-mode="{{ gridMinMode }}" show-weeks="showWeeks"
+                 is-available="dayIsAvailable(day)"
+                 on-select="onSelect(day)" on-browse="onBrowse(month)">
+            </div>
+            <div class="timeseries-hint" ng-if="pickingEnd">
+                {{ 'anol.timeseries.PICK_END' | translate }}
+            </div>
+
+            <!-- start / instant. The units finer than the granularity are
+                 static text, so a lone hour select reads as 12:00, not 12. -->
+            <div class="timeseries-instant" ng-if="showYearSelect || showTimeOfDay || mode === 'range'">
+                <span class="timeseries-instant-label" ng-if="mode === 'range'">
+                    {{ 'anol.timeseries.FROM' | translate }}
+                </span>
+
+                <select ng-if="showYearSelect" class="form-control timeseries-select"
+                        ng-model="start.year" ng-change="applyTime()"
+                        ng-options="year as year for year in yearOptions">
+                </select>
+
+                <span class="timeseries-date" ng-if="mode === 'range' && !showYearSelect">
+                    {{ start.date | timeSeriesDate:granularity }}
+                </span>
+
+                <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
+                    <select class="form-control timeseries-select" ng-model="start.hour"
+                            ng-change="applyTime()"
+                            ng-options="h as (h | leadingZero) disable when !slotHasData(start, 'hour', h) for h in hourOptions">
+                    </select>
+                    <span ng-if="minuteOptions">:</span>
+                    <select ng-if="minuteOptions" class="form-control timeseries-select"
+                            ng-model="start.minute" ng-change="applyTime()"
+                            ng-options="m as (m | leadingZero) disable when !slotHasData(start, 'minute', m) for m in minuteOptions">
+                    </select>
+                    <span ng-if="secondOptions">:</span>
+                    <select ng-if="secondOptions" class="form-control timeseries-select"
+                            ng-model="start.second" ng-change="applyTime()"
+                            ng-options="s as (s | leadingZero) disable when !slotHasData(start, 'second', s) for s in secondOptions">
+                    </select>
+                    <span ng-if="startSuffix">{{ startSuffix }}</span>
+                </div>
+            </div>
+
+            <!-- end, range mode only. Its selects show the last unit of each
+                 bucket, so with PT3H the bucket starting at 15 reads 17:59. -->
+            <div class="timeseries-instant" ng-if="mode === 'range'">
+                <span class="timeseries-instant-label">
+                    {{ 'anol.timeseries.TO' | translate }}
+                </span>
+
+                <select ng-if="showYearSelect" class="form-control timeseries-select"
+                        ng-model="end.year" ng-change="applyTime()"
+                        ng-options="year as year for year in yearOptions">
+                </select>
+
+                <span class="timeseries-date" ng-if="!showYearSelect">
+                    {{ end.date ? (end.date | timeSeriesDate:granularity) : '–' }}
+                </span>
+
+                <div class="timeseries-time-of-day" ng-if="showTimeOfDay">
+                    <select class="form-control timeseries-select" ng-model="end.hour"
+                            ng-change="applyTime()" ng-disabled="pickingEnd"
+                            ng-options="h as endLabel('hour', h) disable when !slotHasData(end, 'hour', h) for h in hourOptions">
+                    </select>
+                    <span ng-if="minuteOptions">:</span>
+                    <select ng-if="minuteOptions" class="form-control timeseries-select"
+                            ng-model="end.minute" ng-change="applyTime()" ng-disabled="pickingEnd"
+                            ng-options="m as endLabel('minute', m) disable when !slotHasData(end, 'minute', m) for m in minuteOptions">
+                    </select>
+                    <span ng-if="secondOptions">:</span>
+                    <select ng-if="secondOptions" class="form-control timeseries-select"
+                            ng-model="end.second" ng-change="applyTime()" ng-disabled="pickingEnd"
+                            ng-options="s as endLabel('second', s) disable when !slotHasData(end, 'second', s) for s in secondOptions">
+                    </select>
+                    <span ng-if="endSuffix">{{ endSuffix }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="timeseries-section" ng-if="hasViewportFilter">
+        <!-- collapsed by default: the radios are rarely touched, and the
+             calendar above needs the room more -->
+        <button type="button" class="timeseries-section-toggle pointer"
+                ng-click="viewportOptionsOpen = !viewportOptionsOpen">
+            <span class="glyphicon"
+                  ng-class="viewportOptionsOpen ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'"></span>
+            {{ 'anol.timeseries.SELECTABLE_TIMES' | translate }}
+            <span class="timeseries-hint" ng-if="!viewportOptionsOpen">
+                {{ (viewport.mode === 'viewport' ? 'anol.timeseries.VIEWPORT_SHORT' : 'anol.timeseries.ALL_SHORT') | translate }}
+            </span>
+        </button>
+        <label class="timeseries-radio" ng-if="viewportOptionsOpen">
+            <input type="radio" name="viewportMode" value="off"
+                   ng-model="viewport.mode" ng-change="applyViewport()"/>
+            {{ 'anol.timeseries.ALL_AVAILABLE' | translate }}
+        </label>
+        <label class="timeseries-radio" ng-if="viewportOptionsOpen">
+            <input type="radio" name="viewportMode" value="viewport"
+                   ng-model="viewport.mode" ng-change="applyViewport()"/>
+            {{ 'anol.timeseries.VIEWPORT_AVAILABLE' | translate }}
+        </label>
+        <div class="timeseries-warning" ng-if="noSensorsInView">
+            {{ 'anol.timeseries.NO_SENSORS_IN_VIEW' | translate }}
+        </div>
+    </div>
+</dialog>
