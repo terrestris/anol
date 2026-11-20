@@ -76,6 +76,9 @@ angular.module('anol.map')
                 angular.forEach(self.olControls, function(control) {
                     self.map.addControl(control);
                 });
+                self.map.on('singleclick', function() {
+                    Controls.prototype.closeIdleMenuContainers(self);
+                });
                 self.$rootScope.$broadcast('anol.controls.registered');
             };
             /**
@@ -97,6 +100,9 @@ angular.module('anol.map')
                 if(control.exclusive === true) {
                     control.onActivate(Controls.prototype.handleExclusiveControlActivate, this);
                     this.exclusiveControls.push(control);
+                }
+                if(control.menuContainer === true) {
+                    control.onDeactivate(Controls.prototype.handleMenuContainerDeactivate, this);
                 }
                 if(control.menu === true) {
                     control.onActivate(Controls.prototype.handleMenuControlActivate, this);
@@ -155,7 +161,11 @@ angular.module('anol.map')
                 angular.forEach(self.exclusiveControls, function(control) {
                     if(control.active === true) {
                         if(control !== targetControl) {
-                            control.deactivate();
+                            if(control.menuContainer && targetControl.keepMenuOpen) {
+                                control.menuTool = targetControl;
+                            } else {
+                                control.deactivate();
+                            }
                         }
                     }
                 });
@@ -182,6 +192,32 @@ angular.module('anol.map')
                     control.activate();
                 });
             };            
+            /**
+         * private function
+         *
+         * handler called on menu container deactivate. Closing the menu ends the tool that kept it open.
+         */
+            Controls.prototype.handleMenuContainerDeactivate = function(targetControl) {
+                var menuTool = targetControl.menuTool;
+                targetControl.menuTool = undefined;
+                if(angular.isDefined(menuTool)) {
+                    menuTool.deactivate();
+                }
+            };
+            /**
+         * private function
+         *
+         * closes open menu containers without an active tool, called on map click
+         */
+            Controls.prototype.closeIdleMenuContainers = function(context) {
+                var self = context;
+                angular.forEach(self.exclusiveControls, function(control) {
+                    if(control.menuContainer && control.active === true &&
+                        !(angular.isDefined(control.menuTool) && control.menuTool.active === true)) {
+                        control.deactivate();
+                    }
+                });
+            };
             /**
          * private function
          *
