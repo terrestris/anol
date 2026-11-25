@@ -9,20 +9,21 @@ angular.module('anol.map')
  * @ngdoc object
  * @name anol.map.ControlsServiceProvider
  */
-    .provider('ControlsService', [function() {
-        var _controls;
+.provider('ControlsService', [function() {
+    var _controls;
 
-        /**
+    /**
      * @ngdoc method
      * @name setControls
      * @methodOf anol.map.ControlsServiceProvider
      * @param {Array.<Object>} controls ol3 controls
      */
-        this.setControls = function(controls) {
-            _controls = controls;
-        };
+    this.setControls = function(controls) {
+        _controls = controls;
+    };
 
-        this.$get = ['ClusterSelectService', '$rootScope', function(ClusterSelectService, $rootScope) {
+    this.$get = ['ClusterSelectService', '$rootScope', function(ClusterSelectService, $rootScope) {
+
         /**
          * @ngdoc service
          * @name anol.map.ControlsService
@@ -30,33 +31,34 @@ angular.module('anol.map')
          * @description
          * Stores ol3 controls and add them to map, if map present
          */
-            var Controls = function(controls) {
-                var self = this;
-                self.$rootScope = $rootScope;
-                self.olControls = [];
-                self.controls = [];
-                self.menus = [];
-                self.exclusiveControls = [];
-                self.subordinateControls = [];
-                self.map = undefined;
-                if(angular.isUndefined(controls)) {
-                // Zoom-, Rotate and AttributionControls provided by corresponding directives
-                    var defaultControls = controlDefaults({
-                        attribution: false,
-                        zoom: false,
-                        rotate: false
-                    });
-                    angular.forEach(defaultControls, function(olControl) {
-                        self.olControls.push(olControl);
-                        self.controls.push(new anol.control.Control({
-                            olControl: olControl,
-                            active: true
-                        }));
-                    });
-                }
-                self.addControls(controls);
-            };
-            /**
+        var Controls = function(controls) {
+            var self = this;
+            self.$rootScope = $rootScope;
+            self.olControls = [];
+            self.controls = [];
+            self.menus = [];
+            self.exclusiveControls = [];
+            self.subordinateControls = [];
+            self.map = undefined;
+            if(angular.isUndefined(controls)) {
+            // Zoom-, Rotate and AttributionControls provided by corresponding directives
+                var defaultControls = controlDefaults({
+                    attribution: false,
+                    zoom: false,
+                    rotate: false
+                });
+                angular.forEach(defaultControls, function(olControl) {
+                    self.olControls.push(olControl);
+                    self.controls.push(new anol.control.Control({
+                        olControl: olControl,
+                        active: true
+                    }));
+                });
+            }
+            self.addControls(controls);
+        };
+
+        /**
          * @ngdoc method
          * @name registerMap
          * @methodOf anol.map.ControlsService
@@ -64,21 +66,25 @@ angular.module('anol.map')
          * @description
          * Register an ol3 map in `ControlsService`
          */
-            Controls.prototype.registerMap = function(map) {
-                var self = this;
-                self.map = map;
-                // get cluster select control from service. undefined when no clustered layer present
-                var selectClusterControl = ClusterSelectService.getControl();
-                if(angular.isDefined(selectClusterControl)) {
-                    self.addControl(selectClusterControl);
-                }
+        Controls.prototype.registerMap = function(map) {
+            var self = this;
+            self.map = map;
+            // get cluster select control from service. undefined when no clustered layer present
+            var selectClusterControl = ClusterSelectService.getControl();
+            if(angular.isDefined(selectClusterControl)) {
+                self.addControl(selectClusterControl);
+            }
 
-                angular.forEach(self.olControls, function(control) {
-                    self.map.addControl(control);
-                });
-                self.$rootScope.$broadcast('anol.controls.registered');
-            };
-            /**
+            angular.forEach(self.olControls, function(control) {
+                self.map.addControl(control);
+            });
+            self.map.on('singleclick', function() {
+                Controls.prototype.closeIdleMenuContainers(self);
+            });
+            self.$rootScope.$broadcast('anol.controls.registered');
+        };
+
+        /**
          * @ngdoc method
          * @name addControl
          * @methodOf anol.map.ControlsService
@@ -86,27 +92,31 @@ angular.module('anol.map')
          * @description
          * Adds a single control
          */
-            Controls.prototype.addControl = function(control) {
-                if(angular.isDefined(this.map) && control.olControl instanceof Control) {
-                    this.map.addControl(control.olControl);
-                }
-                this.controls.push(control);
-                if(control.olControl instanceof Control) {
-                    this.olControls.push(control.olControl);
-                }
-                if(control.exclusive === true) {
-                    control.onActivate(Controls.prototype.handleExclusiveControlActivate, this);
-                    this.exclusiveControls.push(control);
-                }
-                if(control.menu === true) {
-                    control.onActivate(Controls.prototype.handleMenuControlActivate, this);
-                    this.menus.push(control);
-                }                
-                if(control.subordinate === true) {
-                    this.subordinateControls.push(control);
-                }
-            };
-            /**
+        Controls.prototype.addControl = function(control) {
+            if(angular.isDefined(this.map) && control.olControl instanceof Control) {
+                this.map.addControl(control.olControl);
+            }
+            this.controls.push(control);
+            if(control.olControl instanceof Control) {
+                this.olControls.push(control.olControl);
+            }
+            if(control.exclusive === true) {
+                control.onActivate(Controls.prototype.handleExclusiveControlActivate, this);
+                this.exclusiveControls.push(control);
+            }
+            if(control.menuContainer === true) {
+                control.onDeactivate(Controls.prototype.handleMenuContainerDeactivate, this);
+            }
+            if(control.menu === true) {
+                control.onActivate(Controls.prototype.handleMenuControlActivate, this);
+                this.menus.push(control);
+            }                
+            if(control.subordinate === true) {
+                this.subordinateControls.push(control);
+            }
+        };
+
+        /**
          * @ngdoc method
          * @name addControls
          * @methodOf anol.map.ControlsService
@@ -114,13 +124,14 @@ angular.module('anol.map')
          * @description
          * Adds an array of controls
          */
-            Controls.prototype.addControls = function(controls) {
-                var self = this;
-                angular.forEach(controls, function(control) {
-                    self.addControl(control);
-                });
-            };
-            /**
+        Controls.prototype.addControls = function(controls) {
+            var self = this;
+            angular.forEach(controls, function(control) {
+                self.addControl(control);
+            });
+        };
+
+        /**
          * @ngdoc method
          * @name removeControl
          * @methodOf anol.map.ControlsService
@@ -128,73 +139,108 @@ angular.module('anol.map')
          * @description
          * Remove a single control
          */
-            Controls.prototype.removeControl = function(control) {
-                var controlIdx = $.inArray(this.controls, control);
-                var exclusiveIdx = $.inArray(this.exclusiveControls, control);
-                var subordinateIdx = $.inArray(this.subordinateControls, control);
-                if(controlIdx > -1) {
-                    this.controls.splice(controlIdx, 1);
-                }
-                if(exclusiveIdx > -1) {
-                    this.exclusiveControls.splice(exclusiveIdx, 1);
-                }
-                if(subordinateIdx > -1) {
-                    this.subordinateControls.splice(subordinateIdx, 1);
-                }
-                if(angular.isDefined(this.map) && control.olControl instanceof Control) {
-                    this.map.removeControl(control.olControl);
-                }
-            };
-            /**
+        Controls.prototype.removeControl = function(control) {
+            var controlIdx = $.inArray(this.controls, control);
+            var exclusiveIdx = $.inArray(this.exclusiveControls, control);
+            var subordinateIdx = $.inArray(this.subordinateControls, control);
+            if(controlIdx > -1) {
+                this.controls.splice(controlIdx, 1);
+            }
+            if(exclusiveIdx > -1) {
+                this.exclusiveControls.splice(exclusiveIdx, 1);
+            }
+            if(subordinateIdx > -1) {
+                this.subordinateControls.splice(subordinateIdx, 1);
+            }
+            if(angular.isDefined(this.map) && control.olControl instanceof Control) {
+                this.map.removeControl(control.olControl);
+            }
+        };
+
+        /**
          * private function
          *
          * handler called on exclusiv control activate
          */
-            Controls.prototype.handleExclusiveControlActivate = function(targetControl, context) {
-                var self = context;
-                angular.forEach(self.exclusiveControls, function(control) {
-                    if(control.active === true) {
-                        if(control !== targetControl) {
+        Controls.prototype.handleExclusiveControlActivate = function(targetControl, context) {
+            var self = context;
+            angular.forEach(self.exclusiveControls, function(control) {
+                if(control.active === true) {
+                    if(control !== targetControl) {
+                        if(control.menuContainer && targetControl.keepMenuOpen) {
+                            control.menuTool = targetControl;
+                        } else {
                             control.deactivate();
                         }
                     }
-                });
-                angular.forEach(self.subordinateControls, function(control) {
-                    if(control.active === true) {
-                        control.deactivate();
-                    }
-                });
-                angular.forEach(self.menus, function(control) {
-                    if(control !== targetControl && !targetControl.keepMenuOpen) {
-                        control.deactivate();
-                    }
-                });                
-                targetControl.oneDeactivate(Controls.prototype.handleExclusiveControlDeactivate, self);
-            };
-            /**
+                }
+            });
+            angular.forEach(self.subordinateControls, function(control) {
+                if(control.active === true) {
+                    control.deactivate();
+                }
+            });
+            angular.forEach(self.menus, function(control) {
+                if(control !== targetControl && !targetControl.keepMenuOpen) {
+                    control.deactivate();
+                }
+            });                
+            targetControl.oneDeactivate(Controls.prototype.handleExclusiveControlDeactivate, self);
+        };
+
+        /**
          * private function
          *
          * handler called on exclusiv control deactivate
          */
-            Controls.prototype.handleExclusiveControlDeactivate = function(targetControl, context) {
-                var self = context;
-                angular.forEach(self.subordinateControls, function(control) {
-                    control.activate();
-                });
-            };            
-            /**
+        Controls.prototype.handleExclusiveControlDeactivate = function(targetControl, context) {
+            var self = context;
+            angular.forEach(self.subordinateControls, function(control) {
+                control.activate();
+            });
+        };
+
+        /**
+         * private function
+         *
+         * handler called on menu container deactivate. Closing the menu ends the tool that kept it open.
+         */
+        Controls.prototype.handleMenuContainerDeactivate = function(targetControl) {
+            var menuTool = targetControl.menuTool;
+            targetControl.menuTool = undefined;
+            if(angular.isDefined(menuTool)) {
+                menuTool.deactivate();
+            }
+        };
+
+        /**
+         * private function
+         *
+         * closes open menu containers without an active tool, called on map click
+         */
+        Controls.prototype.closeIdleMenuContainers = function(context) {
+            var self = context;
+            angular.forEach(self.exclusiveControls, function(control) {
+                if(control.menuContainer && control.active === true &&
+                    !(angular.isDefined(control.menuTool) && control.menuTool.active === true)) {
+                    control.deactivate();
+                }
+            });
+        };
+
+        /**
          * private function
          *
          * handler called on menu control activate
          */
-            Controls.prototype.handleMenuControlActivate = function(targetControl, context) {
-                var self = context;
-                angular.forEach(self.menus, function(control) {
-                    if(control !== targetControl) {
-                        control.deactivate();
-                    }
-                });
-            };
-            return new Controls(_controls);
-        }];
-    }]);
+        Controls.prototype.handleMenuControlActivate = function(targetControl, context) {
+            var self = context;
+            angular.forEach(self.menus, function(control) {
+                if(control !== targetControl) {
+                    control.deactivate();
+                }
+            });
+        };
+        return new Controls(_controls);
+    }];
+}]);

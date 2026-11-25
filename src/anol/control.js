@@ -5,6 +5,8 @@
  * @param {Object} options AnOl Control options
  * @param {boolean} options.active Controls initial active state. Default false
  * @param {boolean} options.exclusive Flag control as exclusive. Only one exclusive control can be active at one time
+ * @param {boolean} options.menuContainer Flag exclusive control as a menu holding other controls. It stays active when a control with keepMenuOpen is activated, and deactivating it deactivates that control. A map click closes it while no such control is active.
+ * @param {boolean} options.keepMenuOpen Keep menu containers open while this control is active
  * @param {boolean} options.subordinate Flag control as subordinate. Subordinate controls are permanently active as long as no exclusive control is active.
  * @param {Object} options.element DOM-Element control belongs to
  * @param {Object} options.target DOM-Element control should be placed in
@@ -32,6 +34,7 @@ class Control {
         this.keepMenuOpen = options.keepMenuOpen || false;
         this.exclusive = options.exclusive || false;
         this.menu = options.menu || false;
+        this.menuContainer = options.menuContainer || false;
         this.subordinate = options.subordinate || false;
         this.element = options.element;
         this.interactions = options.interactions || [];
