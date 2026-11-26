@@ -47,6 +47,7 @@ import BaseLayer from 'ol/layer/Base';
 import Source from 'ol/source/Source';
 import { DEVICE_PIXEL_RATIO } from 'ol/has';
 import Group from './layer/group';
+import { parseDuration, dividesEvenly } from '../modules/timeseries/time.js';
 
 class AnolBaseLayer {
     /** @type {Group|undefined} */
@@ -89,6 +90,22 @@ class AnolBaseLayer {
         this.groupLayer = false;
         this.metadataUrl = options.metadataUrl || false;
         this.searchConfig = options.searchConfig || [];
+        this.timeSeries = options.timeSeries || false;
+        this.viewportFilter = options.viewportFilter || false;
+        this.granularity = undefined;
+        if (this.timeSeries !== false) {
+            try {
+                this.granularity = parseDuration(this.timeSeries.granularity);
+                if (!dividesEvenly(this.granularity)) {
+                    console.warn(`Layer "${this.name}": granularity ` +
+                        `"${this.timeSeries.granularity}" does not divide its parent unit evenly, ` +
+                        'so the last bucket of each parent is shorter than the rest.');
+                }
+            } catch (error) {
+                console.error(`Layer "${this.name}": ${error.message}`);
+                this.timeSeries = false;
+            }
+        }
         // opacity set in layer configuration files
         this.configuredOpacity = options.opacity || 1;
         // opacity set by user via ui
@@ -177,6 +194,87 @@ class AnolBaseLayer {
     }
     offVisibleChange(func) {
         angular.element(this).off('anol.layer.visible:change', func);
+    }
+
+    /**
+     * Time series and viewport filtering are declared on any layer type, so the
+     * layerswitcher can ask every layer without type checking. Layer classes
+     * that can actually filter override the setters.
+     */
+    hasTimeSeries() {
+        return this.timeSeries !== false;
+    }
+
+    /**
+     * @return {{unit: string, count: number}|undefined}
+     */
+    getGranularity() {
+        return this.granularity;
+    }
+
+    /**
+     * @return {'instant'|'range'}
+     */
+    getTimeSeriesMode() {
+        return this.timeSeries.mode === 'range' ? 'range' : 'instant';
+    }
+
+    /**
+     * @return {{start: Date, end: Date}|undefined} `undefined` means "latest"
+     */
+    getTime() {
+        return undefined;
+    }
+
+    /**
+     * Timestamp of the newest data actually drawn, as opposed to the window
+     * that was requested. In the "latest" state there is no window, so this is
+     * the only way to tell what the map is showing.
+     *
+     * @return {Date|undefined}
+     */
+    getDisplayedTime() {
+        return undefined;
+    }
+
+    /**
+     * @return {Promise|undefined} resolves once the new data is drawn
+     */
+    // eslint-disable-next-line no-unused-vars
+    setTime(time) {
+        return undefined;
+    }
+
+    hasViewportFilter() {
+        return this.viewportFilter !== false && this.viewportFilter.enabled === true;
+    }
+
+    getViewportFilter() {
+        return false;
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    setViewportFilter(active) {
+    }
+
+    /**
+     * Union of the temporal extents the layer's data covers.
+     *
+     * @param {number[]} [viewExtent] in map projection; omit to consider all
+     * @return {{start: Date, end: Date}|undefined}
+     */
+    // eslint-disable-next-line no-unused-vars
+    getCoverage(viewExtent) {
+        return undefined;
+    }
+
+    /**
+     * @param {number[]} [viewExtent] in map projection; omit to consider all
+     * @return {(number|string)[]}
+     */
+    // eslint-disable-next-line no-unused-vars
+    getDatastreamIds(viewExtent) {
+        return [];
     }
 
     getConfiguredOpacity() {
